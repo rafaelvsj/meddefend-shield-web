@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 
 const Index = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [pricingToggle, setPricingToggle] = useState('monthly'); // 'monthly' or 'annual'
+  const [pricingToggle, setPricingToggle] = useState('annual'); // Changed to 'annual' by default
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -779,13 +779,14 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-8">
+          {/* All plans in a row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             {/* Plano Free */}
             <Card className={`p-6 text-center transition-all duration-1000 delay-200 hover:scale-105 hover:shadow-xl ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <CardContent className="p-0">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Free</h3>
-                <p className="text-gray-600 mb-4">Para conhecer o básico</p>
-                <div className="text-3xl font-bold text-gray-900 mb-4">
+                <p className="text-gray-600 mb-4 text-sm">Para conhecer o básico</p>
+                <div className="text-3xl font-bold text-gray-900 mb-2">
                   Gratuito
                 </div>
                 <div className="text-sm text-gray-600 mb-6">
@@ -812,7 +813,7 @@ const Index = () => {
             <Card className={`p-6 text-center transition-all duration-1000 delay-300 hover:scale-105 hover:shadow-xl ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <CardContent className="p-0">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Starter</h3>
-                <p className="text-gray-600 mb-4">Ideal para consultório individual</p>
+                <p className="text-gray-600 mb-4 text-sm">Ideal para consultório individual</p>
                 <div className="mb-4">
                   {pricingToggle === 'monthly' ? (
                     <div className="text-3xl font-bold text-gray-900">
@@ -821,8 +822,11 @@ const Index = () => {
                   ) : (
                     <div>
                       <div className="text-lg text-gray-500 line-through">R$ 598,80/ano</div>
-                      <div className="text-3xl font-bold text-gray-900">
+                      <div className="text-3xl font-bold text-gray-900 mb-1">
                         R$ 449,10<span className="text-base text-gray-600">/ano</span>
+                      </div>
+                      <div className="text-sm text-green-600 font-medium">
+                        ≈ R$ 37,43/mês
                       </div>
                     </div>
                   )}
@@ -861,7 +865,7 @@ const Index = () => {
               </div>
               <CardContent className="p-0">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Profissional</h3>
-                <p className="text-gray-600 mb-4">Para médicos em alta demanda</p>
+                <p className="text-gray-600 mb-4 text-sm">Para médicos em alta demanda</p>
                 <div className="mb-4">
                   {pricingToggle === 'monthly' ? (
                     <div className="text-3xl font-bold text-gray-900">
@@ -870,8 +874,11 @@ const Index = () => {
                   ) : (
                     <div>
                       <div className="text-lg text-gray-500 line-through">R$ 1.558,80/ano</div>
-                      <div className="text-3xl font-bold text-gray-900">
+                      <div className="text-3xl font-bold text-gray-900 mb-1">
                         R$ 1.169,10<span className="text-base text-gray-600">/ano</span>
+                      </div>
+                      <div className="text-sm text-green-600 font-medium">
+                        ≈ R$ 97,43/mês
                       </div>
                     </div>
                   )}
@@ -911,7 +918,7 @@ const Index = () => {
             <Card className={`p-6 text-center transition-all duration-1000 delay-500 hover:scale-105 hover:shadow-xl ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <CardContent className="p-0">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Ultra</h3>
-                <p className="text-gray-600 mb-4">Para uso intensivo</p>
+                <p className="text-gray-600 mb-4 text-sm">Para uso intensivo</p>
                 <div className="mb-4">
                   {pricingToggle === 'monthly' ? (
                     <div className="text-3xl font-bold text-gray-900">
@@ -920,8 +927,11 @@ const Index = () => {
                   ) : (
                     <div>
                       <div className="text-lg text-gray-500 line-through">R$ 4.198,80/ano</div>
-                      <div className="text-3xl font-bold text-gray-900">
+                      <div className="text-3xl font-bold text-gray-900 mb-1">
                         R$ 3.149,10<span className="text-base text-gray-600">/ano</span>
+                      </div>
+                      <div className="text-sm text-green-600 font-medium">
+                        ≈ R$ 262,43/mês
                       </div>
                     </div>
                   )}
@@ -960,72 +970,50 @@ const Index = () => {
                 </Button>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Plano Clínicas - Seção separada */}
-          <div className={`mt-16 transition-all duration-1000 delay-600 ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <Card className="p-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200">
+            {/* Plano Clínicas */}
+            <Card className={`p-6 text-center transition-all duration-1000 delay-600 hover:scale-105 hover:shadow-xl ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <CardContent className="p-0">
-                <div className="text-center">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">Plano Clínicas</h3>
-                  <p className="text-lg text-gray-600 mb-6">Solução completa para equipes médicas e instituições</p>
-                  
-                  <div className="grid md:grid-cols-3 gap-6 mb-8">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-blue-900 mb-2">Personalizado</div>
-                      <p className="text-gray-600">A partir de R$ 1.490 + R$ 2/usuário ativo</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-blue-900 mb-2">Créditos</div>
-                      <p className="text-gray-600">Pool compartilhado para toda equipe</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-blue-900 mb-2">Gestão</div>
-                      <p className="text-gray-600">Dashboard administrativo completo</p>
-                    </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Clínicas</h3>
+                <p className="text-gray-600 mb-4 text-sm">Para equipes médicas</p>
+                <div className="mb-4">
+                  <div className="text-2xl font-bold text-gray-900 mb-1">
+                    Sob consulta
                   </div>
-
-                  <div className="grid md:grid-cols-2 gap-6 mb-8">
-                    <div className="text-left">
-                      <h4 className="font-semibold text-gray-900 mb-3">Benefícios Profissional +</h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          <span className="text-sm text-gray-700">Todos os benefícios dos planos individuais</span>
-                        </div>
-                        <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          <span className="text-sm text-gray-700">Gestão centralizada de usuários</span>
-                        </div>
-                        <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          <span className="text-sm text-gray-700">Relatórios de conformidade</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-left">
-                      <h4 className="font-semibold text-gray-900 mb-3">Recursos Empresariais</h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          <span className="text-sm text-gray-700">API para integração com sistemas</span>
-                        </div>
-                        <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          <span className="text-sm text-gray-700">Suporte técnico dedicado</span>
-                        </div>
-                        <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          <span className="text-sm text-gray-700">Treinamento da equipe</span>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="text-sm text-gray-600">
+                    A partir de R$ 1.490/mês<br/>
+                    + R$ 2/usuário ativo
                   </div>
-
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg transition-all duration-300 hover:scale-105" onClick={() => scrollToSection('contato')}>
-                    Solicitar Proposta
-                  </Button>
                 </div>
+                <div className="text-sm text-gray-600 mb-6">
+                  Pool compartilhado<br/>
+                  para toda equipe
+                </div>
+                <div className="text-left mb-6 space-y-2">
+                  <div className="flex items-center group">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
+                    <span className="text-sm text-gray-700">Todos os benefícios Pro</span>
+                  </div>
+                  <div className="flex items-center group">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
+                    <span className="text-sm text-gray-700">Gestão de usuários</span>
+                  </div>
+                  <div className="flex items-center group">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
+                    <span className="text-sm text-gray-700">Relatórios conformidade</span>
+                  </div>
+                  <div className="flex items-center group">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
+                    <span className="text-sm text-gray-700">API para integração</span>
+                  </div>
+                  <div className="flex items-center group">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
+                    <span className="text-sm text-gray-700">Suporte dedicado</span>
+                  </div>
+                </div>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 transition-all duration-300 hover:scale-105" onClick={() => scrollToSection('contato')}>
+                  Solicitar Proposta
+                </Button>
               </CardContent>
             </Card>
           </div>

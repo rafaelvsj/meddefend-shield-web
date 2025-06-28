@@ -110,13 +110,13 @@ const Index = () => {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-8">
-              <button onClick={() => scrollToSection('home')} className="hover:text-blue-300 transition-all duration-300 hover:scale-105 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-blue-300 after:transition-all after:duration-300 hover:after:w-full">Início</button>
-              <button onClick={() => scrollToSection('sobre')} className="hover:text-blue-300 transition-all duration-300 hover:scale-105 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-blue-300 after:transition-all after:duration-300 hover:after:w-full">Sobre</button>
-              <button onClick={() => scrollToSection('funcionalidades')} className="hover:text-blue-300 transition-all duration-300 hover:scale-105 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-blue-300 after:transition-all after:duration-300 hover:after:w-full">Funcionalidades</button>
-              <button onClick={() => scrollToSection('precos')} className="hover:text-blue-300 transition-all duration-300 hover:scale-105 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-blue-300 after:transition-all after:duration-300 hover:after:w-full">Preços</button>
-              <button onClick={() => scrollToSection('contato')} className="hover:text-blue-300 transition-all duration-300 hover:scale-105 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-blue-300 after:transition-all after:duration-300 hover:after:w-full">Contato</button>
-              <a href="/dashboard_usuario.html" className="hover:text-blue-300 transition-all duration-300 hover:scale-105 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-blue-300 after:transition-all after:duration-300 hover:after:w-full">Login</a>
+            <nav className="hidden lg:flex items-center space-x-8">
+              <a href="#home" className="text-white hover:text-blue-200 transition-colors duration-300">Início</a>
+              <a href="#sobre" className="text-white hover:text-blue-200 transition-colors duration-300">Sobre</a>
+              <a href="#funcionalidades" className="text-white hover:text-blue-200 transition-colors duration-300">Funcionalidades</a>
+              <a href="#precos" className="text-white hover:text-blue-200 transition-colors duration-300">Preços</a>
+              <a href="#contato" className="text-white hover:text-blue-200 transition-colors duration-300">Contato</a>
+              <a href="/login" className="text-white hover:text-blue-200 transition-colors duration-300">Login</a>
             </nav>
 
             {/* CTA Button */}
@@ -144,7 +144,7 @@ const Index = () => {
                 <button onClick={() => scrollToSection('funcionalidades')} className="block px-3 py-2 hover:bg-blue-700 rounded-md w-full text-left transition-all duration-300 hover:scale-105">Funcionalidades</button>
                 <button onClick={() => scrollToSection('precos')} className="block px-3 py-2 hover:bg-blue-700 rounded-md w-full text-left transition-all duration-300 hover:scale-105">Preços</button>
                 <button onClick={() => scrollToSection('contato')} className="block px-3 py-2 hover:bg-blue-700 rounded-md w-full text-left transition-all duration-300 hover:scale-105">Contato</button>
-                <a href="/dashboard_usuario.html" className="block px-3 py-2 hover:bg-blue-700 rounded-md transition-all duration-300 hover:scale-105">Login</a>
+                <a href="/login" className="block px-3 py-2 hover:bg-blue-700 rounded-md transition-all duration-300 hover:scale-105">Login</a>
                 <Button asChild className="w-full mt-2 bg-blue-700 hover:bg-blue-600 transition-all duration-300 hover:scale-105">
                   <a href="/checkout.html">Acessar Plataforma</a>
                 </Button>
@@ -386,7 +386,7 @@ const Index = () => {
               Nunca mais esqueça um detalhe importante. Com base no contexto clínico (ex: "alta pós-cirúrgica"), a MedDefend gera uma lista de verificação para garantir que todos os pontos críticos da documentação foram cobertos.
             </p>
 
-            <Card className="p-6 hover:scale-105 transition-all duration-300 hover:shadow-lg">
+            <Card className="p-6 hover:scale-105 transition-all duration-300 hover:shadow-xl">
               <CardContent className="p-0">
                 <h4 className="font-semibold text-gray-900 mb-4">Checklist para 'Pós-operatório de apendicectomia'</h4>
                 <div className="space-y-3">
@@ -695,11 +695,12 @@ const Index = () => {
             <div>
               <h4 className="text-lg font-semibold mb-4">Navegação</h4>
               <div className="space-y-2">
-                <button onClick={() => scrollToSection('home')} className="block text-blue-200 hover:text-white transition-all duration-300 hover:translate-x-2">Início</button>
-                <button onClick={() => scrollToSection('sobre')} className="block text-blue-200 hover:text-white transition-all duration-300 hover:translate-x-2">Sobre</button>
-                <button onClick={() => scrollToSection('funcionalidades')} className="block text-blue-200 hover:text-white transition-all duration-300 hover:translate-x-2">Funcionalidades</button>
-                <button onClick={() => scrollToSection('precos')} className="block text-blue-200 hover:text-white transition-all duration-300 hover:translate-x-2">Preços</button>
-                <button onClick={() => scrollToSection('contato')} className="block text-blue-200 hover:text-white transition-all duration-300 hover:translate-x-2">Contato</button>
+                <a href="#home" className="block text-blue-200 hover:text-white transition-colors duration-300">Início</a>
+                <a href="#sobre" className="block text-blue-200 hover:text-white transition-colors duration-300">Sobre</a>
+                <a href="#funcionalidades" className="block text-blue-200 hover:text-white transition-colors duration-300">Funcionalidades</a>
+                <a href="#precos" className="block text-blue-200 hover:text-white transition-colors duration-300">Preços</a>
+                <a href="#contato" className="block text-blue-200 hover:text-white transition-colors duration-300">Contato</a>
+                <a href="/login" className="block text-blue-200 hover:text-white transition-colors duration-300">Login</a>
               </div>
             </div>
 
@@ -707,10 +708,10 @@ const Index = () => {
             <div>
               <h4 className="text-lg font-semibold mb-4">Contato</h4>
               <div className="space-y-2">
-                <a href="mailto:suporte@meddefend.com.br" className="block text-blue-200 hover:text-white transition-all duration-300 hover:translate-x-2">
+                <a href="mailto:suporte@meddefend.com.br" className="block text-blue-200 hover:text-white transition-colors duration-300 hover:translate-x-2">
                   suporte@meddefend.com.br
                 </a>
-                <a href="mailto:parcerias@meddefend.com.br" className="block text-blue-200 hover:text-white transition-all duration-300 hover:translate-x-2">
+                <a href="mailto:parcerias@meddefend.com.br" className="block text-blue-200 hover:text-white transition-colors duration-300 hover:translate-x-2">
                   parcerias@meddefend.com.br
                 </a>
               </div>

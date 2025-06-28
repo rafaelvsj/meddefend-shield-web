@@ -197,7 +197,7 @@ const Index = () => {
               A MedDefend é a primeira plataforma com inteligência artificial que transforma sua documentação médica em uma sólida defesa jurídica. Reduza o risco de litígios e dedique seu tempo ao que realmente importa: seus pacientes.
             </p>
             <div className={`transition-all duration-1000 delay-500 ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg transition-all duration-300 hover:scale-105 hover:shadow-xl animate-pulse hover:animate-none">
+              <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
                 <a href="/checkout.html">Experimente Gratuitamente por 3 Dias</a>
               </Button>
             </div>
@@ -252,92 +252,92 @@ const Index = () => {
         </div>
       </section>
 
-      {/* LLM Danger Section - NEW */}
-      <section className="py-20 bg-gradient-to-br from-red-600 via-red-800 to-black text-white overflow-hidden" data-animate id="llm-danger">
+      {/* LLM Danger Section - Updated with blue theme */}
+      <section className="py-20 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-950 text-white overflow-hidden" data-animate id="llm-danger">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Warning Header */}
           <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <div className="flex items-center justify-center mb-6">
-              <AlertTriangle className="h-12 w-12 text-red-300 mr-4 animate-pulse" />
+              <AlertTriangle className="h-12 w-12 text-orange-300 mr-4" />
               <h2 className="text-4xl md:text-5xl font-bold">
                 Por Que LLMs Genéricas São Perigosas Na Medicina?
               </h2>
-              <AlertTriangle className="h-12 w-12 text-red-300 ml-4 animate-pulse" />
+              <AlertTriangle className="h-12 w-12 text-orange-300 ml-4" />
             </div>
-            <p className="text-xl text-red-100 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl text-blue-100 max-w-4xl mx-auto leading-relaxed">
               O Perigo Silencioso das LLMs em Documentação Médica
             </p>
           </div>
 
           {/* Scenario Description */}
-          <div className={`bg-black/50 p-8 rounded-lg mb-16 border-l-4 border-red-400 transition-all duration-1000 delay-200 ${visibleElements.has('llm-danger') ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+          <div className={`bg-blue-950/70 p-8 rounded-lg mb-16 border-l-4 border-orange-400 transition-all duration-1000 delay-200 ${visibleElements.has('llm-danger') ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
             <p className="text-lg leading-relaxed mb-4">
-              <strong className="text-red-300">Imagine este cenário:</strong> Um médico utiliza ChatGPT para redigir um relatório médico. A IA gera um texto fluente e aparentemente técnico, mas contém uma <span className="text-red-300 font-bold">alucinação crítica</span> - afirma que o paciente 'não apresenta histórico de alergias' quando, na verdade, ele possui alergia grave à penicilina.
+              <strong className="text-orange-300">Imagine este cenário:</strong> Um médico utiliza ChatGPT para redigir um relatório médico. A IA gera um texto fluente e aparentemente técnico, mas contém uma <span className="text-orange-300 font-bold">alucinação crítica</span> - afirma que o paciente 'não apresenta histórico de alergias' quando, na verdade, ele possui alergia grave à penicilina.
             </p>
             <p className="text-lg leading-relaxed">
-              Seis meses depois, em uma emergência, outro médico prescreve penicilina baseado nessa documentação. O resultado? <span className="text-red-300 font-bold">Choque anafilático, UTI, e um processo de R$ 2 milhões.</span>
+              Seis meses depois, em uma emergência, outro médico prescreve penicilina baseado nessa documentação. O resultado? <span className="text-orange-300 font-bold">Choque anafilático, UTI, e um processo de R$ 2 milhões.</span>
             </p>
           </div>
 
           {/* Statistics Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            <Card className={`bg-red-900/80 border-red-400 text-center p-6 transition-all duration-1000 delay-300 hover:scale-105 hover:bg-red-900 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <Card className={`bg-blue-800/80 border-orange-400 text-center p-6 transition-all duration-1000 delay-300 hover:scale-105 hover:bg-blue-800 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <CardContent className="p-0">
-                <BarChart2 className="h-8 w-8 text-red-300 mx-auto mb-2" />
-                <div className="text-3xl font-bold text-red-100 mb-1">{counters.processesVsDoctors.toLocaleString()}</div>
-                <div className="text-sm text-red-200">Processos vs 562.206 Médicos</div>
-                <p className="text-xs text-red-300 mt-2">Mais processos que médicos!</p>
+                <BarChart2 className="h-8 w-8 text-orange-300 mx-auto mb-2" />
+                <div className="text-3xl font-bold text-blue-100 mb-1">{counters.processesVsDoctors.toLocaleString()}</div>
+                <div className="text-sm text-blue-200">Processos vs 562.206 Médicos</div>
+                <p className="text-xs text-orange-300 mt-2">Mais processos que médicos!</p>
               </CardContent>
             </Card>
 
-            <Card className={`bg-red-900/80 border-red-400 text-center p-6 transition-all duration-1000 delay-400 hover:scale-105 hover:bg-red-900 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <Card className={`bg-blue-800/80 border-orange-400 text-center p-6 transition-all duration-1000 delay-400 hover:scale-105 hover:bg-blue-800 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <CardContent className="p-0">
-                <AlertTriangle className="h-8 w-8 text-red-300 mx-auto mb-2" />
-                <div className="text-3xl font-bold text-red-100 mb-1">{counters.gpt35Hallucination.toFixed(1)}%</div>
-                <div className="text-sm text-red-200">Taxa de Alucinação GPT-3.5</div>
-                <p className="text-xs text-red-300 mt-2">4 em cada 10 respostas!</p>
+                <AlertTriangle className="h-8 w-8 text-orange-300 mx-auto mb-2" />
+                <div className="text-3xl font-bold text-blue-100 mb-1">{counters.gpt35Hallucination.toFixed(1)}%</div>
+                <div className="text-sm text-blue-200">Taxa de Alucinação GPT-3.5</div>
+                <p className="text-xs text-orange-300 mt-2">4 em cada 10 respostas!</p>
               </CardContent>
             </Card>
 
-            <Card className={`bg-red-900/80 border-red-400 text-center p-6 transition-all duration-1000 delay-500 hover:scale-105 hover:bg-red-900 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <Card className={`bg-blue-800/80 border-orange-400 text-center p-6 transition-all duration-1000 delay-500 hover:scale-105 hover:bg-blue-800 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <CardContent className="p-0">
-                <AlertTriangle className="h-8 w-8 text-red-300 mx-auto mb-2" />
-                <div className="text-3xl font-bold text-red-100 mb-1">{counters.bardHallucination.toFixed(1)}%</div>
-                <div className="text-sm text-red-200">Taxa de Alucinação Bard</div>
-                <p className="text-xs text-red-300 mt-2">9 em cada 10 respostas!</p>
+                <AlertTriangle className="h-8 w-8 text-orange-300 mx-auto mb-2" />
+                <div className="text-3xl font-bold text-blue-100 mb-1">{counters.bardHallucination.toFixed(1)}%</div>
+                <div className="text-sm text-blue-200">Taxa de Alucinação Bard</div>
+                <p className="text-xs text-orange-300 mt-2">9 em cada 10 respostas!</p>
               </CardContent>
             </Card>
 
-            <Card className={`bg-red-900/80 border-red-400 text-center p-6 transition-all duration-1000 delay-600 hover:scale-105 hover:bg-red-900 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <Card className={`bg-blue-800/80 border-orange-400 text-center p-6 transition-all duration-1000 delay-600 hover:scale-105 hover:bg-blue-800 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <CardContent className="p-0">
-                <AlertTriangle className="h-8 w-8 text-red-300 mx-auto mb-2" />
-                <div className="text-3xl font-bold text-red-100 mb-1">{counters.severeHallucinations}%</div>
-                <div className="text-sm text-red-200">Alucinações Graves</div>
-                <p className="text-xs text-red-300 mt-2">Potencialmente fatais</p>
+                <AlertTriangle className="h-8 w-8 text-orange-300 mx-auto mb-2" />
+                <div className="text-3xl font-bold text-blue-100 mb-1">{counters.severeHallucinations}%</div>
+                <div className="text-sm text-blue-200">Alucinações Graves</div>
+                <p className="text-xs text-orange-300 mt-2">Potencialmente fatais</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Real Cases */}
           <div className={`mb-16 transition-all duration-1000 delay-700 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <h3 className="text-2xl font-bold text-center mb-8 text-red-100">Casos Reais de Processos por Documentação Inadequada</h3>
+            <h3 className="text-2xl font-bold text-center mb-8 text-blue-100">Casos Reais de Processos por Documentação Inadequada</h3>
             <div className="grid md:grid-cols-3 gap-6">
-              <Card className="bg-black/60 border-red-400 p-6 hover:scale-105 transition-all duration-300">
+              <Card className="bg-blue-950/60 border-orange-400 p-6 hover:scale-105 transition-all duration-300">
                 <CardContent className="p-0">
-                  <div className="text-2xl font-bold text-red-300 mb-2">US$ 216.8 mi</div>
-                  <p className="text-red-100 text-sm">Hospital Johns Hopkins - Falha na documentação de procedimento</p>
+                  <div className="text-2xl font-bold text-orange-300 mb-2">US$ 216.8 mi</div>
+                  <p className="text-blue-100 text-sm">Hospital Johns Hopkins - Falha na documentação de procedimento</p>
                 </CardContent>
               </Card>
-              <Card className="bg-black/60 border-red-400 p-6 hover:scale-105 transition-all duration-300">
+              <Card className="bg-blue-950/60 border-orange-400 p-6 hover:scale-105 transition-all duration-300">
                 <CardContent className="p-0">
-                  <div className="text-2xl font-bold text-red-300 mb-2">US$ 101 mi</div>
-                  <p className="text-red-100 text-sm">Mayo Clinic - Erro de registro em prontuário eletrônico</p>
+                  <div className="text-2xl font-bold text-orange-300 mb-2">US$ 101 mi</div>
+                  <p className="text-blue-100 text-sm">Mayo Clinic - Erro de registro em prontuário eletrônico</p>
                 </CardContent>
               </Card>
-              <Card className="bg-black/60 border-red-400 p-6 hover:scale-105 transition-all duration-300">
+              <Card className="bg-blue-950/60 border-orange-400 p-6 hover:scale-105 transition-all duration-300">
                 <CardContent className="p-0">
-                  <div className="text-2xl font-bold text-red-300 mb-2">R$ 500 mil</div>
-                  <p className="text-red-100 text-sm">Hospital Sírio-Libanês - Documentação incompleta de cirurgia</p>
+                  <div className="text-2xl font-bold text-orange-300 mb-2">R$ 500 mil</div>
+                  <p className="text-blue-100 text-sm">Hospital Sírio-Libanês - Documentação incompleta de cirurgia</p>
                 </CardContent>
               </Card>
             </div>
@@ -345,21 +345,21 @@ const Index = () => {
 
           {/* Comparison Section */}
           <div className={`mb-16 transition-all duration-1000 delay-800 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <h3 className="text-2xl font-bold text-center mb-8 text-red-100">A Diferença que Pode Salvar Sua Carreira</h3>
+            <h3 className="text-2xl font-bold text-center mb-8 text-blue-100">A Diferença que Pode Salvar Sua Carreira</h3>
             <div className="grid md:grid-cols-2 gap-8">
               {/* LLM Comum */}
-              <Card className="bg-red-900/50 border-red-400 p-6 hover:scale-105 transition-all duration-300">
+              <Card className="bg-blue-800/50 border-orange-400 p-6 hover:scale-105 transition-all duration-300">
                 <CardContent className="p-0">
                   <div className="flex items-center mb-4">
-                    <AlertTriangle className="h-6 w-6 text-red-400 mr-3" />
-                    <h4 className="text-xl font-bold text-red-300">Com LLM Comum</h4>
+                    <AlertTriangle className="h-6 w-6 text-orange-400 mr-3" />
+                    <h4 className="text-xl font-bold text-orange-300">Com LLM Comum</h4>
                   </div>
-                  <div className="bg-black/50 p-4 rounded border-l-2 border-red-400">
-                    <p className="text-red-100 italic">
+                  <div className="bg-blue-950/50 p-4 rounded border-l-2 border-orange-400">
+                    <p className="text-blue-100 italic">
                       "Paciente apresentou dor abdominal. Realizado exame clínico. Prescrito analgésico."
                     </p>
                   </div>
-                  <div className="mt-4 text-sm text-red-200">
+                  <div className="mt-4 text-sm text-blue-200">
                     ❌ Vago e subjetivo<br/>
                     ❌ Sem detalhes importantes<br/>
                     ❌ Vulnerável juridicamente
@@ -374,7 +374,7 @@ const Index = () => {
                     <Shield className="h-6 w-6 text-green-400 mr-3" />
                     <h4 className="text-xl font-bold text-green-300">Com MedDefend</h4>
                   </div>
-                  <div className="bg-black/50 p-4 rounded border-l-2 border-green-400">
+                  <div className="bg-blue-950/50 p-4 rounded border-l-2 border-green-400">
                     <p className="text-green-100 text-sm">
                       "Paciente relata dor abdominal iniciada há 6 horas, localizada em fossa ilíaca direita, intensidade 7/10 na escala numérica. Ao exame físico: abdome flácido, doloroso à palpação profunda em ponto de McBurney, sem sinais de irritação peritoneal. Descartada apendicite aguda através dos critérios de Alvarado (escore: 3/10). Sinal de Blumberg negativo. Orientado retorno em caso de piora do quadro ou surgimento de febre. Paciente compreendeu e concordou com conduta proposta."
                     </p>
@@ -391,23 +391,23 @@ const Index = () => {
 
           {/* Urgency CTA */}
           <div className={`text-center transition-all duration-1000 delay-1000 ${visibleElements.has('llm-danger') ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-            <div className="bg-black/70 p-8 rounded-lg border border-red-400">
-              <h3 className="text-3xl font-bold text-red-100 mb-4">
+            <div className="bg-blue-950/70 p-8 rounded-lg border border-orange-400">
+              <h3 className="text-3xl font-bold text-blue-100 mb-4">
                 Você Confiaria Sua Defesa Jurídica a uma IA que 'Alucina' 3 em cada 10 Vezes?
               </h3>
-              <p className="text-lg text-red-200 mb-6">
+              <p className="text-lg text-blue-200 mb-6">
                 A pergunta não é <strong>SE</strong> você será processado, mas <strong>QUANDO</strong>
               </p>
               <Button 
                 asChild 
                 size="lg" 
-                className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 text-lg transition-all duration-300 hover:scale-105 hover:shadow-xl animate-pulse hover:animate-none border-2 border-red-400"
+                className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 text-lg transition-all duration-300 hover:scale-105 hover:shadow-xl border-2 border-orange-400"
               >
                 <a href="/checkout.html">
                   🛡️ PROTEJA SUA CARREIRA AGORA - TESTE GRÁTIS
                 </a>
               </Button>
-              <p className="text-sm text-red-300 mt-4">Não deixe sua documentação se tornar sua maior vulnerabilidade</p>
+              <p className="text-sm text-orange-300 mt-4">Não deixe sua documentação se tornar sua maior vulnerabilidade</p>
             </div>
           </div>
         </div>
@@ -503,7 +503,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className={`p-6 border-l-4 border-purple-500 transition-all duration-1000 delay-600 hover:scale-105 hover:shadow-lg ${visibleElements.has('sobre') ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
+            <Card className={`p-6 border-l-4 border-purple-500 transition-all duration-1000 delay-600 hover:scale-105 hover:shadow-lg ${visibleElements.has('sobre') ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
               <CardContent className="p-0">
                 <div className="flex items-center mb-4 group">
                   <Zap className="h-8 w-8 text-purple-600 mr-3 transition-all duration-300 group-hover:scale-125" />

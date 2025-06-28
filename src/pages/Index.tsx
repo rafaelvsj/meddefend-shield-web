@@ -668,79 +668,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Benefícios Section */}
-      <section className="py-20 bg-white" data-animate id="beneficios">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('beneficios') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Mais que um Software: Uma Apólice de Tranquilidade
-            </h2>
-            <p className="text-xl text-gray-600">
-              Adotar a MedDefend é um investimento direto na longevidade e na segurança da sua carreira.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            <Card className={`p-8 text-center transition-all duration-1000 delay-200 hover:scale-105 hover:shadow-xl ${visibleElements.has('beneficios') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <CardContent className="p-0">
-                <Shield className="h-12 w-12 text-green-600 mx-auto mb-4 transition-all duration-300 hover:scale-125" />
-                <h3 className="text-xl font-semibold mb-3">Máxima Segurança Jurídica</h3>
-                <p className="text-gray-600">Crie uma barreira de proteção documental que minimiza brechas para litígios.</p>
-              </CardContent>
-            </Card>
-
-            <Card className={`p-8 text-center relative border-2 border-green-500 transition-all duration-1000 delay-400 hover:scale-105 hover:shadow-xl ${visibleElements.has('beneficios') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium animate-pulse">POPULAR</span>
-              </div>
-              <CardContent className="p-0">
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">MedDefend Profissional</h3>
-                <div className="text-4xl font-bold text-gray-900 mb-2">R$ 99 <span className="text-lg text-gray-600">/mês</span></div>
-                <p className="text-gray-600 mb-2">Proteção Integral e Teste Gratuito</p>
-                <p className="text-sm text-gray-500 mb-6">Após 3 dias de teste gratuito</p>
-                <div className="text-left mb-6 space-y-2">
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-gray-700">Assistente de Escrita Ilimitado</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-gray-700">Checklist Contextual Inteligente</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-gray-700">Biblioteca Completa de Modelos</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-gray-700">Histórico de Documentos</span>
-                  </div>
-                </div>
-                <Button className="w-full bg-green-600 hover:bg-green-700 transition-all duration-300 hover:scale-105 hover:shadow-lg" asChild>
-                  <a href="/checkout.html">Iniciar Teste de 3 Dias</a>
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className={`p-8 text-center transition-all duration-1000 delay-600 hover:scale-105 hover:shadow-xl ${visibleElements.has('beneficios') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <CardContent className="p-0">
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">MedDefend Clínicas</h3>
-                <div className="text-4xl font-bold text-gray-900 mb-2">Sob Consulta</div>
-                <p className="text-gray-600 mb-2">Para equipes</p>
-                <p className="text-sm text-gray-500 mb-6">Para múltiplos usuários</p>
-                <div className="mb-6">
-                  <p className="text-gray-700">Recursos do plano Profissional, gestão de equipe e relatórios de conformidade.</p>
-                </div>
-                <Button variant="outline" className="w-full transition-all duration-300 hover:scale-105" onClick={() => scrollToSection('contato')}>
-                  Fale Conosco
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Preços Section - Updated */}
+      {/* Preços Section - Updated to show monthly equivalent prominently */}
       <section id="precos" className="py-20 bg-gray-50" data-animate>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
@@ -821,12 +749,11 @@ const Index = () => {
                     </div>
                   ) : (
                     <div>
-                      <div className="text-lg text-gray-500 line-through">R$ 598,80/ano</div>
                       <div className="text-3xl font-bold text-gray-900 mb-1">
-                        R$ 449,10<span className="text-base text-gray-600">/ano</span>
+                        R$ 37,43<span className="text-base text-gray-600">/mês</span>
                       </div>
-                      <div className="text-sm text-green-600 font-medium">
-                        ≈ R$ 37,43/mês
+                      <div className="text-sm text-gray-500">
+                        R$ 449,10 cobrados anualmente
                       </div>
                     </div>
                   )}
@@ -873,12 +800,11 @@ const Index = () => {
                     </div>
                   ) : (
                     <div>
-                      <div className="text-lg text-gray-500 line-through">R$ 1.558,80/ano</div>
                       <div className="text-3xl font-bold text-gray-900 mb-1">
-                        R$ 1.169,10<span className="text-base text-gray-600">/ano</span>
+                        R$ 97,43<span className="text-base text-gray-600">/mês</span>
                       </div>
-                      <div className="text-sm text-green-600 font-medium">
-                        ≈ R$ 97,43/mês
+                      <div className="text-sm text-gray-500">
+                        R$ 1.169,10 cobrados anualmente
                       </div>
                     </div>
                   )}
@@ -926,12 +852,11 @@ const Index = () => {
                     </div>
                   ) : (
                     <div>
-                      <div className="text-lg text-gray-500 line-through">R$ 4.198,80/ano</div>
                       <div className="text-3xl font-bold text-gray-900 mb-1">
-                        R$ 3.149,10<span className="text-base text-gray-600">/ano</span>
+                        R$ 262,43<span className="text-base text-gray-600">/mês</span>
                       </div>
-                      <div className="text-sm text-green-600 font-medium">
-                        ≈ R$ 262,43/mês
+                      <div className="text-sm text-gray-500">
+                        R$ 3.149,10 cobrados anualmente
                       </div>
                     </div>
                   )}

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -148,10 +149,10 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
 
           {/* Plano Profissional */}
           <Card className={`p-6 text-center relative border-2 border-emerald-300 bg-gradient-to-br from-white to-green-50 shadow-xl rounded-3xl transition-all duration-1000 delay-400 hover:scale-105 hover:shadow-2xl ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-              <span className="bg-gradient-to-r from-emerald-500 to-green-500 text-white px-4 py-1 rounded-full text-sm font-medium shadow-md">MAIS POPULAR</span>
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+              <span className="bg-gradient-to-r from-emerald-500 to-green-500 text-white px-6 py-2 rounded-full text-sm font-medium shadow-lg whitespace-nowrap">MAIS POPULAR</span>
             </div>
-            <CardContent className="p-0">
+            <CardContent className="p-0 pt-4">
               <h3 className="text-xl font-bold text-slate-900 mb-2">Profissional</h3>
               <p className="text-slate-600 mb-6 text-sm font-light">Para médicos em alta demanda</p>
               <div className="mb-6">

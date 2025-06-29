@@ -17,11 +17,11 @@ const Header = ({ scrollToSection }: HeaderProps) => {
           {/* Logo */}
           <div className="flex items-center space-x-4 group">
             <img 
-              src="/lovable-uploads/74f4dcc6-f954-459f-bc27-c55c4307bc8e.png" 
+              src="/lovable-uploads/38d87268-cc87-427b-8e27-bf6629d3ade4.png" 
               alt="MedDefend Logo" 
-              className="h-16 w-16 transition-transform duration-300 group-hover:scale-110 drop-shadow-2xl"
+              className="h-12 w-12 transition-transform duration-300 group-hover:scale-110 drop-shadow-2xl"
             />
-            <span className="text-2xl md:text-3xl font-bold font-montserrat text-white drop-shadow-lg tracking-wide">
+            <span className="text-2xl md:text-3xl font-bold font-outfit text-white drop-shadow-lg tracking-wide">
               MedDefend
             </span>
           </div>
@@ -55,7 +55,7 @@ const Header = ({ scrollToSection }: HeaderProps) => {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-black/90 backdrop-blur-md animate-fade-in rounded-b-2xl border border-white/10">
-            <div className="px-2 pt-2 pb-6 space-y-1">
+            <div className="px-2 pt-2 pb-8 space-y-1">
               <button onClick={() => scrollToSection('home')} className="block px-4 py-3 hover:bg-white/10 rounded-xl w-full text-left transition-all duration-300 font-medium text-sm text-gray-200 hover:text-white">Início</button>
               <button onClick={() => scrollToSection('sobre')} className="block px-4 py-3 hover:bg-white/10 rounded-xl w-full text-left transition-all duration-300 font-medium text-sm text-gray-200 hover:text-white">Sobre</button>
               <button onClick={() => scrollToSection('funcionalidades')} className="block px-4 py-3 hover:bg-white/10 rounded-xl w-full text-left transition-all duration-300 font-medium text-sm text-gray-200 hover:text-white">Funcionalidades</button>

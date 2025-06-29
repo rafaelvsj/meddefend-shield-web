@@ -1,54 +1,100 @@
 
+import { Mail, Phone, MapPin, Shield, Scale, Cookie } from 'lucide-react';
+
 const FooterSection = () => {
   return (
-    <footer className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-3 gap-8 mb-8">
-          {/* Logo e Tagline */}
-          <div>
-            <div className="flex items-center space-x-3 mb-4 group">
+    <footer className="bg-gradient-to-b from-black via-gray-950 to-slate-950 border-t border-gray-800/50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid md:grid-cols-4 gap-8">
+          {/* Logo and Description */}
+          <div className="md:col-span-1">
+            <div className="flex items-center space-x-3 mb-6">
               <img 
-                src="/lovable-uploads/bdba2116-5b5a-4dd6-b6e8-5eb4cd0eb9bb.png" 
+                src="/lovable-uploads/38d87268-cc87-427b-8e27-bf6629d3ade4.png" 
                 alt="MedDefend Logo" 
-                className="h-8 w-8 transition-transform duration-300 group-hover:scale-110"
+                className="h-10 w-10"
               />
-              <span className="text-2xl font-bold transition-colors duration-300 group-hover:text-blue-300">MedDefend</span>
+              <span className="text-2xl font-bold font-outfit text-white">MedDefend</span>
             </div>
-            <p className="text-blue-200">Protegendo quem cuida.</p>
+            <p className="text-gray-300 text-sm leading-relaxed">
+              A primeira plataforma com IA especializada em documentação médica defensiva. 
+              Protegendo médicos brasileiros desde 2024.
+            </p>
           </div>
 
-          {/* Navegação */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Navegação</h4>
-            <div className="space-y-2">
-              <a href="#home" className="block text-blue-200 hover:text-white transition-colors duration-300">Início</a>
-              <a href="#sobre" className="block text-blue-200 hover:text-white transition-colors duration-300">Sobre</a>
-              <a href="#funcionalidades" className="block text-blue-200 hover:text-white transition-colors duration-300">Funcionalidades</a>
-              <a href="#precos" className="block text-blue-200 hover:text-white transition-colors duration-300">Preços</a>
-              <a href="#contato" className="block text-blue-200 hover:text-white transition-colors duration-300">Contato</a>
-              <a href="/login" className="block text-blue-200 hover:text-white transition-colors duration-300">Login</a>
-            </div>
+          {/* Quick Links */}
+          <div className="md:col-span-1">
+            <h4 className="text-white font-semibold mb-4">Navegação</h4>
+            <ul className="space-y-3 text-sm">
+              <li><a href="#home" className="text-gray-300 hover:text-white transition-colors">Início</a></li>
+              <li><a href="#sobre" className="text-gray-300 hover:text-white transition-colors">Sobre</a></li>
+              <li><a href="#funcionalidades" className="text-gray-300 hover:text-white transition-colors">Funcionalidades</a></li>
+              <li><a href="#precos" className="text-gray-300 hover:text-white transition-colors">Preços</a></li>
+              <li><a href="#contato" className="text-gray-300 hover:text-white transition-colors">Contato</a></li>
+              <li><a href="/login" className="text-gray-300 hover:text-white transition-colors">Login</a></li>
+            </ul>
           </div>
 
-          {/* Contato */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Contato</h4>
-            <div className="space-y-2">
-              <a href="mailto:suporte@meddefend.com.br" className="block text-blue-200 hover:text-white transition-colors duration-300 hover:translate-x-2">
-                suporte@meddefend.com.br
-              </a>
-              <a href="mailto:parcerias@meddefend.com.br" className="block text-blue-200 hover:text-white transition-colors duration-300 hover:translate-x-2">
-                parcerias@meddefend.com.br
-              </a>
-            </div>
+          {/* Legal */}
+          <div className="md:col-span-1">
+            <h4 className="text-white font-semibold mb-4">Legal</h4>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <a href="/privacy-policy" className="text-gray-300 hover:text-white transition-colors flex items-center space-x-2">
+                  <Shield className="h-4 w-4" />
+                  <span>Política de Privacidade</span>
+                </a>
+              </li>
+              <li>
+                <a href="/terms" className="text-gray-300 hover:text-white transition-colors flex items-center space-x-2">
+                  <Scale className="h-4 w-4" />
+                  <span>Termos de Uso</span>
+                </a>
+              </li>
+              <li>
+                <a href="/cancellation" className="text-gray-300 hover:text-white transition-colors">
+                  Cancelamento e Reembolso
+                </a>
+              </li>
+              <li>
+                <a href="/cookies" className="text-gray-300 hover:text-white transition-colors flex items-center space-x-2">
+                  <Cookie className="h-4 w-4" />
+                  <span>Política de Cookies</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact Info */}
+          <div className="md:col-span-1">
+            <h4 className="text-white font-semibold mb-4">Contato</h4>
+            <ul className="space-y-3 text-sm">
+              <li className="flex items-center space-x-2 text-gray-300">
+                <Mail className="h-4 w-4" />
+                <span>contato@meddefend.com.br</span>
+              </li>
+              <li className="flex items-center space-x-2 text-gray-300">
+                <Phone className="h-4 w-4" />
+                <span>(11) 9999-9999</span>
+              </li>
+              <li className="flex items-start space-x-2 text-gray-300">
+                <MapPin className="h-4 w-4 mt-0.5" />
+                <span>São Paulo, SP<br />Brasil</span>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="border-t border-blue-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-blue-200 text-sm">© 2025 MedDefend. Todos os direitos reservados.</p>
-          <a href="/dashboard_admin.html" className="text-blue-200 hover:text-white text-sm transition-all duration-300 mt-4 md:mt-0 hover:scale-105">
-            Admin
-          </a>
+        <div className="border-t border-gray-800/50 mt-12 pt-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-400 text-sm">
+              © 2024 MedDefend. Todos os direitos reservados.
+            </p>
+            <div className="flex space-x-6 mt-4 md:mt-0 text-sm">
+              <span className="text-gray-400">CNPJ: XX.XXX.XXX/0001-XX</span>
+              <span className="text-gray-400">Feito com ❤️ para médicos brasileiros</span>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

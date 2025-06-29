@@ -1,17 +1,37 @@
 
-interface ScenarioDescriptionProps {
-  isVisible: boolean;
-}
+import { AlertTriangle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
-const ScenarioDescription = ({ isVisible }: ScenarioDescriptionProps) => {
+const ScenarioDescription = () => {
   return (
-    <div className={`bg-gray-800 p-8 rounded-lg mb-16 border-l-4 border-red-600 shadow-lg transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-      <p className="text-lg leading-relaxed mb-4 text-gray-200">
-        <strong className="text-red-400">Imagine:</strong> Um médico utiliza Claude para redigir um relatório. A IA gera texto fluente, mas contém uma <span className="text-red-400 font-bold">alucinação</span> - afirma que o paciente 'não apresenta alergias' quando ele tem alergia grave à penicilina.
-      </p>
-      <p className="text-lg leading-relaxed text-gray-200">
-        Meses depois, outro médico prescreve penicilina baseado nessa documentação. <span className="text-red-400 font-bold">Resultado: choque anafilático e processo milionário.</span>
-      </p>
+    <div className="grid md:grid-cols-2 gap-8 mb-16">
+      <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">
+        <CardContent className="p-8">
+          <div className="flex items-center mb-4">
+            <AlertTriangle className="h-8 w-8 text-red-400 mr-3" />
+            <h3 className="text-2xl font-bold text-white">A epidemia silenciosa</h3>
+          </div>
+          <p className="text-gray-300 leading-relaxed">
+            Médicos brasileiros enfrentam uma crise sem precedentes: mais de <strong className="text-white">400 mil processos judiciais</strong> ativos 
+            contra profissionais de saúde. Enquanto isso, ferramentas de IA generativa como ChatGPT e similares criam 
+            <strong className="text-red-400"> informações médicas falsas</strong> em até 90% dos casos complexos.
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">
+        <CardContent className="p-8">
+          <div className="flex items-center mb-4">
+            <AlertTriangle className="h-8 w-8 text-yellow-400 mr-3" />
+            <h3 className="text-2xl font-bold text-white">O risco está crescendo</h3>
+          </div>
+          <p className="text-gray-300 leading-relaxed">
+            Pacientes cada vez mais usam IA para questionar diagnósticos e tratamentos, criando expectativas 
+            irreais e aumentando conflitos. <strong className="text-white">Sua documentação médica</strong> é sua única 
+            proteção real contra alegações infundadas e processos frivolos.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 };

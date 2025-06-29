@@ -20,7 +20,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white font-inter">
+    <div className="min-h-screen bg-background text-foreground font-inter">
       <Header scrollToSection={scrollToSection} />
       <HeroSection />
       <StatisticsSection />

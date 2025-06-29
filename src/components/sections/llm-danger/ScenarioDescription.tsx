@@ -2,7 +2,11 @@
 import { AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
-const ScenarioDescription = () => {
+interface ScenarioDescriptionProps {
+  isVisible: boolean;
+}
+
+const ScenarioDescription = ({ isVisible }: ScenarioDescriptionProps) => {
   return (
     <div className="grid md:grid-cols-2 gap-8 mb-16">
       <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-700/50 hover:border-purple-500/50 transition-all duration-300">

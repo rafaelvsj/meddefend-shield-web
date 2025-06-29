@@ -51,6 +51,10 @@ const TermsOfService = () => {
     }
   };
 
+  const handleTermsAcceptance = (checked: boolean | "indeterminate") => {
+    setAcceptedTerms(checked === true);
+  };
+
   return (
     <div className="min-h-screen bg-black text-foreground">
       {/* Header */}
@@ -332,7 +336,7 @@ const TermsOfService = () => {
                     <Checkbox
                       id="terms"
                       checked={acceptedTerms}
-                      onCheckedChange={setAcceptedTerms}
+                      onCheckedChange={handleTermsAcceptance}
                       className="mt-1"
                     />
                     <label htmlFor="terms" className="text-sm text-gray-300 cursor-pointer">

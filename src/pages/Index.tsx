@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
-import { Shield, Menu, X, CheckCircle, Clock, Users, TrendingDown, ArrowRight, Mail, FileText, Zap, Heart, AlertTriangle, BarChart2 } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, Clock, Users, TrendingDown, Mail, FileText, Zap, Heart, BarChart2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
+// Import new components
+import Header from '@/components/sections/Header';
+import HeroSection from '@/components/sections/HeroSection';
+import StatisticsSection from '@/components/sections/StatisticsSection';
+import PricingSection from '@/components/sections/PricingSection';
+
 const Index = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [pricingToggle, setPricingToggle] = useState('annual'); // Changed to 'annual' by default
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -20,9 +24,6 @@ const Index = () => {
   // Animation states
   const [visibleElements, setVisibleElements] = useState(new Set());
   const [counters, setCounters] = useState({
-    processes: 0,
-    growth: 0,
-    days: 0,
     processesVsDoctors: 0,
     claudeSonnet: 0,
     claudeOpus: 0,
@@ -53,33 +54,8 @@ const Index = () => {
     return () => observerRef.current?.disconnect();
   }, []);
 
-  // Counter animations
+  // Counter animations for LLM danger section
   useEffect(() => {
-    if (visibleElements.has('statistics')) {
-      const animateCounter = (target: number, setter: (value: number) => void, duration: number = 2000) => {
-        let start = 0;
-        const startTime = performance.now();
-        
-        const animate = (currentTime: number) => {
-          const elapsed = currentTime - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          const current = Math.floor(progress * target);
-          setter(current);
-          
-          if (progress < 1) {
-            requestAnimationFrame(animate);
-          }
-        };
-        
-        requestAnimationFrame(animate);
-      };
-
-      animateCounter(573, (val) => setCounters(prev => ({ ...prev, processes: val })));
-      animateCounter(198, (val) => setCounters(prev => ({ ...prev, growth: val })));
-      animateCounter(747, (val) => setCounters(prev => ({ ...prev, days: val })));
-    }
-
-    // New counters for LLM danger section
     if (visibleElements.has('llm-danger')) {
       const animateCounter = (target: number, setter: (value: number) => void, duration: number = 2000) => {
         let start = 0;
@@ -127,149 +103,27 @@ const Index = () => {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
-    setMobileMenuOpen(false);
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-blue-900 text-white shadow-lg fixed w-full top-0 z-50 transition-all duration-300 hover:shadow-2xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-3 group">
-              <img 
-                src="/lovable-uploads/bdba2116-5b5a-4dd6-b6e8-5eb4cd0eb9bb.png" 
-                alt="MedDefend Logo" 
-                className="h-10 w-10 transition-transform duration-300 group-hover:scale-110"
-              />
-              <span className="text-2xl font-bold transition-colors duration-300 group-hover:text-blue-300">MedDefend</span>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <Header scrollToSection={scrollToSection} />
+      <HeroSection />
+      <StatisticsSection />
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8">
-              <a href="#home" className="text-white hover:text-blue-200 transition-colors duration-300">Início</a>
-              <a href="#sobre" className="text-white hover:text-blue-200 transition-colors duration-300">Sobre</a>
-              <a href="#funcionalidades" className="text-white hover:text-blue-200 transition-colors duration-300">Funcionalidades</a>
-              <a href="#precos" className="text-white hover:text-blue-200 transition-colors duration-300">Preços</a>
-              <a href="#contato" className="text-white hover:text-blue-200 transition-colors duration-300">Contato</a>
-              <a href="/login" className="text-white hover:text-blue-200 transition-colors duration-300">Login</a>
-            </nav>
-
-            {/* CTA Button */}
-            <div className="hidden md:block">
-              <Button asChild className="bg-blue-700 hover:bg-blue-600 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                <a href="/checkout.html">Acessar Plataforma</a>
-              </Button>
-            </div>
-
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden transition-transform duration-300 hover:scale-110"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <div className="md:hidden bg-blue-800 border-t border-blue-700 animate-fade-in">
-              <div className="px-2 pt-2 pb-3 space-y-1">
-                <button onClick={() => scrollToSection('home')} className="block px-3 py-2 hover:bg-blue-700 rounded-md w-full text-left transition-all duration-300 hover:scale-105">Início</button>
-                <button onClick={() => scrollToSection('sobre')} className="block px-3 py-2 hover:bg-blue-700 rounded-md w-full text-left transition-all duration-300 hover:scale-105">Sobre</button>
-                <button onClick={() => scrollToSection('funcionalidades')} className="block px-3 py-2 hover:bg-blue-700 rounded-md w-full text-left transition-all duration-300 hover:scale-105">Funcionalidades</button>
-                <button onClick={() => scrollToSection('precos')} className="block px-3 py-2 hover:bg-blue-700 rounded-md w-full text-left transition-all duration-300 hover:scale-105">Preços</button>
-                <button onClick={() => scrollToSection('contato')} className="block px-3 py-2 hover:bg-blue-700 rounded-md w-full text-left transition-all duration-300 hover:scale-105">Contato</button>
-                <a href="/login" className="block px-3 py-2 hover:bg-blue-700 rounded-md transition-all duration-300 hover:scale-105">Login</a>
-                <Button asChild className="w-full mt-2 bg-blue-700 hover:bg-blue-600 transition-all duration-300 hover:scale-105">
-                  <a href="/checkout.html">Acessar Plataforma</a>
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section id="home" className="pt-16 bg-gradient-to-br from-blue-50 to-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center max-w-4xl mx-auto" data-animate id="hero-content">
-            <h1 className={`text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight transition-all duration-1000 ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              Mais processos judiciais do que médicos no Brasil. Sua prática clínica está protegida?
-            </h1>
-            <p className={`text-xl text-gray-600 mb-8 leading-relaxed transition-all duration-1000 delay-300 ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              A MedDefend é a primeira plataforma com inteligência artificial que transforma sua documentação médica em uma sólida defesa jurídica. Reduza o risco de litígios e dedique seu tempo ao que realmente importa: seus pacientes.
-            </p>
-            <div className={`transition-all duration-1000 delay-500 ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
-                <a href="/checkout.html">Experimente Gratuitamente por 3 Dias</a>
-              </Button>
-            </div>
-            <p className={`text-sm text-gray-500 mt-4 transition-all duration-1000 delay-700 ${visibleElements.has('hero-content') ? 'opacity-100' : 'opacity-0'}`}>Acesso completo. Cancele quando quiser.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Estatísticas Section */}
-      <section className="py-20 bg-white" data-animate id="statistics">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('statistics') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              A Epidemia Silenciosa que Ameaça a Medicina
-            </h2>
-            <p className="text-xl text-gray-600">
-              A realidade da prática médica no Brasil mudou. A judicialização não é mais um risco distante, é uma estatística alarmante.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            <Card className={`text-center p-8 border-l-4 border-blue-500 transition-all duration-1000 delay-200 hover:scale-105 hover:shadow-xl ${visibleElements.has('statistics') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <CardContent className="p-0">
-                <div className="text-4xl font-bold text-blue-900 mb-2">+{counters.processes} mil</div>
-                <div className="text-lg font-semibold text-gray-900 mb-2">Processos na Saúde</div>
-                <p className="text-gray-600">O número já supera o total de médicos ativos no país. É mais de 1 processo por médico.</p>
-              </CardContent>
-            </Card>
-
-            <Card className={`text-center p-8 border-l-4 border-blue-500 transition-all duration-1000 delay-400 hover:scale-105 hover:shadow-xl ${visibleElements.has('statistics') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <CardContent className="p-0">
-                <div className="text-4xl font-bold text-blue-900 mb-2">{counters.growth}%</div>
-                <div className="text-lg font-semibold text-gray-900 mb-2">Aumento de Litígios</div>
-                <p className="text-gray-600">Crescimento exponencial na última década, gerando um ambiente de constante insegurança.</p>
-              </CardContent>
-            </Card>
-
-            <Card className={`text-center p-8 border-l-4 border-blue-500 transition-all duration-1000 delay-600 hover:scale-105 hover:shadow-xl ${visibleElements.has('statistics') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <CardContent className="p-0">
-                <div className="text-4xl font-bold text-blue-900 mb-2">{counters.days} Dias</div>
-                <div className="text-lg font-semibold text-gray-900 mb-2">Tempo Médio de Conclusão</div>
-                <p className="text-gray-600">Anos de desgaste financeiro e emocional para os profissionais envolvidos.</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className={`bg-blue-50 p-8 rounded-lg text-center transition-all duration-1000 delay-800 hover:bg-blue-100 ${visibleElements.has('statistics') ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-            <blockquote className="text-xl text-gray-800 font-medium italic">
-              "A principal vulnerabilidade não está no seu ato clínico, mas na forma como ele é documentado. Ambiguidade e omissões em prontuários são o principal combustível para processos judiciais."
-            </blockquote>
-          </div>
-        </div>
-      </section>
-
-      {/* LLM Danger Section - Updated with verified data and correct colors */}
-      <section className="py-20 bg-gray-50" data-animate id="llm-danger">
+      {/* LLM Danger Section - keeping existing content with updated styling */}
+      <section className="py-24 bg-gradient-to-br from-slate-100 via-red-50 to-orange-50" data-animate id="llm-danger">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Warning Header */}
-          <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <div className="flex items-center justify-center mb-6">
-              <AlertTriangle className="h-12 w-12 text-red-600 mr-4" />
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
+          <div className={`text-center mb-20 transition-all duration-1000 ${visibleElements.has('llm-danger') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <div className="flex items-center justify-center mb-8">
+              <AlertTriangle className="h-16 w-16 text-red-600 mr-6" />
+              <h2 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
                 Por Que LLMs Genéricas São Perigosas Na Medicina?
               </h2>
-              <AlertTriangle className="h-12 w-12 text-red-600 ml-4" />
+              <AlertTriangle className="h-16 w-16 text-red-600 ml-6" />
             </div>
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-slate-600 max-w-4xl mx-auto leading-relaxed font-light">
               🚨 O Perigo Silencioso das LLMs Genéricas em Documentação Médica
             </p>
           </div>
@@ -460,7 +314,7 @@ const Index = () => {
       </section>
 
       {/* Produto Section */}
-      <section className="py-20 bg-gray-50" data-animate id="produto">
+      <section className="py-24 bg-gradient-to-br from-white via-blue-50 to-indigo-50" data-animate id="produto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('produto') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -512,7 +366,7 @@ const Index = () => {
       </section>
 
       {/* Sobre Section */}
-      <section id="sobre" className="py-20 bg-white" data-animate>
+      <section id="sobre" className="py-24 bg-gradient-to-br from-slate-50 to-white" data-animate>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('sobre') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
@@ -573,7 +427,7 @@ const Index = () => {
       </section>
 
       {/* Funcionalidades Section */}
-      <section id="funcionalidades" className="py-20 bg-gray-50" data-animate>
+      <section id="funcionalidades" className="py-24 bg-gradient-to-br from-blue-50 to-indigo-50" data-animate>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('funcionalidades') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -668,304 +522,10 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Preços Section - Updated to show monthly equivalent prominently */}
-      <section id="precos" className="py-20 bg-gray-50" data-animate>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Escolha o Plano Ideal para Sua Segurança
-            </h2>
-            <p className="text-xl text-gray-600 mb-8">
-              Proteção jurídica inteligente para médicos modernos. Planos flexíveis com desconto anual.
-            </p>
-            
-            {/* Toggle mensal/anual */}
-            <div className="flex items-center justify-center mb-12">
-              <span className={`mr-3 text-lg ${pricingToggle === 'monthly' ? 'text-blue-900 font-semibold' : 'text-gray-600'}`}>
-                Mensal
-              </span>
-              <button
-                onClick={() => setPricingToggle(pricingToggle === 'monthly' ? 'annual' : 'monthly')}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  pricingToggle === 'annual' ? 'bg-blue-600' : 'bg-gray-200'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    pricingToggle === 'annual' ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-              <span className={`ml-3 text-lg ${pricingToggle === 'annual' ? 'text-blue-900 font-semibold' : 'text-gray-600'}`}>
-                Anual
-              </span>
-              {pricingToggle === 'annual' && (
-                <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-                  Economize 25%
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* All plans in a row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {/* Plano Free */}
-            <Card className={`p-6 text-center transition-all duration-1000 delay-200 hover:scale-105 hover:shadow-xl ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <CardContent className="p-0">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Free</h3>
-                <p className="text-gray-600 mb-4 text-sm">Para conhecer o básico</p>
-                <div className="text-3xl font-bold text-gray-900 mb-2">
-                  Gratuito
-                </div>
-                <div className="text-sm text-gray-600 mb-6">
-                  10 créditos únicos<br/>
-                  (não renováveis)
-                </div>
-                <div className="text-left mb-6 space-y-2">
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Assistente de Escrita Defensiva</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Acesso limitado à biblioteca</span>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full border-orange-500 text-orange-600 hover:bg-orange-50 transition-all duration-300 hover:scale-105" asChild>
-                  <a href="/dashboard_usuario.html">Começar Grátis</a>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Plano Starter */}
-            <Card className={`p-6 text-center transition-all duration-1000 delay-300 hover:scale-105 hover:shadow-xl ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <CardContent className="p-0">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Starter</h3>
-                <p className="text-gray-600 mb-4 text-sm">Ideal para consultório individual</p>
-                <div className="mb-4">
-                  {pricingToggle === 'monthly' ? (
-                    <div className="text-3xl font-bold text-gray-900">
-                      R$ 49,90<span className="text-base text-gray-600">/mês</span>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="text-3xl font-bold text-gray-900 mb-1">
-                        R$ 37,43<span className="text-base text-gray-600">/mês</span>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        R$ 449,10 cobrados anualmente
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="text-sm text-gray-600 mb-6">
-                  50 créditos/mês
-                </div>
-                <div className="text-left mb-6 space-y-2">
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Assistente de Escrita Ilimitado</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Checklist Contextual Inteligente</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Biblioteca Completa de Modelos</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Histórico de Documentos</span>
-                  </div>
-                </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 transition-all duration-300 hover:scale-105" asChild>
-                  <a href="/checkout.html">Assinar Agora</a>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Plano Profissional */}
-            <Card className={`p-6 text-center relative border-2 border-green-500 transition-all duration-1000 delay-400 hover:scale-105 hover:shadow-xl ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium">MAIS POPULAR</span>
-              </div>
-              <CardContent className="p-0">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Profissional</h3>
-                <p className="text-gray-600 mb-4 text-sm">Para médicos em alta demanda</p>
-                <div className="mb-4">
-                  {pricingToggle === 'monthly' ? (
-                    <div className="text-3xl font-bold text-gray-900">
-                      R$ 129,90<span className="text-base text-gray-600">/mês</span>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="text-3xl font-bold text-gray-900 mb-1">
-                        R$ 97,43<span className="text-base text-gray-600">/mês</span>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        R$ 1.169,10 cobrados anualmente
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="text-sm text-gray-600 mb-6">
-                  150 créditos/mês
-                </div>
-                <div className="text-left mb-6 space-y-2">
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Assistente de Escrita Ilimitado</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Checklist Contextual Inteligente</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Biblioteca Completa de Modelos</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Histórico de Documentos</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Suporte prioritário</span>
-                  </div>
-                </div>
-                <Button className="w-full bg-green-600 hover:bg-green-700 transition-all duration-300 hover:scale-105" asChild>
-                  <a href="/checkout.html">Assinar Agora</a>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Plano Ultra */}
-            <Card className={`p-6 text-center transition-all duration-1000 delay-500 hover:scale-105 hover:shadow-xl ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <CardContent className="p-0">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Ultra</h3>
-                <p className="text-gray-600 mb-4 text-sm">Para uso intensivo</p>
-                <div className="mb-4">
-                  {pricingToggle === 'monthly' ? (
-                    <div className="text-3xl font-bold text-gray-900">
-                      R$ 349,90<span className="text-base text-gray-600">/mês</span>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="text-3xl font-bold text-gray-900 mb-1">
-                        R$ 262,43<span className="text-base text-gray-600">/mês</span>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        R$ 3.149,10 cobrados anualmente
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="text-sm text-gray-600 mb-6">
-                  Uso justo ≈ 1.000 créditos¹
-                </div>
-                <div className="text-left mb-6 space-y-2">
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Assistente de Escrita Ilimitado</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Checklist Contextual Inteligente</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Biblioteca Completa de Modelos</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Histórico de Documentos</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Suporte prioritário</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Análise de uso personalizada</span>
-                  </div>
-                </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 transition-all duration-300 hover:scale-105" asChild>
-                  <a href="/checkout.html">Assinar Agora</a>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Plano Clínicas */}
-            <Card className={`p-6 text-center transition-all duration-1000 delay-600 hover:scale-105 hover:shadow-xl ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <CardContent className="p-0">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Clínicas</h3>
-                <p className="text-gray-600 mb-4 text-sm">Para equipes médicas</p>
-                <div className="mb-4">
-                  <div className="text-2xl font-bold text-gray-900 mb-1">
-                    Sob consulta
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    A partir de R$ 1.490/mês<br/>
-                    + R$ 2/usuário ativo
-                  </div>
-                </div>
-                <div className="text-sm text-gray-600 mb-6">
-                  Pool compartilhado<br/>
-                  para toda equipe
-                </div>
-                <div className="text-left mb-6 space-y-2">
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Todos os benefícios Pro</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Gestão de usuários</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Relatórios conformidade</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">API para integração</span>
-                  </div>
-                  <div className="flex items-center group">
-                    <CheckCircle className="h-4 w-4 text-green-500 mr-2 transition-all duration-300 group-hover:scale-125" />
-                    <span className="text-sm text-gray-700">Suporte dedicado</span>
-                  </div>
-                </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 transition-all duration-300 hover:scale-105" onClick={() => scrollToSection('contato')}>
-                  Solicitar Proposta
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Notas e condições */}
-          <div className={`mt-12 text-center transition-all duration-1000 delay-700 ${visibleElements.has('precos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <h4 className="font-semibold text-gray-900 mb-4">Condições e Formas de Pagamento</h4>
-              <div className="grid md:grid-cols-2 gap-6 text-sm text-gray-600">
-                <div>
-                  <p className="mb-2"><strong>Formas de Pagamento:</strong> Cartão de Crédito, Pix, Apple Pay, Google Pay</p>
-                  <p className="mb-2"><strong>Cobrança:</strong> Recorrente mensal ou anual até cancelamento</p>
-                  <p><strong>Moeda:</strong> Todos os valores em Real Brasileiro (BRL)</p>
-                </div>
-                <div>
-                  <p className="mb-2"><strong>Política de Créditos:</strong> Créditos não utilizados não acumulam para o próximo período</p>
-                  <p className="mb-2"><strong>¹ Uso Justo:</strong> Após ~1.000 queries/mês aplicar throttling ou cobrar R$ 0,25 por lote adicional de 100 queries</p>
-                  <p><strong>Cancelamento:</strong> Sem multa, cancele quando quiser</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PricingSection scrollToSection={scrollToSection} />
 
       {/* Contato Section */}
-      <section id="contato" className="py-20 bg-white" data-animate>
+      <section id="contato" className="py-24 bg-gradient-to-br from-white to-slate-50" data-animate>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('contato') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -1080,7 +640,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-blue-900 text-white py-16">
+      <footer className="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             {/* Logo e Tagline */}

@@ -24,25 +24,25 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <section id="home" className="bg-gradient-to-b from-slate-900 via-gray-800 to-slate-900 min-h-screen flex items-center overflow-hidden relative">
+    <section id="home" className="bg-gradient-to-b from-slate-950 via-gray-950 to-black min-h-screen flex items-center overflow-hidden relative">
       {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/10 via-transparent to-indigo-900/10"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-950/20 via-transparent to-indigo-950/20"></div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 relative z-10">
         <div className="text-center max-w-5xl mx-auto" data-animate id="hero-content">
-          <h1 className={`text-hero text-white mb-6 leading-tight transition-all duration-1000 tracking-tight drop-shadow-2xl ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            Mais processos judiciais do que médicos no Brasil. Sua prática clínica está
-            <span className="text-gradient block mt-2"> protegida?</span>
+          <h1 className={`text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8 leading-tight transition-all duration-1000 tracking-tight drop-shadow-2xl ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            Mais processos judiciais do que médicos no Brasil. Sua prática clínica está{' '}
+            <span className="text-gradient block mt-2">protegida?</span>
           </h1>
-          <p className={`text-body-large text-gray-300 mb-10 leading-relaxed font-light font-inter max-w-4xl mx-auto transition-all duration-1000 delay-300 drop-shadow-lg ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            A MedDefend é a primeira plataforma com inteligência artificial que transforma sua documentação médica em uma sólida defesa jurídica. Reduza o risco de litígios e dedique seu tempo ao que realmente importa: seus pacientes.
+          <p className={`text-xl md:text-2xl text-gray-100 mb-10 leading-relaxed font-light font-inter max-w-4xl mx-auto transition-all duration-1000 delay-300 drop-shadow-lg ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            A MedDefend é a primeira plataforma com inteligência artificial que transforma sua documentação médica em uma sólida defesa jurídica. Reduza o risco de litígios e dedique seu tempo ao que realmente importa{': '}seus pacientes.
           </p>
           <div className={`transition-all duration-1000 delay-500 ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <Button asChild size="lg" className="bg-white text-black hover:bg-gray-100 px-10 py-6 text-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl border-0 rounded-full font-semibold font-inter shadow-2xl">
               <a href="/checkout.html">Experimente Gratuitamente por 3 Dias</a>
             </Button>
           </div>
-          <p className={`text-sm text-gray-400 mt-6 font-light font-inter transition-all duration-1000 delay-700 ${visibleElements.has('hero-content') ? 'opacity-100' : 'opacity-0'}`}>
+          <p className={`text-sm text-gray-300 mt-6 font-light font-inter transition-all duration-1000 delay-700 ${visibleElements.has('hero-content') ? 'opacity-100' : 'opacity-0'}`}>
             Acesso completo. Cancele quando quiser.
           </p>
         </div>

@@ -5,113 +5,68 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
 const Dashboard = () => {
   const [inputText, setInputText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [activeTab, setActiveTab] = useState('analise');
-
   const handleAnalyze = async () => {
     if (!inputText.trim()) return;
-    
     setIsAnalyzing(true);
     // Simulação de análise
     setTimeout(() => {
       setAnalysisResult({
         original: inputText,
         suggestion: inputText.replace(/paciente/, 'pessoa assistida').replace(/doença/, 'condição médica'),
-        changes: [
-          { type: 'modified', original: 'paciente', suggestion: 'pessoa assistida', position: 0 },
-          { type: 'modified', original: 'doença', suggestion: 'condição médica', position: 1 }
-        ]
+        changes: [{
+          type: 'modified',
+          original: 'paciente',
+          suggestion: 'pessoa assistida',
+          position: 0
+        }, {
+          type: 'modified',
+          original: 'doença',
+          suggestion: 'condição médica',
+          position: 1
+        }]
       });
       setIsAnalyzing(false);
     }, 2000);
   };
-
-  return (
-    <div className="min-h-screen bg-white font-inter flex flex-col lg:flex-row">
+  return <div className="min-h-screen bg-white font-inter flex flex-col lg:flex-row">
       {/* Sidebar - Mobile-first design */}
       <div className="w-full lg:w-64 bg-slate-50 border-b lg:border-b-0 lg:border-r border-slate-200 flex flex-col">
         <div className="p-4 lg:p-6">
           <div className="flex items-center justify-center lg:justify-start space-x-3">
-            <img 
-              src="/lovable-uploads/6efd3d4d-8293-4655-ae74-c39d2bc96998.png" 
-              alt="MedDefend Logo" 
-              className="h-6 lg:h-8 w-6 lg:w-8"
-            />
+            <img src="/lovable-uploads/6efd3d4d-8293-4655-ae74-c39d2bc96998.png" alt="MedDefend Logo" className="h-6 lg:h-8 w-6 lg:w-8" />
             <span className="text-lg lg:text-xl font-semibold text-slate-800">MedDefend</span>
           </div>
         </div>
 
         <nav className="flex-1 px-2 lg:px-4 space-y-1 lg:space-y-2 pb-4 lg:pb-0">
-          <button
-            onClick={() => setActiveTab('analise')}
-            className={`w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg text-sm lg:text-base transition-colors ${
-              activeTab === 'analise' 
-                ? 'bg-blue-100 text-blue-800 border-l-0 lg:border-l-4 border-blue-600' 
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-            aria-label="Análise de Texto"
-            role="tab"
-            aria-selected={activeTab === 'analise'}
-          >
+          <button onClick={() => setActiveTab('analise')} className={`w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg text-sm lg:text-base transition-colors ${activeTab === 'analise' ? 'bg-blue-100 text-blue-800 border-l-0 lg:border-l-4 border-blue-600' : 'text-slate-600 hover:bg-slate-100'}`} aria-label="Análise de Texto" role="tab" aria-selected={activeTab === 'analise'}>
             <FileText className="h-4 lg:h-5 w-4 lg:w-5" />
             <span className="hidden lg:block">Análise de Texto</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('modelos')}
-            className={`w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg text-sm lg:text-base transition-colors ${
-              activeTab === 'modelos' 
-                ? 'bg-blue-100 text-blue-800 border-l-0 lg:border-l-4 border-blue-600' 
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-            aria-label="Modelos"
-            role="tab"
-            aria-selected={activeTab === 'modelos'}
-          >
+          <button onClick={() => setActiveTab('modelos')} className={`w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg text-sm lg:text-base transition-colors ${activeTab === 'modelos' ? 'bg-blue-100 text-blue-800 border-l-0 lg:border-l-4 border-blue-600' : 'text-slate-600 hover:bg-slate-100'}`} aria-label="Modelos" role="tab" aria-selected={activeTab === 'modelos'}>
             <Bookmark className="h-4 lg:h-5 w-4 lg:w-5" />
             <span className="hidden lg:block">Modelos</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('historico')}
-            className={`w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg text-sm lg:text-base transition-colors ${
-              activeTab === 'historico' 
-                ? 'bg-blue-100 text-blue-800 border-l-0 lg:border-l-4 border-blue-600' 
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-            aria-label="Histórico"
-            role="tab"
-            aria-selected={activeTab === 'historico'}
-          >
+          <button onClick={() => setActiveTab('historico')} className={`w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg text-sm lg:text-base transition-colors ${activeTab === 'historico' ? 'bg-blue-100 text-blue-800 border-l-0 lg:border-l-4 border-blue-600' : 'text-slate-600 hover:bg-slate-100'}`} aria-label="Histórico" role="tab" aria-selected={activeTab === 'historico'}>
             <History className="h-4 lg:h-5 w-4 lg:w-5" />
             <span className="hidden lg:block">Histórico</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('relatorios')}
-            className={`w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg text-sm lg:text-base transition-colors ${
-              activeTab === 'relatorios' 
-                ? 'bg-blue-100 text-blue-800 border-l-0 lg:border-l-4 border-blue-600' 
-                : 'text-slate-600 hover:bg-slate-100'
-            }`}
-            aria-label="Relatórios"
-            role="tab"
-            aria-selected={activeTab === 'relatorios'}
-          >
+          <button onClick={() => setActiveTab('relatorios')} className={`w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg text-sm lg:text-base transition-colors ${activeTab === 'relatorios' ? 'bg-blue-100 text-blue-800 border-l-0 lg:border-l-4 border-blue-600' : 'text-slate-600 hover:bg-slate-100'}`} aria-label="Relatórios" role="tab" aria-selected={activeTab === 'relatorios'}>
             <BarChart3 className="h-4 lg:h-5 w-4 lg:w-5" />
             <span className="hidden lg:block">Relatórios</span>
           </button>
         </nav>
 
         <div className="hidden lg:block p-4 border-t border-slate-200">
-          <button 
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
-            aria-label="Configurações"
-          >
+          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors" aria-label="Configurações">
             <Settings className="h-5 w-5" />
             <span>Configurações</span>
           </button>
@@ -135,12 +90,7 @@ const Dashboard = () => {
             <div className="flex items-center space-x-2 lg:space-x-4">
               <div className="relative hidden lg:block">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  type="text"
-                  placeholder="Buscar..."
-                  className="pl-10 w-48 lg:w-64 border-slate-300 focus:border-blue-500"
-                  aria-label="Campo de busca"
-                />
+                <Input type="text" placeholder="Buscar..." className="pl-10 w-48 lg:w-64 border-slate-300 focus:border-blue-500" aria-label="Campo de busca" />
               </div>
               
               <Button variant="ghost" size="icon" aria-label="Notificações">
@@ -166,33 +116,21 @@ const Dashboard = () => {
 
         {/* Content Area - Three column responsive layout */}
         <main className="flex-1 p-4 lg:p-6 bg-slate-50" role="main" aria-labelledby="main-heading">
-          {activeTab === 'analise' && (
-            <div className="max-w-7xl mx-auto">
+          {activeTab === 'analise' && <div className="max-w-7xl mx-auto">
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6">
                 {/* Column 1: Input Area */}
                 <div className="xl:col-span-2">
                   <Card className="bg-white border border-slate-200 shadow-sm">
                     <CardHeader className="pb-4">
-                      <CardTitle className="text-slate-800 text-lg lg:text-xl">Insira o texto médico para análise</CardTitle>
+                      <CardTitle className="text-slate-800 text-lg lg:text-xl text-center">Insira aqui sua solicitação ou texto para análise</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <Textarea
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        placeholder="Cole aqui o texto médico que deseja analisar para verificação de linguagem neutra e adequação profissional..."
-                        className="min-h-[200px] resize-none bg-white border-slate-300 text-slate-800 focus:border-blue-500"
-                        aria-label="Campo de entrada de texto médico"
-                      />
+                      <Textarea value={inputText} onChange={e => setInputText(e.target.value)} placeholder="Cole aqui o texto médico que deseja analisar para verificação de linguagem neutra e adequação profissional..." className="min-h-[200px] resize-none bg-white border-slate-300 text-slate-800 focus:border-blue-500" aria-label="Campo de entrada de texto médico" />
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <p className="text-sm text-slate-500">
                           {inputText.length} caracteres
                         </p>
-                        <Button 
-                          onClick={handleAnalyze}
-                          disabled={!inputText.trim() || isAnalyzing}
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                          aria-label={isAnalyzing ? 'Analisando texto' : 'Analisar texto médico'}
-                        >
+                        <Button onClick={handleAnalyze} disabled={!inputText.trim() || isAnalyzing} className="bg-blue-600 hover:bg-blue-700 text-white font-medium" aria-label={isAnalyzing ? 'Analisando texto' : 'Analisar texto médico'}>
                           {isAnalyzing ? 'Analisando...' : 'Analisar Texto'}
                         </Button>
                       </div>
@@ -201,8 +139,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Column 2: Analysis Results */}
-                {analysisResult && (
-                  <div className="xl:col-span-1 space-y-4 lg:space-y-6">
+                {analysisResult && <div className="xl:col-span-1 space-y-4 lg:space-y-6">
                     {/* Original Text */}
                     <Card className="bg-white border border-slate-200 shadow-sm">
                       <CardHeader className="pb-3">
@@ -230,21 +167,18 @@ const Dashboard = () => {
                         </div>
                       </CardContent>
                     </Card>
-                  </div>
-                )}
+                  </div>}
               </div>
 
               {/* Changes Section - Full width below */}
-              {analysisResult && (
-                <div className="mt-4 lg:mt-6">
+              {analysisResult && <div className="mt-4 lg:mt-6">
                   <Card className="bg-white border border-slate-200 shadow-sm">
                     <CardHeader>
                       <CardTitle className="text-slate-800 text-lg">Alterações Sugeridas</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
-                        {analysisResult.changes.map((change, index) => (
-                          <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 lg:p-4 bg-yellow-50 rounded-lg border border-yellow-200 gap-3">
+                        {analysisResult.changes.map((change, index) => <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 lg:p-4 bg-yellow-50 rounded-lg border border-yellow-200 gap-3">
                             <div className="flex-1">
                               <span className="line-through text-red-600 mr-2 text-sm lg:text-base">
                                 {change.original}
@@ -254,36 +188,22 @@ const Dashboard = () => {
                               </span>
                             </div>
                             <div className="flex space-x-2 w-full sm:w-auto">
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="text-green-600 border-green-600 hover:bg-green-50 flex-1 sm:flex-none"
-                                aria-label={`Aceitar alteração de ${change.original} para ${change.suggestion}`}
-                              >
+                              <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50 flex-1 sm:flex-none" aria-label={`Aceitar alteração de ${change.original} para ${change.suggestion}`}>
                                 Aceitar
                               </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="text-red-600 border-red-600 hover:bg-red-50 flex-1 sm:flex-none"
-                                aria-label={`Rejeitar alteração de ${change.original} para ${change.suggestion}`}
-                              >
+                              <Button size="sm" variant="outline" className="text-red-600 border-red-600 hover:bg-red-50 flex-1 sm:flex-none" aria-label={`Rejeitar alteração de ${change.original} para ${change.suggestion}`}>
                                 Rejeitar
                               </Button>
                             </div>
-                          </div>
-                        ))}
+                          </div>)}
                       </div>
                     </CardContent>
                   </Card>
-                </div>
-              )}
-            </div>
-          )}
+                </div>}
+            </div>}
 
           {/* Other tabs remain the same structure but with responsive improvements */}
-          {activeTab === 'modelos' && (
-            <div className="max-w-4xl mx-auto">
+          {activeTab === 'modelos' && <div className="max-w-4xl mx-auto">
               <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-slate-800">Biblioteca de Modelos</CardTitle>
@@ -292,11 +212,9 @@ const Dashboard = () => {
                   <p className="text-slate-600">Funcionalidade de modelos será implementada em breve.</p>
                 </CardContent>
               </Card>
-            </div>
-          )}
+            </div>}
 
-          {activeTab === 'historico' && (
-            <div className="max-w-4xl mx-auto">
+          {activeTab === 'historico' && <div className="max-w-4xl mx-auto">
               <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-slate-800">Histórico de Análises</CardTitle>
@@ -305,11 +223,9 @@ const Dashboard = () => {
                   <p className="text-slate-600">Histórico será implementado em breve.</p>
                 </CardContent>
               </Card>
-            </div>
-          )}
+            </div>}
 
-          {activeTab === 'relatorios' && (
-            <div className="max-w-4xl mx-auto">
+          {activeTab === 'relatorios' && <div className="max-w-4xl mx-auto">
               <Card className="bg-white border border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-slate-800">Relatórios e Métricas</CardTitle>
@@ -318,12 +234,9 @@ const Dashboard = () => {
                   <p className="text-slate-600">Relatórios serão implementados em breve.</p>
                 </CardContent>
               </Card>
-            </div>
-          )}
+            </div>}
         </main>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;

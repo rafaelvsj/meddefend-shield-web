@@ -30,10 +30,9 @@ const HeroSection = () => {
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 pt-32 relative z-10">
         <div className="text-center max-w-5xl mx-auto" data-animate id="hero-content">
-          <h1 className={`text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-12 leading-relaxed transition-all duration-1000 tracking-tight drop-shadow-2xl ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <span className="block mb-4">Mais processos judiciais do que médicos no Brasil.</span>
-            <span className="block mb-4">Sua prática clínica está</span>
-            <span className="text-gradient block leading-relaxed py-2">protegida?</span>
+          <h1 className={`text-4xl md:text-5xl lg:text-6xl font-bold mb-12 leading-relaxed transition-all duration-1000 tracking-tight drop-shadow-2xl ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <span className="block mb-4 text-white">Escolha o plano ideal para</span>
+            <span className="block bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent leading-relaxed py-2">sua proteção</span>
           </h1>
           <p className={`text-xl md:text-2xl text-gray-100 mb-10 leading-relaxed font-light font-inter max-w-4xl mx-auto transition-all duration-1000 delay-300 drop-shadow-lg ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             A MedDefend é a primeira plataforma com inteligência artificial que transforma sua documentação médica em uma sólida defesa jurídica. Reduza o risco de litígios e dedique seu tempo ao que realmente importa{': '}seus pacientes.

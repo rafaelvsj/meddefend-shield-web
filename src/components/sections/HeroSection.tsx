@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
@@ -37,7 +38,7 @@ const HeroSection = () => {
             A MedDefend é a primeira plataforma com inteligência artificial que transforma sua documentação médica em uma sólida defesa jurídica. Reduza o risco de litígios e dedique seu tempo ao que realmente importa{': '}seus pacientes.
           </p>
           <div className={`transition-all duration-1000 delay-500 ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            <Button asChild size="lg" className="bg-white text-black hover:bg-gray-100 px-10 py-6 text-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl border-0 rounded-full font-semibold font-inter shadow-2xl">
+            <Button asChild size="lg" className="bg-green-600 text-white hover:bg-green-700 px-10 py-6 text-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl border-0 rounded-full font-semibold font-inter shadow-2xl">
               <a href="/checkout.html">Experimente Gratuitamente por 3 Dias</a>
             </Button>
           </div>

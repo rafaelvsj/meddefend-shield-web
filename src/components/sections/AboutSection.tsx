@@ -25,7 +25,7 @@ const AboutSection = () => {
   }, []);
 
   return (
-    <section id="sobre" className="py-20 bg-gradient-to-br from-slate-800 via-gray-900 to-slate-800" data-animate>
+    <section id="sobre" className="py-20 bg-black" data-animate>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('sobre') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h2 className="text-section-title text-white mb-6">
@@ -42,7 +42,7 @@ const AboutSection = () => {
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          <Card className={`p-6 border-l-4 border-green-500 bg-slate-800/50 border-slate-700 transition-all duration-1000 delay-200 hover:scale-105 hover:shadow-lg ${visibleElements.has('sobre') ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
+          <Card className={`p-6 border-l-4 border-green-500 bg-gray-900/50 border-gray-700/50 transition-all duration-1000 delay-200 hover:scale-105 hover:shadow-lg ${visibleElements.has('sobre') ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
             <CardContent className="p-0">
               <div className="flex items-center mb-4 group">
                 <Shield className="h-8 w-8 text-green-400 mr-3 transition-all duration-300 group-hover:scale-125" />
@@ -52,7 +52,7 @@ const AboutSection = () => {
             </CardContent>
           </Card>
 
-          <Card className={`p-6 border-l-4 border-blue-500 bg-slate-800/50 border-slate-700 transition-all duration-1000 delay-400 hover:scale-105 hover:shadow-lg ${visibleElements.has('sobre') ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
+          <Card className={`p-6 border-l-4 border-blue-500 bg-gray-900/50 border-gray-700/50 transition-all duration-1000 delay-400 hover:scale-105 hover:shadow-lg ${visibleElements.has('sobre') ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
             <CardContent className="p-0">
               <div className="flex items-center mb-4 group">
                 <Heart className="h-8 w-8 text-blue-400 mr-3 transition-all duration-300 group-hover:scale-125" />
@@ -62,7 +62,7 @@ const AboutSection = () => {
             </CardContent>
           </Card>
 
-          <Card className={`p-6 border-l-4 border-purple-500 bg-slate-800/50 border-slate-700 transition-all duration-1000 delay-600 hover:scale-105 hover:shadow-lg ${visibleElements.has('sobre') ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
+          <Card className={`p-6 border-l-4 border-purple-500 bg-gray-900/50 border-gray-700/50 transition-all duration-1000 delay-600 hover:scale-105 hover:shadow-lg ${visibleElements.has('sobre') ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
             <CardContent className="p-0">
               <div className="flex items-center mb-4 group">
                 <Zap className="h-8 w-8 text-purple-400 mr-3 transition-all duration-300 group-hover:scale-125" />
@@ -72,7 +72,7 @@ const AboutSection = () => {
             </CardContent>
           </Card>
 
-          <Card className={`p-6 border-l-4 border-orange-500 bg-slate-800/50 border-slate-700 transition-all duration-1000 delay-800 hover:scale-105 hover:shadow-lg ${visibleElements.has('sobre') ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
+          <Card className={`p-6 border-l-4 border-orange-500 bg-gray-900/50 border-gray-700/50 transition-all duration-1000 delay-800 hover:scale-105 hover:shadow-lg ${visibleElements.has('sobre') ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
             <CardContent className="p-0">
               <div className="flex items-center mb-4 group">
                 <Users className="h-8 w-8 text-orange-400 mr-3 transition-all duration-300 group-hover:scale-125" />

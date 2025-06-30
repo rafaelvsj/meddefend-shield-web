@@ -63,7 +63,7 @@ const ProductSection = ({ scrollToSection }: ProductSectionProps) => {
   ];
 
   return (
-    <section id="produto" className="py-24 bg-gradient-to-b from-black via-gray-950 to-slate-950">
+    <section id="produto" className="py-24 bg-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16" data-animate id="product-header">
           <h2 className={`text-section-title text-white mb-6 transition-all duration-1000 ${visibleElements.has('product-header') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>

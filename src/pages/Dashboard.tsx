@@ -32,7 +32,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-white flex">
       {/* Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-6">
@@ -150,20 +150,20 @@ const Dashboard = () => {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 bg-white">
           {activeTab === 'analise' && (
             <div className="max-w-6xl mx-auto space-y-6">
               {/* Input Area */}
-              <Card>
+              <Card className="bg-white border border-gray-200">
                 <CardHeader>
-                  <CardTitle>Insira o texto médico para análise</CardTitle>
+                  <CardTitle className="text-gray-900">Insira o texto médico para análise</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Textarea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="Cole aqui o texto médico que deseja analisar para verificação de linguagem neutra e adequação profissional..."
-                    className="min-h-[200px] resize-none"
+                    className="min-h-[200px] resize-none bg-white border-gray-300 text-gray-900"
                   />
                   <div className="flex justify-between items-center">
                     <p className="text-sm text-gray-500">
@@ -172,7 +172,7 @@ const Dashboard = () => {
                     <Button 
                       onClick={handleAnalyze}
                       disabled={!inputText.trim() || isAnalyzing}
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       {isAnalyzing ? 'Analisando...' : 'Analisar Texto'}
                     </Button>
@@ -184,7 +184,7 @@ const Dashboard = () => {
               {analysisResult && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Original Text */}
-                  <Card>
+                  <Card className="bg-white border border-gray-200">
                     <CardHeader>
                       <CardTitle className="text-red-700">Texto Original</CardTitle>
                     </CardHeader>
@@ -198,7 +198,7 @@ const Dashboard = () => {
                   </Card>
 
                   {/* Suggested Text */}
-                  <Card>
+                  <Card className="bg-white border border-gray-200">
                     <CardHeader>
                       <CardTitle className="text-green-700">Sugestão Melhorada</CardTitle>
                     </CardHeader>
@@ -221,10 +221,10 @@ const Dashboard = () => {
                               </span>
                             </div>
                             <div className="space-x-2">
-                              <Button size="sm" variant="outline" className="text-green-600">
+                              <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50">
                                 Aceitar
                               </Button>
-                              <Button size="sm" variant="outline" className="text-red-600">
+                              <Button size="sm" variant="outline" className="text-red-600 border-red-600 hover:bg-red-50">
                                 Rejeitar
                               </Button>
                             </div>
@@ -240,9 +240,9 @@ const Dashboard = () => {
 
           {activeTab === 'modelos' && (
             <div className="max-w-4xl mx-auto">
-              <Card>
+              <Card className="bg-white border border-gray-200">
                 <CardHeader>
-                  <CardTitle>Biblioteca de Modelos</CardTitle>
+                  <CardTitle className="text-gray-900">Biblioteca de Modelos</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600">Funcionalidade de modelos será implementada em breve.</p>
@@ -253,9 +253,9 @@ const Dashboard = () => {
 
           {activeTab === 'historico' && (
             <div className="max-w-4xl mx-auto">
-              <Card>
+              <Card className="bg-white border border-gray-200">
                 <CardHeader>
-                  <CardTitle>Histórico de Análises</CardTitle>
+                  <CardTitle className="text-gray-900">Histórico de Análises</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600">Histórico será implementado em breve.</p>
@@ -266,9 +266,9 @@ const Dashboard = () => {
 
           {activeTab === 'relatorios' && (
             <div className="max-w-4xl mx-auto">
-              <Card>
+              <Card className="bg-white border border-gray-200">
                 <CardHeader>
-                  <CardTitle>Relatórios e Métricas</CardTitle>
+                  <CardTitle className="text-gray-900">Relatórios e Métricas</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600">Relatórios serão implementados em breve.</p>

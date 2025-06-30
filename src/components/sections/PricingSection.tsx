@@ -113,16 +113,12 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
       priceAnnual: "Personalizado",
       monthlyEquivalent: "Personalizado",
       annualTotal: "R$ 2/usuário ativo adicional",
-      description: "Para clínicas e hospitais",
-      features: [
-        "Créditos personalizados por equipe",
-        ...beneficiosPadrao,
-        "Treinamento presencial",
-        "Gerente de conta dedicado"
-      ],
+      description: "",
+      features: [],
       popular: false,
-      cta: "Solicitar Proposta",
-      isEnterprise: true
+      cta: "Falar Conosco",
+      isEnterprise: true,
+      isContactOnly: true
     }
   ];
 
@@ -191,46 +187,52 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
                 </div>
                 <CardTitle className="text-xl font-bold text-white">{plan.name}</CardTitle>
                 
-                <div className="mt-4">
-                  {plan.isFree ? (
-                    <div>
-                      <span className="text-3xl font-bold text-white">Gratuito</span>
-                      <p className="text-gray-400 text-sm mt-1">{plan.credits}</p>
-                    </div>
-                  ) : plan.isEnterprise ? (
-                    <div>
-                      <span className="text-2xl font-bold text-white">Personalizado</span>
-                      <p className="text-gray-400 text-sm mt-1">{plan.annualTotal}</p>
-                    </div>
-                  ) : isAnnual ? (
-                    <div>
-                      <span className="text-3xl font-bold text-white">{plan.monthlyEquivalent}</span>
-                      <span className="text-gray-400 text-base">/mês</span>
-                      <p className="text-gray-500 text-xs mt-1">{plan.annualTotal}</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <span className="text-3xl font-bold text-white">{plan.priceMonthly}</span>
-                      <span className="text-gray-400 text-base">/mês</span>
-                    </div>
-                  )}
-                </div>
+                {!plan.isContactOnly && (
+                  <div className="mt-4">
+                    {plan.isFree ? (
+                      <div>
+                        <span className="text-3xl font-bold text-white">Gratuito</span>
+                        <p className="text-gray-400 text-sm mt-1">{plan.credits}</p>
+                      </div>
+                    ) : plan.isEnterprise ? (
+                      <div>
+                        <span className="text-2xl font-bold text-white">Personalizado</span>
+                        <p className="text-gray-400 text-sm mt-1">{plan.annualTotal}</p>
+                      </div>
+                    ) : isAnnual ? (
+                      <div>
+                        <span className="text-3xl font-bold text-white">{plan.monthlyEquivalent}</span>
+                        <span className="text-gray-400 text-base">/mês</span>
+                        <p className="text-gray-500 text-xs mt-1">{plan.annualTotal}</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="text-3xl font-bold text-white">{plan.priceMonthly}</span>
+                        <span className="text-gray-400 text-base">/mês</span>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
-                <p className="text-gray-300 mt-2 text-sm">{plan.description}</p>
-                {!plan.isFree && !plan.isEnterprise && (
+                {plan.description && (
+                  <p className="text-gray-300 mt-2 text-sm">{plan.description}</p>
+                )}
+                {!plan.isFree && !plan.isEnterprise && !plan.isContactOnly && (
                   <p className="text-gray-400 text-xs mt-1">{plan.credits}</p>
                 )}
               </CardHeader>
               
               <CardContent className="pt-0">
-                <ul className="space-y-2 mb-6">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-start text-gray-300 text-sm">
-                      <Check className="h-4 w-4 text-green-400 mr-2 flex-shrink-0 mt-0.5" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                {plan.features.length > 0 && (
+                  <ul className="space-y-2 mb-6">
+                    {plan.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-start text-gray-300 text-sm">
+                        <Check className="h-4 w-4 text-green-400 mr-2 flex-shrink-0 mt-0.5" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 
                 <Button 
                   className={`w-full py-4 text-sm font-semibold rounded-full transition-all duration-300 hover:scale-105 ${
@@ -240,7 +242,7 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
                       ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 hover:border-gray-500'
                       : 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-600 hover:border-gray-500'
                   }`}
-                  onClick={() => plan.isEnterprise ? scrollToSection('contato') : scrollToSection('contato')}
+                  onClick={() => scrollToSection('contato')}
                 >
                   {plan.cta}
                 </Button>

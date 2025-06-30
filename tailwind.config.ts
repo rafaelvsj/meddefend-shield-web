@@ -23,6 +23,7 @@ export default {
 				'inter': ['Inter', 'system-ui', 'sans-serif'],
 				'outfit': ['Outfit', 'system-ui', 'sans-serif'],
 				'montserrat': ['Montserrat', 'system-ui', 'sans-serif'],
+				'sabon': ['Sabon Next', 'serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Search, Bell, Settings, User, LogOut, FileText, History, Bookmark, BarChart3, Folder, FolderOpen, FileCheck, ClipboardList, Shield, AlertTriangle, Activity, Stethoscope, Bed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -338,7 +337,7 @@ const Dashboard = () => {
                         <Button 
                           onClick={() => setOpenFolder(isOpen ? null : category.id)}
                           variant="outline"
-                          className="w-full mb-3 text-medical-slate-700 border-medical-slate-300 hover:bg-medical-slate-50"
+                          className="w-full mb-3 text-medical-slate-800 bg-medical-blue-50 border-medical-blue-200 hover:bg-medical-blue-100"
                         >
                           {isOpen ? (
                             <>

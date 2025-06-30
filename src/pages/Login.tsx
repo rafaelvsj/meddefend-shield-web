@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +27,9 @@ const Login = () => {
         description: "Redirecionando para o dashboard...",
       });
       setIsLoading(false);
-      // Aqui seria o redirecionamento para o dashboard
-      console.log('Redirecting to dashboard...');
+      
+      // Redirecionar para o dashboard após login bem-sucedido
+      navigate('/dashboard');
     }, 1500);
   };
 
@@ -36,6 +39,15 @@ const Login = () => {
       description: "Redirecionando para autenticação Google...",
     });
     console.log('Google login initiated');
+    
+    // Simulação de login com Google - em produção seria integração real
+    setTimeout(() => {
+      toast({
+        title: "Login Google realizado com sucesso!",
+        description: "Redirecionando para o dashboard...",
+      });
+      navigate('/dashboard');
+    }, 2000);
   };
 
   const handleAppleLogin = () => {
@@ -44,6 +56,23 @@ const Login = () => {
       description: "Redirecionando para autenticação Apple...",
     });
     console.log('Apple login initiated');
+    
+    // Simulação de login com Apple - em produção seria integração real
+    setTimeout(() => {
+      toast({
+        title: "Login Apple realizado com sucesso!",
+        description: "Redirecionando para o dashboard...",
+      });
+      navigate('/dashboard');
+    }, 2000);
+  };
+
+  const handleSignUp = () => {
+    // Navegar para página de cadastro ou abrir modal de cadastro
+    toast({
+      title: "Cadastro",
+      description: "Funcionalidade de cadastro será implementada em breve.",
+    });
   };
 
   return (
@@ -177,9 +206,12 @@ const Login = () => {
           <div className="mt-8 text-center">
             <p className="text-gray-600">
               Não tem uma conta?{' '}
-              <a href="#" className="text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-300">
+              <button 
+                onClick={handleSignUp}
+                className="text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-300"
+              >
                 Criar conta gratuita
-              </a>
+              </button>
             </p>
           </div>
         </div>

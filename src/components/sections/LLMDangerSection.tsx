@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import WarningHeader from './llm-danger/WarningHeader';
 import ScenarioDescription from './llm-danger/ScenarioDescription';
@@ -72,7 +71,7 @@ const LLMDangerSection = () => {
   const isVisible = visibleElements.has('llm-danger');
 
   return (
-    <section className="py-24 bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800" data-animate id="llm-danger">
+    <section className="py-24 bg-black" data-animate id="llm-danger">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <WarningHeader isVisible={isVisible} />
         <ScenarioDescription isVisible={isVisible} />

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,7 +24,7 @@ const FeaturesSection = () => {
   }, []);
 
   return (
-    <section id="funcionalidades" className="py-20 bg-gradient-to-br from-slate-900 via-gray-800 to-slate-900" data-animate>
+    <section id="funcionalidades" className="py-20 bg-black" data-animate>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className={`text-center mb-16 transition-all duration-1000 ${visibleElements.has('funcionalidades') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h2 className="text-section-title text-white mb-4">

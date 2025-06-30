@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Check, Crown, Shield, Zap } from 'lucide-react';
+import { Check, Crown, Shield, Zap, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -10,6 +10,7 @@ interface PricingSectionProps {
 
 const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
   const [visibleElements, setVisibleElements] = useState(new Set());
+  const [isAnnual, setIsAnnual] = useState(true); // Começar com anual selecionado
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -29,61 +30,112 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
     return () => observer.disconnect();
   }, []);
 
+  const beneficiosPadrao = [
+    "Assistente de Escrita Defensiva ilimitado",
+    "Checklist Contextual Inteligente", 
+    "Biblioteca Completa de Modelos",
+    "Histórico de Documentos"
+  ];
+
   const plans = [
     {
-      name: "Essencial",
-      icon: <Shield className="h-8 w-8 text-blue-400" />,
-      price: "R$ 297",
-      period: "/mês",
-      description: "Perfeito para médicos em início de carreira",
+      name: "Free",
+      icon: <Shield className="h-8 w-8 text-gray-400" />,
+      credits: "10 créditos únicos",
+      priceMonthly: "Gratuito",
+      priceAnnual: "Gratuito",
+      monthlyEquivalent: "Gratuito",
+      annualTotal: "",
+      description: "Para experimentar nossa plataforma",
       features: [
-        "Até 200 documentos/mês",
-        "IA básica para documentação",
-        "Templates padrão CFM",
-        "Suporte por email",
-        "Backup automático",
-        "Conformidade LGPD"
+        "10 créditos não renováveis",
+        "Assistente de Escrita Defensiva básico",
+        "Acesso limitado aos modelos"
       ],
       popular: false,
-      cta: "Começar Teste Grátis"
+      cta: "Começar Grátis",
+      isFree: true
     },
     {
-      name: "Professional",
-      icon: <Crown className="h-8 w-8 text-purple-400" />,
-      price: "R$ 497",
-      period: "/mês",
-      description: "Ideal para médicos estabelecidos",
+      name: "Starter",
+      icon: <Shield className="h-8 w-8 text-blue-400" />,
+      credits: "50 créditos/mês",
+      priceMonthly: "R$ 49,90",
+      priceAnnual: "R$ 449,10",
+      monthlyEquivalent: "R$ 37,43",
+      annualTotal: "R$ 449,10 cobrados anualmente",
+      description: "Ideal para médicos em início de carreira",
       features: [
-        "Documentos ilimitados",
-        "IA avançada + análise preditiva",
-        "Templates personalizáveis",
+        "50 créditos mensais",
+        ...beneficiosPadrao,
+        "Suporte por email",
+        "Backup automático"
+      ],
+      popular: false,
+      cta: "Escolher Starter"
+    },
+    {
+      name: "Professional", 
+      icon: <Crown className="h-8 w-8 text-purple-400" />,
+      credits: "150 créditos/mês",
+      priceMonthly: "R$ 129,90",
+      priceAnnual: "R$ 1.169,10",
+      monthlyEquivalent: "R$ 97,43",
+      annualTotal: "R$ 1.169,10 cobrados anualmente",
+      description: "Para médicos estabelecidos",
+      features: [
+        "150 créditos mensais",
+        ...beneficiosPadrao,
         "Suporte prioritário 24/7",
-        "Analytics de risco",
+        "Analytics de risco avançado",
         "Integração com sistemas",
-        "Consultoria jurídica mensal",
         "Relatórios de conformidade"
       ],
       popular: true,
       cta: "Mais Popular"
     },
     {
-      name: "Enterprise",
+      name: "Ultra",
       icon: <Zap className="h-8 w-8 text-yellow-400" />,
-      price: "R$ 897",
-      period: "/mês",
-      description: "Para clínicas e hospitais",
+      credits: "~1.000 créditos/mês",
+      priceMonthly: "R$ 349,90", 
+      priceAnnual: "R$ 3.149,10",
+      monthlyEquivalent: "R$ 262,43",
+      annualTotal: "R$ 3.149,10 cobrados anualmente",
+      description: "Uso intensivo para especialistas",
       features: [
-        "Multi-usuários ilimitados",
-        "IA personalizada por especialidade",
-        "API dedicada",
-        "Gerente de conta dedicado",
-        "Treinamento presencial",
-        "Auditoria de segurança",
-        "SLA 99.9% uptime",
-        "Consultoria jurídica ilimitada"
+        "Aproximadamente 1.000 créditos/mês",
+        ...beneficiosPadrao,
+        "Todos os benefícios Professional",
+        "Gestão de equipe avançada",
+        "Relatórios de conformidade premium",
+        "API dedicada"
       ],
       popular: false,
-      cta: "Falar com Vendas"
+      cta: "Escolher Ultra"
+    },
+    {
+      name: "Clínicas",
+      icon: <Building2 className="h-8 w-8 text-green-400" />,
+      credits: "Personalizado",
+      priceMonthly: "A partir de R$ 1.490",
+      priceAnnual: "Personalizado",
+      monthlyEquivalent: "Personalizado",
+      annualTotal: "R$ 2/usuário ativo adicional",
+      description: "Para clínicas e hospitais",
+      features: [
+        "Créditos personalizados por equipe",
+        ...beneficiosPadrao,
+        "Todos os benefícios Professional",
+        "Gestão completa de equipe",
+        "Relatórios de conformidade institucional",
+        "Treinamento presencial",
+        "Gerente de conta dedicado",
+        "SLA 99.9% uptime"
+      ],
+      popular: false,
+      cta: "Solicitar Proposta",
+      isEnterprise: true
     }
   ];
 
@@ -95,19 +147,48 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
             Escolha o plano ideal para{' '}
             <span className="text-gradient">sua proteção</span>
           </h2>
-          <p className={`text-body text-gray-300 max-w-3xl mx-auto transition-all duration-1000 delay-300 ${visibleElements.has('pricing-header') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-            Investimento menor que uma consulta particular por dia. Proteção maior que qualquer seguro.
+          <p className={`text-body text-gray-300 max-w-3xl mx-auto mb-8 transition-all duration-1000 delay-300 ${visibleElements.has('pricing-header') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            Invista na sua segurança jurídica. Proteção completa por menos que uma consulta particular.
           </p>
+          
+          {/* Toggle de preços */}
+          <div className="flex items-center justify-center mb-8">
+            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-700/50 rounded-full p-1 flex">
+              <button
+                onClick={() => setIsAnnual(false)}
+                className={`px-6 py-2 rounded-full transition-all duration-300 text-sm font-medium ${
+                  !isAnnual 
+                    ? 'bg-white text-black shadow-lg' 
+                    : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                Mensal
+              </button>
+              <button
+                onClick={() => setIsAnnual(true)}
+                className={`px-6 py-2 rounded-full transition-all duration-300 text-sm font-medium relative ${
+                  isAnnual 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg' 
+                    : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                Anual
+                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  -25%
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 mb-16" data-animate id="pricing-cards">
+        <div className="grid lg:grid-cols-5 md:grid-cols-3 gap-6 mb-16" data-animate id="pricing-cards">
           {plans.map((plan, index) => (
             <Card 
               key={index}
               className={`relative bg-gray-900/50 backdrop-blur-sm border-gray-700/50 hover:border-purple-500/50 transition-all duration-500 hover:scale-105 ${
                 plan.popular ? 'ring-2 ring-purple-500/50 scale-105' : ''
-              } ${visibleElements.has('pricing-cards') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-              style={{ transitionDelay: `${index * 200}ms` }}
+              } ${plan.isFree ? 'border-gray-600' : ''} ${visibleElements.has('pricing-cards') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+              style={{ transitionDelay: `${index * 100}ms` }}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -121,37 +202,74 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
                 <div className="flex justify-center mb-4">
                   {plan.icon}
                 </div>
-                <CardTitle className="text-2xl font-bold text-white">{plan.name}</CardTitle>
+                <CardTitle className="text-xl font-bold text-white">{plan.name}</CardTitle>
+                
                 <div className="mt-4">
-                  <span className="text-4xl font-bold text-white">{plan.price}</span>
-                  <span className="text-gray-400 text-lg">{plan.period}</span>
+                  {plan.isFree ? (
+                    <div>
+                      <span className="text-3xl font-bold text-white">Gratuito</span>
+                      <p className="text-gray-400 text-sm mt-1">{plan.credits}</p>
+                    </div>
+                  ) : plan.isEnterprise ? (
+                    <div>
+                      <span className="text-2xl font-bold text-white">Personalizado</span>
+                      <p className="text-gray-400 text-sm mt-1">{plan.annualTotal}</p>
+                    </div>
+                  ) : isAnnual ? (
+                    <div>
+                      <span className="text-3xl font-bold text-white">{plan.monthlyEquivalent}</span>
+                      <span className="text-gray-400 text-base">/mês</span>
+                      <p className="text-gray-500 text-xs mt-1">{plan.annualTotal}</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-3xl font-bold text-white">{plan.priceMonthly}</span>
+                      <span className="text-gray-400 text-base">/mês</span>
+                    </div>
+                  )}
                 </div>
-                <p className="text-gray-300 mt-2">{plan.description}</p>
+                
+                <p className="text-gray-300 mt-2 text-sm">{plan.description}</p>
+                {!plan.isFree && !plan.isEnterprise && (
+                  <p className="text-gray-400 text-xs mt-1">{plan.credits}</p>
+                )}
               </CardHeader>
               
-              <CardContent className="pt-4">
-                <ul className="space-y-3 mb-8">
+              <CardContent className="pt-0">
+                <ul className="space-y-2 mb-6">
                   {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center text-gray-300">
-                      <Check className="h-5 w-5 text-green-400 mr-3 flex-shrink-0" />
+                    <li key={featureIndex} className="flex items-start text-gray-300 text-sm">
+                      <Check className="h-4 w-4 text-green-400 mr-2 flex-shrink-0 mt-0.5" />
                       <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
                 
                 <Button 
-                  className={`w-full py-6 text-lg font-semibold rounded-full transition-all duration-300 hover:scale-105 ${
+                  className={`w-full py-4 text-sm font-semibold rounded-full transition-all duration-300 hover:scale-105 ${
                     plan.popular 
                       ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-2xl' 
+                      : plan.isFree
+                      ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 hover:border-gray-500'
                       : 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-600 hover:border-gray-500'
                   }`}
-                  onClick={() => scrollToSection('contato')}
+                  onClick={() => plan.isEnterprise ? scrollToSection('contato') : scrollToSection('contato')}
                 >
                   {plan.cta}
                 </Button>
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Regras de uso justo */}
+        <div className="text-center mb-8" data-animate id="fair-use">
+          <div className={`bg-gray-900/30 backdrop-blur-sm border border-gray-700/30 rounded-xl p-6 max-w-4xl mx-auto transition-all duration-1000 delay-500 ${visibleElements.has('fair-use') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <p className="text-gray-400 text-sm">
+              <strong className="text-white">Uso Justo:</strong> Após ~1.000 queries/mês, aplicamos throttling ou cobrança de R$ 0,25 por lote adicional de 100 queries. 
+              Cobrança em <strong className="text-white">BRL</strong>. Pagamento via Pix, Cartão, Apple Pay e Google Pay.
+            </p>
+          </div>
         </div>
 
         <div className="text-center" data-animate id="pricing-guarantee">

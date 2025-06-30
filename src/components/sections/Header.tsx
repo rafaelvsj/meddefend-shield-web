@@ -17,7 +17,7 @@ const Header = ({ scrollToSection }: HeaderProps) => {
           {/* Logo */}
           <div className="flex items-center space-x-4 group">
             <img 
-              src="/lovable-uploads/38d87268-cc87-427b-8e27-bf6629d3ade4.png" 
+              src="/lovable-uploads/6efd3d4d-8293-4655-ae74-c39d2bc96998.png" 
               alt="MedDefend Logo" 
               className="h-12 w-12 transition-transform duration-300 group-hover:scale-110 drop-shadow-2xl"
             />

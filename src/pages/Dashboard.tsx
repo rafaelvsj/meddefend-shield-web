@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Search, Bell, Settings, User, LogOut, FileText, History, Bookmark, BarChart3, Folder, FolderOpen, FileCheck, ClipboardList, Shield, AlertTriangle, Activity, Stethoscope, Bed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -355,9 +356,9 @@ const Dashboard = () => {
                         {isOpen && (
                           <div className="space-y-2 animate-fade-in">
                             {category.models.map((model, index) => (
-                              <div key={index} className="p-3 bg-medical-slate-50 rounded-lg border border-medical-slate-200 hover:bg-medical-slate-100 transition-colors cursor-pointer">
+                              <div key={index} className="p-3 bg-medical-blue-50 rounded-lg border border-medical-blue-200 hover:bg-medical-blue-100 transition-colors cursor-pointer">
                                 <h4 className="font-medium text-medical-slate-800 text-sm mb-1">{model.name}</h4>
-                                <p className="text-xs text-medical-slate-600">{model.description}</p>
+                                <p className="text-xs text-medical-slate-700">{model.description}</p>
                               </div>
                             ))}
                           </div>

@@ -7,16 +7,16 @@ interface WarningHeaderProps {
 
 const WarningHeader = ({ isVisible }: WarningHeaderProps) => {
   return (
-    <div className={`text-center mb-20 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-      <div className="flex items-center justify-center mb-8">
-        <AlertTriangle className="h-16 w-16 text-red-600 mr-6" />
-        <h2 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-          Por Que LLMs Genéricas São Perigosas Na Medicina?
+    <div className="text-center mb-16">
+      <div className="flex items-center justify-center mb-6">
+        <AlertTriangle className="h-12 w-12 text-red-400 mr-4 animate-pulse" />
+        <h2 className="text-4xl md:text-5xl font-bold text-white">
+          A Epidemia Silenciosa que Ameaça a Medicina
         </h2>
-        <AlertTriangle className="h-16 w-16 text-red-600 ml-6" />
       </div>
-      <p className="text-xl md:text-2xl text-slate-300 max-w-4xl mx-auto leading-relaxed font-light">
-        🚨 O Perigo Silencioso das LLMs Genéricas em Documentação Médica
+      <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+        A realidade da prática médica no Brasil mudou. A judicialização não é mais um risco 
+        distante, é uma estatística alarmante.
       </p>
     </div>
   );

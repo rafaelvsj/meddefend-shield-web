@@ -1,78 +1,58 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
 import { Apple } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
+  
+  const { user, signIn, signUp, signInWithGoogle, signInWithApple } = useAuth();
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  // Redirect to dashboard if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulação de login
-    setTimeout(() => {
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Redirecionando para o dashboard...",
-      });
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (!error) {
+          navigate('/dashboard');
+        }
+      } else {
+        const { error } = await signUp(email, password, fullName);
+        if (!error) {
+          // User will be redirected after email confirmation
+        }
+      }
+    } finally {
       setIsLoading(false);
-      
-      // Redirecionar para o dashboard após login bem-sucedido
-      navigate('/dashboard');
-    }, 1500);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    toast({
-      title: "Login com Google",
-      description: "Redirecionando para autenticação Google...",
-    });
-    console.log('Google login initiated');
-    
-    // Simulação de login com Google - em produção seria integração real
-    setTimeout(() => {
-      toast({
-        title: "Login Google realizado com sucesso!",
-        description: "Redirecionando para o dashboard...",
-      });
-      navigate('/dashboard');
-    }, 2000);
+  const handleGoogleLogin = async () => {
+    await signInWithGoogle();
   };
 
-  const handleAppleLogin = () => {
-    toast({
-      title: "Login com Apple",
-      description: "Redirecionando para autenticação Apple...",
-    });
-    console.log('Apple login initiated');
-    
-    // Simulação de login com Apple - em produção seria integração real
-    setTimeout(() => {
-      toast({
-        title: "Login Apple realizado com sucesso!",
-        description: "Redirecionando para o dashboard...",
-      });
-      navigate('/dashboard');
-    }, 2000);
-  };
-
-  const handleSignUp = () => {
-    // Navegar para página de cadastro ou abrir modal de cadastro
-    toast({
-      title: "Cadastro",
-      description: "Funcionalidade de cadastro será implementada em breve.",
-    });
+  const handleAppleLogin = async () => {
+    await signInWithApple();
   };
 
   return (
@@ -96,8 +76,12 @@ const Login = () => {
                 className="h-12 w-auto"
               />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Bem-vindo de volta</h1>
-            <p className="text-gray-600">Entre na sua conta para acessar o dashboard</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              {isLogin ? 'Bem-vindo de volta' : 'Criar conta'}
+            </h1>
+            <p className="text-gray-600">
+              {isLogin ? 'Entre na sua conta para acessar o dashboard' : 'Crie sua conta para começar'}
+            </p>
           </div>
 
           {/* Social Login Buttons */}
@@ -138,8 +122,25 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Email Login Form */}
-          <form onSubmit={handleEmailLogin} className="space-y-4">
+          {/* Email Login/Signup Form */}
+          <form onSubmit={handleEmailSubmit} className="space-y-4">
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+                  Nome Completo
+                </Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Seu nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required={!isLogin}
+                  className="h-12 border-2 focus:border-blue-500 transition-all duration-300"
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email
@@ -170,21 +171,23 @@ const Login = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
-                <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
-                  Lembrar de mim
-                </Label>
+            {isLogin && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  />
+                  <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
+                    Lembrar de mim
+                  </Label>
+                </div>
+                <a href="#" className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-300">
+                  Esqueceu a senha?
+                </a>
               </div>
-              <a href="#" className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-300">
-                Esqueceu a senha?
-              </a>
-            </div>
+            )}
 
             <Button
               type="submit"
@@ -194,10 +197,10 @@ const Login = () => {
               {isLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
-                  Entrando...
+                  {isLogin ? 'Entrando...' : 'Criando conta...'}
                 </div>
               ) : (
-                'Entrar na Conta'
+                isLogin ? 'Entrar na Conta' : 'Criar Conta'
               )}
             </Button>
           </form>
@@ -205,12 +208,12 @@ const Login = () => {
           {/* Footer */}
           <div className="mt-8 text-center">
             <p className="text-gray-600">
-              Não tem uma conta?{' '}
+              {isLogin ? 'Não tem uma conta?' : 'Já tem uma conta?'}{' '}
               <button 
-                onClick={handleSignUp}
+                onClick={() => setIsLogin(!isLogin)}
                 className="text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-300"
               >
-                Criar conta gratuita
+                {isLogin ? 'Criar conta gratuita' : 'Fazer login'}
               </button>
             </p>
           </div>

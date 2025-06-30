@@ -5,8 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
   const [inputText, setInputText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -119,6 +124,11 @@ const Dashboard = () => {
     }, 2000);
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-white font-inter flex flex-col lg:flex-row">
       {/* Sidebar - Mobile-first design */}
@@ -186,14 +196,23 @@ const Dashboard = () => {
 
               <div className="flex items-center space-x-2 lg:space-x-3">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="#" alt="Avatar do usuário" />
-                  <AvatarFallback className="bg-medical-blue-100 text-medical-blue-800 text-sm">DR</AvatarFallback>
+                  <AvatarImage src={user?.user_metadata?.avatar_url} alt="Avatar do usuário" />
+                  <AvatarFallback className="bg-medical-blue-100 text-medical-blue-800 text-sm">
+                    {user?.user_metadata?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:block">
-                  <p className="text-sm font-medium text-medical-slate-800">Dr. Roberto</p>
+                  <p className="text-sm font-medium text-medical-slate-800">
+                    {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário'}
+                  </p>
                   <p className="text-xs text-medical-slate-500">Plano Premium</p>
                 </div>
-                <Button variant="ghost" size="icon" aria-label="Sair">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleLogout}
+                  aria-label="Sair"
+                >
                   <LogOut className="h-4 w-4" />
                 </Button>
               </div>

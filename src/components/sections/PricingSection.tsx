@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Check, Crown, Shield, Zap, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +33,9 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
     "Assistente de Escrita Defensiva ilimitado",
     "Checklist Contextual Inteligente", 
     "Biblioteca Completa de Modelos",
-    "Histórico de Documentos"
+    "Histórico de Documentos",
+    "Suporte por email e Whatsapp",
+    "Backup automático"
   ];
 
   const plans = [
@@ -67,9 +68,7 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
       description: "Ideal para médicos em início de carreira",
       features: [
         "50 créditos mensais",
-        ...beneficiosPadrao,
-        "Suporte por email",
-        "Backup automático"
+        ...beneficiosPadrao
       ],
       popular: false,
       cta: "Escolher Starter"
@@ -85,11 +84,7 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
       description: "Para médicos estabelecidos",
       features: [
         "150 créditos mensais",
-        ...beneficiosPadrao,
-        "Suporte prioritário 24/7",
-        "Analytics de risco avançado",
-        "Integração com sistemas",
-        "Relatórios de conformidade"
+        ...beneficiosPadrao
       ],
       popular: true,
       cta: "Mais Popular"
@@ -105,11 +100,7 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
       description: "Uso intensivo para especialistas",
       features: [
         "Aproximadamente 1.000 créditos/mês",
-        ...beneficiosPadrao,
-        "Todos os benefícios Professional",
-        "Gestão de equipe avançada",
-        "Relatórios de conformidade premium",
-        "API dedicada"
+        ...beneficiosPadrao
       ],
       popular: false,
       cta: "Escolher Ultra"
@@ -126,12 +117,8 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
       features: [
         "Créditos personalizados por equipe",
         ...beneficiosPadrao,
-        "Todos os benefícios Professional",
-        "Gestão completa de equipe",
-        "Relatórios de conformidade institucional",
         "Treinamento presencial",
-        "Gerente de conta dedicado",
-        "SLA 99.9% uptime"
+        "Gerente de conta dedicado"
       ],
       popular: false,
       cta: "Solicitar Proposta",
@@ -191,10 +178,10 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
               style={{ transitionDelay: `${index * 100}ms` }}
             >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg whitespace-nowrap">
                     Mais Popular
-                  </span>
+                  </div>
                 </div>
               )}
               

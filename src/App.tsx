@@ -22,6 +22,7 @@ import CookiePolicy from "./pages/CookiePolicy";
 import Blog from "./pages/Blog";
 import CookieBanner from "./components/CookieBanner";
 import AdminLayout from "./components/AdminLayout";
+import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -73,9 +74,9 @@ const App = () => (
             <Route path="/cookies" element={<CookiePolicy />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/admin/*" element={
-              <ProtectedRoute>
+              <AdminProtectedRoute>
                 <AdminLayout />
-              </ProtectedRoute>
+              </AdminProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

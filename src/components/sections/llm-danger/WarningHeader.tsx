@@ -10,7 +10,7 @@ const WarningHeader = ({ isVisible }: WarningHeaderProps) => {
     <div className="text-center mb-16">
       <div className="flex items-center justify-center mb-6">
         <AlertTriangle className="h-12 w-12 text-red-400 mr-4 animate-pulse" />
-        <h2 className="text-4xl md:text-5xl font-bold text-white">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
           A Epidemia Silenciosa que Ameaça a Medicina
         </h2>
       </div>

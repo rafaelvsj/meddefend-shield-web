@@ -21,7 +21,7 @@ const Header = ({ scrollToSection }: HeaderProps) => {
               alt="MedDefend Logo" 
               className="h-12 w-12 transition-transform duration-300 group-hover:scale-110 drop-shadow-2xl"
             />
-            <span className="text-2xl md:text-3xl font-bold font-sabon bg-gradient-to-r from-gray-400 via-gray-200 to-white bg-clip-text text-transparent drop-shadow-lg tracking-wide">
+            <span className="text-xl md:text-2xl lg:text-3xl font-bold font-sabon bg-gradient-to-r from-gray-400 via-gray-200 to-white bg-clip-text text-transparent drop-shadow-lg tracking-wide">
               MedDefend
             </span>
           </div>

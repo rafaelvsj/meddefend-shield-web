@@ -27,32 +27,32 @@ const HallucinationTable = ({ isVisible, counters }: HallucinationTableProps) =>
           <tbody>
             <tr className="border-b border-gray-700">
               <td className="px-6 py-4 font-medium text-gray-200">Claude 3 Sonnet</td>
-              <td className="px-6 py-4 text-center text-2xl font-bold text-red-400">{counters.claudeSonnet.toFixed(1)}%</td>
+              <td className="px-6 py-4 text-center text-lg sm:text-xl md:text-2xl font-bold text-red-400">{counters.claudeSonnet.toFixed(1)}%</td>
               <td className="px-6 py-4 text-center"><span className="px-3 py-1 bg-red-900 text-red-300 rounded-full text-sm font-medium">Muito Alto</span></td>
             </tr>
             <tr className="border-b border-gray-700">
               <td className="px-6 py-4 font-medium text-gray-200">Claude 3 Opus</td>
-              <td className="px-6 py-4 text-center text-2xl font-bold text-red-400">{counters.claudeOpus.toFixed(1)}%</td>
+              <td className="px-6 py-4 text-center text-lg sm:text-xl md:text-2xl font-bold text-red-400">{counters.claudeOpus.toFixed(1)}%</td>
               <td className="px-6 py-4 text-center"><span className="px-3 py-1 bg-orange-900 text-orange-300 rounded-full text-sm font-medium">Alto</span></td>
             </tr>
             <tr className="border-b border-gray-700">
               <td className="px-6 py-4 font-medium text-gray-200">GPT-4</td>
-              <td className="px-6 py-4 text-center text-2xl font-bold text-yellow-400">{counters.gpt4.toFixed(1)}%</td>
+              <td className="px-6 py-4 text-center text-lg sm:text-xl md:text-2xl font-bold text-yellow-400">{counters.gpt4.toFixed(1)}%</td>
               <td className="px-6 py-4 text-center"><span className="px-3 py-1 bg-yellow-900 text-yellow-300 rounded-full text-sm font-medium">Moderado</span></td>
             </tr>
             <tr className="border-b border-gray-700">
               <td className="px-6 py-4 font-medium text-gray-200">GPT-4o</td>
-              <td className="px-6 py-4 text-center text-2xl font-bold text-yellow-400">{counters.gpt4o.toFixed(1)}%</td>
+              <td className="px-6 py-4 text-center text-lg sm:text-xl md:text-2xl font-bold text-yellow-400">{counters.gpt4o.toFixed(1)}%</td>
               <td className="px-6 py-4 text-center"><span className="px-3 py-1 bg-yellow-900 text-yellow-300 rounded-full text-sm font-medium">Moderado</span></td>
             </tr>
             <tr className="border-b border-gray-700">
               <td className="px-6 py-4 font-medium text-gray-200">Gemini 2.0 Flash</td>
-              <td className="px-6 py-4 text-center text-2xl font-bold text-blue-400">{counters.gemini.toFixed(1)}%</td>
+              <td className="px-6 py-4 text-center text-lg sm:text-xl md:text-2xl font-bold text-blue-400">{counters.gemini.toFixed(1)}%</td>
               <td className="px-6 py-4 text-center"><span className="px-3 py-1 bg-blue-900 text-blue-300 rounded-full text-sm font-medium">Baixo</span></td>
             </tr>
             <tr className="bg-green-900/30 border-b border-green-700">
               <td className="px-6 py-4 font-bold text-green-300">MedDefend</td>
-              <td className="px-6 py-4 text-center text-2xl font-bold text-green-400">&lt;{counters.meddefend.toFixed(1)}%</td>
+              <td className="px-6 py-4 text-center text-lg sm:text-xl md:text-2xl font-bold text-green-400">&lt;{counters.meddefend.toFixed(1)}%</td>
               <td className="px-6 py-4 text-center"><span className="px-3 py-1 bg-green-800 text-green-200 rounded-full text-sm font-bold">Mínimo</span></td>
             </tr>
           </tbody>

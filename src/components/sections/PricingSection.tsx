@@ -191,7 +191,7 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
                   <div className="mt-4">
                     {plan.isFree ? (
                       <div>
-                        <span className="text-3xl font-bold text-white">Gratuito</span>
+                        <span className="text-2xl sm:text-3xl font-bold text-white">Gratuito</span>
                         <p className="text-gray-400 text-sm mt-1">{plan.credits}</p>
                       </div>
                     ) : plan.isEnterprise ? (
@@ -201,13 +201,13 @@ const PricingSection = ({ scrollToSection }: PricingSectionProps) => {
                       </div>
                     ) : isAnnual ? (
                       <div>
-                        <span className="text-3xl font-bold text-white">{plan.monthlyEquivalent}</span>
+                        <span className="text-2xl sm:text-3xl font-bold text-white">{plan.monthlyEquivalent}</span>
                         <span className="text-gray-400 text-base">/mês</span>
                         <p className="text-gray-500 text-xs mt-1">{plan.annualTotal}</p>
                       </div>
                     ) : (
                       <div>
-                        <span className="text-3xl font-bold text-white">{plan.priceMonthly}</span>
+                        <span className="text-2xl sm:text-3xl font-bold text-white">{plan.priceMonthly}</span>
                         <span className="text-gray-400 text-base">/mês</span>
                       </div>
                     )}

@@ -1,4 +1,5 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { 
   Home, 
   MessageCircle, 
@@ -8,6 +9,7 @@ import {
   Database, 
   Settings 
 } from 'lucide-react';
+import { messagesApi } from '@/lib/api/messages';
 import {
   Sidebar,
   SidebarContent,
@@ -31,23 +33,55 @@ import AdminTemplates from "@/pages/admin/AdminTemplates";
 import AdminLogs from "@/pages/admin/AdminLogs";
 import AdminSettings from "@/pages/admin/AdminSettings";
 
-const menuItems = [
-  { title: "Home", url: "/admin", icon: Home },
-  { 
-    title: "Messages", 
-    url: "/admin/messages", 
-    icon: MessageCircle,
-    badge: "3"
-  },
-  { title: "Users", url: "/admin/users", icon: Users },
-  { title: "Plans & Billing", url: "/admin/billing", icon: CreditCard },
-  { title: "Templates", url: "/admin/templates", icon: FileText },
-  { title: "AI Logs", url: "/admin/logs", icon: Database },
-  { title: "Settings", url: "/admin/settings", icon: Settings },
-];
-
 const AdminLayout = () => {
   const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const menuItems = [
+    { title: "Home", url: "/admin", icon: Home },
+    { 
+      title: "Messages", 
+      url: "/admin/messages", 
+      icon: MessageCircle,
+      badge: unreadCount > 0 ? unreadCount.toString() : undefined
+    },
+    { title: "Users", url: "/admin/users", icon: Users },
+    { title: "Plans & Billing", url: "/admin/billing", icon: CreditCard },
+    { title: "Templates", url: "/admin/templates", icon: FileText },
+    { title: "AI Logs", url: "/admin/logs", icon: Database },
+    { title: "Settings", url: "/admin/settings", icon: Settings },
+  ];
+
+  useEffect(() => {
+    // Carregar contagem inicial
+    const loadUnreadCount = async () => {
+      try {
+        const count = await messagesApi.getUnreadCount();
+        setUnreadCount(count);
+      } catch (error) {
+        console.error('Erro ao carregar contagem de mensagens:', error);
+      }
+    };
+
+    loadUnreadCount();
+
+    // Configurar listener para novas mensagens
+    const newMessageChannel = messagesApi.subscribeToMessages(() => {
+      setUnreadCount(prev => prev + 1);
+    });
+
+    // Configurar listener para atualizações (quando marcar como lida)
+    const updateChannel = messagesApi.subscribeToUpdates((updatedMessage) => {
+      if (updatedMessage.status === 'read') {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    });
+
+    return () => {
+      newMessageChannel.unsubscribe();
+      updateChannel.unsubscribe();
+    };
+  }, []);
 
   return (
     <SidebarProvider>

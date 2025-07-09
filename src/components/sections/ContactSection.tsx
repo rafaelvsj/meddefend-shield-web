@@ -140,8 +140,8 @@ const ContactSection = () => {
                 <p className="text-gray-300 mb-4">
                   Para perguntas sobre a plataforma, planos ou suporte técnico, preencha o formulário ou envie um e-mail para:
                 </p>
-                <a href="mailto:suporte@meddefend.com.br" className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-300 hover:underline">
-                  suporte@meddefend.com.br
+                <a href="mailto:suporte@meddefend.tech" className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-300 hover:underline">
+                  suporte@meddefend.tech
                 </a>
               </CardContent>
             </Card>
@@ -152,8 +152,8 @@ const ContactSection = () => {
                 <p className="text-gray-300 mb-4">
                   Representa uma associação médica, seguradora ou instituição de saúde? Entre em contato para explorarmos oportunidades.
                 </p>
-                <a href="mailto:parcerias@meddefend.com.br" className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-300 hover:underline">
-                  parcerias@meddefend.com.br
+                <a href="mailto:parcerias@meddefend.tech" className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-300 hover:underline">
+                  parcerias@meddefend.tech
                 </a>
               </CardContent>
             </Card>

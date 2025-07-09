@@ -71,7 +71,7 @@ const FooterSection = () => {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center space-x-2 text-gray-300">
                 <Mail className="h-4 w-4" />
-                <span>contato@meddefend.com.br</span>
+                <span>suporte@meddefend.tech</span>
               </li>
               <li className="flex items-center space-x-2 text-gray-300">
                 <Phone className="h-4 w-4" />

@@ -5,7 +5,7 @@ const FooterSection = () => {
         <div className="grid md:grid-cols-4 gap-8">
           {/* Logo and Description */}
           <div className="md:col-span-1">
-            <div className="flex items-center space-x-3 mb-6">
+            <div className="flex items-center space-x-3 mb-6 justify-end">
               <img src="/lovable-uploads/38d87268-cc87-427b-8e27-bf6629d3ade4.png" alt="MedDefend Logo" className="h-10 w-10" />
               <span className="text-2xl font-bold font-outfit text-white">MedDefend</span>
             </div>

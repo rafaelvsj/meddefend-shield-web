@@ -18,6 +18,7 @@ export const useUserRoles = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    console.log('ROLES DEBUG - useUserRoles effect:', { user: !!user, userId: user?.id });
     if (user) {
       fetchUserRoles();
     } else {
@@ -30,6 +31,7 @@ export const useUserRoles = () => {
   const fetchUserRoles = async () => {
     if (!user) return;
 
+    console.log('ROLES DEBUG - Fetching roles for user:', user.id);
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -37,14 +39,18 @@ export const useUserRoles = () => {
         .select('role')
         .eq('user_id', user.id);
 
+      console.log('ROLES DEBUG - Query result:', { data, error });
+
       if (error) {
         console.error('Error fetching user roles:', error);
         return;
       }
 
       const roles = (data as UserRoleData[])?.map(item => item.role) || [];
+      console.log('ROLES DEBUG - Parsed roles:', roles);
       setUserRoles(roles);
       setIsAdmin(roles.includes('admin'));
+      console.log('ROLES DEBUG - Final state:', { roles, isAdmin: roles.includes('admin') });
     } catch (error) {
       console.error('Error fetching user roles:', error);
     } finally {

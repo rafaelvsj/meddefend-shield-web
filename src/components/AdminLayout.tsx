@@ -10,6 +10,7 @@ import {
   Settings 
 } from 'lucide-react';
 import { messagesApi } from '@/lib/api/messages';
+import MobileShell from '@/pages/admin/mobile/MobileShell';
 import {
   Sidebar,
   SidebarContent,
@@ -82,6 +83,23 @@ const AdminLayout = () => {
       updateChannel.unsubscribe();
     };
   }, []);
+
+  // Detectar mobile
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Se for mobile, renderizar a interface mobile
+  if (isMobile) {
+    return <MobileShell />;
+  }
+
+  // Desktop layout (mantido inalterado)
 
   return (
     <SidebarProvider>

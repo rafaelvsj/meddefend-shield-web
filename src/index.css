@@ -7,6 +7,10 @@
 
 /* Premium light design system with dark mode support */
 
+:root {
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+}
+
 @layer base {
   :root {
     /* Light theme as default */

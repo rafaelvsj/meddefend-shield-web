@@ -17,30 +17,23 @@
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
     
     <style id="cursor-tracker-style">
-      :root {
-        --cursor-tracker-size: 24px;
-        --cursor-tracker-opacity: 0.08;
-        --cursor-tracker-blur: 16px;
-        --cursor-tracker-duration: 170ms;
-        --cursor-tracker-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
-      }
-      
       #cursor-spotlight {
         position: fixed;
         top: 0;
         left: 0;
-        width: var(--cursor-tracker-size);
-        height: var(--cursor-tracker-size);
-        background: rgba(255, 255, 255, var(--cursor-tracker-opacity));
+        width: 24px;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.08);
         border-radius: 50%;
-        filter: blur(var(--cursor-tracker-blur));
+        filter: blur(16px);
         pointer-events: none;
-        z-index: 9998;
+        z-index: 999999;
         transform: translate(-50%, -50%);
-        transition: width var(--cursor-tracker-duration) var(--cursor-tracker-easing),
-                    height var(--cursor-tracker-duration) var(--cursor-tracker-easing),
-                    opacity var(--cursor-tracker-duration) var(--cursor-tracker-easing);
+        transition: width 170ms cubic-bezier(0.22, 0.61, 0.36, 1),
+                    height 170ms cubic-bezier(0.22, 0.61, 0.36, 1),
+                    opacity 170ms cubic-bezier(0.22, 0.61, 0.36, 1);
         opacity: 0;
+        will-change: transform, width, height, opacity;
       }
     </style>
 
@@ -109,14 +102,17 @@
           }
         }
         
-        document.addEventListener('mousemove', handleMouseMove, { passive: true });
-        document.addEventListener('mouseleave', handleMouseLeave, { passive: true });
-        
-        // Create spotlight on page load if mouse is already over the page
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', createSpotlight);
-        } else {
+        // Wait for DOM to be ready
+        function initCursorTracker() {
+          document.addEventListener('mousemove', handleMouseMove, { passive: true });
+          document.addEventListener('mouseleave', handleMouseLeave, { passive: true });
           createSpotlight();
+        }
+        
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initCursorTracker);
+        } else {
+          initCursorTracker();
         }
       })();
     </script>

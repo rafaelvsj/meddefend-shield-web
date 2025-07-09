@@ -16,27 +16,54 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          auto_save_analyses: boolean | null
           avatar_url: string | null
           created_at: string
+          default_model: string | null
           email: string | null
+          email_notifications: boolean | null
           full_name: string | null
           id: string
+          language: string | null
+          notification_frequency: string | null
+          push_notifications: boolean | null
+          report_detail_level: string | null
+          sound_notifications: boolean | null
+          theme: string | null
           updated_at: string
         }
         Insert: {
+          auto_save_analyses?: boolean | null
           avatar_url?: string | null
           created_at?: string
+          default_model?: string | null
           email?: string | null
+          email_notifications?: boolean | null
           full_name?: string | null
           id: string
+          language?: string | null
+          notification_frequency?: string | null
+          push_notifications?: boolean | null
+          report_detail_level?: string | null
+          sound_notifications?: boolean | null
+          theme?: string | null
           updated_at?: string
         }
         Update: {
+          auto_save_analyses?: boolean | null
           avatar_url?: string | null
           created_at?: string
+          default_model?: string | null
           email?: string | null
+          email_notifications?: boolean | null
           full_name?: string | null
           id?: string
+          language?: string | null
+          notification_frequency?: string | null
+          push_notifications?: boolean | null
+          report_detail_level?: string | null
+          sound_notifications?: boolean | null
+          theme?: string | null
           updated_at?: string
         }
         Relationships: []

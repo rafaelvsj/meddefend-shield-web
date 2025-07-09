@@ -21,6 +21,7 @@ import CancellationPolicy from "./pages/CancellationPolicy";
 import CookiePolicy from "./pages/CookiePolicy";
 import Blog from "./pages/Blog";
 import CookieBanner from "./components/CookieBanner";
+import AdminLayout from "./components/AdminLayout";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,11 @@ const App = () => (
             <Route path="/cancellation" element={<CancellationPolicy />} />
             <Route path="/cookies" element={<CookiePolicy />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/admin/*" element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

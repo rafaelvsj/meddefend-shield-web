@@ -62,8 +62,9 @@ const Header = ({ scrollToSection }: HeaderProps) => {
               <button onClick={() => scrollToSection('precos')} className="block px-4 py-3 hover:bg-white/10 rounded-xl w-full text-left transition-all duration-300 font-medium text-sm text-gray-200 hover:text-white">Preços</button>
               <button onClick={() => scrollToSection('contato')} className="block px-4 py-3 hover:bg-white/10 rounded-xl w-full text-left transition-all duration-300 font-medium text-sm text-gray-200 hover:text-white">Contato</button>
               <a href="/login" className="block px-4 py-3 hover:bg-white/10 rounded-xl transition-all duration-300 font-medium text-sm text-gray-200 hover:text-white">Login</a>
+              <a href="/blog" className="block px-4 py-3 hover:bg-white/10 rounded-xl transition-all duration-300 font-medium text-sm text-gray-200 hover:text-white">Blog</a>
               <Button asChild className="w-full mt-4 bg-white text-black hover:bg-gray-100 rounded-full text-sm font-semibold">
-                <a href="/checkout.html">Acessar Plataforma</a>
+                <a href="/login">Acessar Plataforma</a>
               </Button>
             </div>
           </div>

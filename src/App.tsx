@@ -13,6 +13,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CancellationPolicy from "./pages/CancellationPolicy";
 import CookiePolicy from "./pages/CookiePolicy";
+import Blog from "./pages/Blog";
 import CookieBanner from "./components/CookieBanner";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/cancellation" element={<CancellationPolicy />} />
             <Route path="/cookies" element={<CookiePolicy />} />
+            <Route path="/blog" element={<Blog />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

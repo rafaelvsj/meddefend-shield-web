@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -17,13 +18,18 @@ const Login = () => {
   const navigate = useNavigate();
   
   const { user, signIn, signUp, signInWithGoogle } = useAuth();
+  const { isAdmin, loading: rolesLoading } = useUserRoles();
 
-  // Redirect to dashboard if user is already logged in
+  // Redirect based on user role if user is already logged in
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
+    if (user && !rolesLoading) {
+      if (isAdmin) {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     }
-  }, [user, navigate]);
+  }, [user, isAdmin, rolesLoading, navigate]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +38,7 @@ const Login = () => {
     try {
       if (isLogin) {
         const { error } = await signIn(email, password);
-        if (!error) {
-          navigate('/dashboard');
-        }
+        // Redirecionamento será automático via useEffect após verificação do role
       } else {
         const { error } = await signUp(email, password, fullName);
         if (!error) {

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,9 +7,34 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useUserSettings } from '@/hooks/useUserSettings';
+import { useTheme } from 'next-themes';
 
 const AccountSettings = () => {
   const navigate = useNavigate();
+  const { settings, updateSettings, loading } = useUserSettings();
+  const { setTheme } = useTheme();
+  const [localSettings, setLocalSettings] = useState(settings);
+
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
+
+  const handleSave = async () => {
+    await updateSettings(localSettings);
+    setTheme(localSettings.theme);
+  };
+
+  const updateLocalSetting = <K extends keyof typeof localSettings>(
+    key: K, 
+    value: typeof localSettings[K]
+  ) => {
+    setLocalSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  if (loading) {
+    return <div>Carregando...</div>;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
@@ -42,7 +68,10 @@ const AccountSettings = () => {
                   <Label className="text-base">Tema escuro</Label>
                   <p className="text-sm text-muted-foreground">Ativar modo escuro na interface</p>
                 </div>
-                <Switch />
+                <Switch 
+                  checked={localSettings.theme === 'dark'} 
+                  onCheckedChange={(checked) => updateLocalSetting('theme', checked ? 'dark' : 'light')}
+                />
               </div>
               
               <div className="flex items-center justify-between">
@@ -50,12 +79,15 @@ const AccountSettings = () => {
                   <Label className="text-base">Notificações por email</Label>
                   <p className="text-sm text-muted-foreground">Receber notificações importantes por email</p>
                 </div>
-                <Switch defaultChecked />
+                <Switch 
+                  checked={localSettings.email_notifications} 
+                  onCheckedChange={(checked) => updateLocalSetting('email_notifications', checked)}
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Idioma da interface</Label>
-                <Select defaultValue="pt-br">
+                <Select value={localSettings.language} onValueChange={(value: 'pt-br' | 'en' | 'es') => updateLocalSetting('language', value)}>
                   <SelectTrigger className="w-full md:w-[200px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -146,7 +178,7 @@ const AccountSettings = () => {
 
           {/* Botão de salvar */}
           <div className="flex justify-end">
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2" onClick={handleSave}>
               <Save className="h-4 w-4" />
               Salvar Configurações
             </Button>

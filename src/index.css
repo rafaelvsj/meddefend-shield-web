@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,48 +5,137 @@
 /* Import Google Fonts - Inter + Outfit + Montserrat + Sabon Next */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&family=Sabon+Next:wght@400;500;600;700;800;900&display=swap');
 
-/* Premium dark design system */
+/* Premium light design system with dark mode support */
 
 @layer base {
   :root {
-    --background: 0 0% 3%;
-    --foreground: 0 0% 98%;
+    /* Light theme as default */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 0 0% 3%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 0 0% 3%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
     --primary: 262 83% 58%;
-    --primary-foreground: 0 0% 98%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
 
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 0 0% 10%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
     --ring: 262 83% 58%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 3%;
-    --sidebar-foreground: 0 0% 98%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222.2 84% 4.9%;
     --sidebar-primary: 262 83% 58%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 15%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222.2 84% 4.9%;
+    --sidebar-border: 214.3 31.8% 91.4%;
     --sidebar-ring: 262 83% 58%;
+
+    /* Medical theme colors - light */
+    --medical-primary: 185 64% 47%;
+    --medical-primary-foreground: 0 0% 100%;
+    --medical-secondary: 15 80% 50%;
+    --medical-secondary-foreground: 0 0% 100%;
+    --medical-accent: 30 100% 60%;
+    --medical-accent-foreground: 0 0% 100%;
+    --medical-success: 120 40% 50%;
+    --medical-success-foreground: 0 0% 100%;
+    --medical-warning: 45 100% 60%;
+    --medical-warning-foreground: 0 0% 100%;
+    --medical-error: 0 70% 55%;
+    --medical-error-foreground: 0 0% 100%;
+    --medical-slate-50: 210 20% 98%;
+    --medical-slate-100: 210 20% 95%;
+    --medical-slate-200: 214 20% 90%;
+    --medical-slate-300: 214 20% 80%;
+    --medical-slate-400: 215 20% 65%;
+    --medical-slate-500: 215 16% 47%;
+    --medical-slate-600: 215 19% 35%;
+    --medical-slate-700: 215 25% 27%;
+    --medical-slate-800: 217 33% 17%;
+    --medical-slate-900: 222 47% 11%;
+  }
+
+  .dark {
+    /* Dark theme */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 262 83% 58%;
+    --primary-foreground: 222.2 84% 4.9%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 262 83% 58%;
+
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 222.2 84% 4.9%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 262 83% 58%;
+
+    /* Medical theme colors - dark */
+    --medical-primary: 185 64% 47%;
+    --medical-primary-foreground: 0 0% 100%;
+    --medical-secondary: 15 80% 50%;
+    --medical-secondary-foreground: 0 0% 100%;
+    --medical-accent: 30 100% 60%;
+    --medical-accent-foreground: 0 0% 100%;
+    --medical-success: 120 40% 50%;
+    --medical-success-foreground: 0 0% 100%;
+    --medical-warning: 45 100% 60%;
+    --medical-warning-foreground: 0 0% 100%;
+    --medical-error: 0 70% 55%;
+    --medical-error-foreground: 0 0% 100%;
+    --medical-slate-50: 222 47% 11%;
+    --medical-slate-100: 217 33% 17%;
+    --medical-slate-200: 215 25% 27%;
+    --medical-slate-300: 215 19% 35%;
+    --medical-slate-400: 215 16% 47%;
+    --medical-slate-500: 215 20% 65%;
+    --medical-slate-600: 214 20% 80%;
+    --medical-slate-700: 214 20% 90%;
+    --medical-slate-800: 210 20% 95%;
+    --medical-slate-900: 210 20% 98%;
   }
 }
 
@@ -55,57 +143,8 @@
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-black text-foreground font-inter;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
-
-  html {
-    @apply bg-black;
-  }
-}
-
-/* Optimized typography hierarchy */
-@layer utilities {
-  .text-gradient {
-    @apply bg-gradient-to-r from-purple-400 via-violet-400 to-indigo-400 bg-clip-text text-transparent;
-  }
-  
-  .bg-premium {
-    @apply bg-gradient-to-br from-black via-gray-950 to-slate-950;
-  }
-  
-  .border-premium {
-    @apply border border-gray-800/60;
-  }
-  
-  .shadow-premium {
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.5), 0 1px 3px 1px rgb(0 0 0 / 0.6);
-  }
-  
-  .shadow-premium-lg {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5);
-  }
-
-  /* Optimized text sizes for readability */
-  .text-hero {
-    @apply text-3xl md:text-4xl lg:text-5xl font-bold leading-tight;
-  }
-  
-  .text-section-title {
-    @apply text-2xl md:text-3xl lg:text-4xl font-bold;
-  }
-  
-  .text-subsection-title {
-    @apply text-xl md:text-2xl font-semibold;
-  }
-  
-  .text-body-large {
-    @apply text-lg md:text-xl leading-relaxed;
-  }
-  
-  .text-body {
-    @apply text-base md:text-lg leading-relaxed;
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
   }
 }

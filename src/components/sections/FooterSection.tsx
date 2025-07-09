@@ -9,10 +9,8 @@ const FooterSection = () => {
               <img src="/lovable-uploads/38d87268-cc87-427b-8e27-bf6629d3ade4.png" alt="MedDefend Logo" className="h-10 w-10 mb-2" />
               <span className="text-2xl font-bold font-outfit text-white">MedDefend</span>
             </div>
-            <p className="text-gray-300 text-sm leading-relaxed">
-              A primeira plataforma com IA especializada em documentação médica defensiva. 
-              Protegendo médicos brasileiros desde 2024.
-            </p>
+            <p className="text-gray-300 text-sm leading-relaxed">A primeira plataforma com IA especializada em documentação médica defensiva. Protegendo médicos brasileiros desde 2025
+.</p>
           </div>
 
           {/* Quick Links */}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Bell, Settings, User, LogOut, FileText, History, Bookmark, BarChart3, Folder, FolderOpen, FileCheck, ClipboardList, Shield, AlertTriangle, Activity, Stethoscope, Bed } from 'lucide-react';
+import { Search, Bell, Settings, User, LogOut, FileText, History, Bookmark, Folder, FolderOpen, FileCheck, ClipboardList, Shield, AlertTriangle, Activity, Stethoscope, Bed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -155,11 +155,6 @@ const Dashboard = () => {
             <History className="h-4 lg:h-5 w-4 lg:w-5" />
             <span className="hidden lg:block">Histórico</span>
           </button>
-
-          <button onClick={() => setActiveTab('relatorios')} className={`w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-3 lg:px-4 py-2 lg:py-3 rounded-lg text-sm lg:text-base transition-colors ${activeTab === 'relatorios' ? 'bg-medical-blue-100 text-medical-blue-800 border-l-0 lg:border-l-4 border-medical-blue-600' : 'text-medical-slate-600 hover:bg-medical-slate-100'}`} aria-label="Relatórios" role="tab" aria-selected={activeTab === 'relatorios'}>
-            <BarChart3 className="h-4 lg:h-5 w-4 lg:w-5" />
-            <span className="hidden lg:block">Relatórios</span>
-          </button>
         </nav>
 
         <div className="hidden lg:block p-4 border-t border-medical-slate-200">
@@ -180,7 +175,6 @@ const Dashboard = () => {
                 {activeTab === 'analise' && 'Análise de Texto Médico'}
                 {activeTab === 'modelos' && 'Biblioteca de Modelos'}
                 {activeTab === 'historico' && 'Histórico de Análises'}
-                {activeTab === 'relatorios' && 'Relatórios e Métricas'}
               </h1>
             </div>
 
@@ -389,7 +383,7 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Other tabs remain the same structure but with responsive improvements */}
+          {/* Historico Tab */}
           {activeTab === 'historico' && (
             <div className="max-w-4xl mx-auto">
               <Card className="bg-white border border-medical-slate-200 shadow-sm">
@@ -398,19 +392,6 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-medical-slate-600">Histórico será implementado em breve.</p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {activeTab === 'relatorios' && (
-            <div className="max-w-4xl mx-auto">
-              <Card className="bg-white border border-medical-slate-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-medical-slate-800">Relatórios e Métricas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-medical-slate-600">Relatórios serão implementados em breve.</p>
                 </CardContent>
               </Card>
             </div>

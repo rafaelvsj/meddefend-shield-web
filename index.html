@@ -15,6 +15,111 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    
+    <style id="cursor-tracker-style">
+      :root {
+        --cursor-tracker-size: 24px;
+        --cursor-tracker-opacity: 0.08;
+        --cursor-tracker-blur: 16px;
+        --cursor-tracker-duration: 170ms;
+        --cursor-tracker-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
+      }
+      
+      #cursor-spotlight {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: var(--cursor-tracker-size);
+        height: var(--cursor-tracker-size);
+        background: rgba(255, 255, 255, var(--cursor-tracker-opacity));
+        border-radius: 50%;
+        filter: blur(var(--cursor-tracker-blur));
+        pointer-events: none;
+        z-index: 9998;
+        transform: translate(-50%, -50%);
+        transition: width var(--cursor-tracker-duration) var(--cursor-tracker-easing),
+                    height var(--cursor-tracker-duration) var(--cursor-tracker-easing),
+                    opacity var(--cursor-tracker-duration) var(--cursor-tracker-easing);
+        opacity: 0;
+      }
+    </style>
+
+    <script id="cursor-tracker">
+      (function() {
+        let spotlight = null;
+        let isHoveringPointer = false;
+        
+        function createSpotlight() {
+          spotlight = document.createElement('div');
+          spotlight.id = 'cursor-spotlight';
+          document.body.appendChild(spotlight);
+        }
+        
+        function updateSpotlightPosition(e) {
+          if (spotlight) {
+            spotlight.style.left = e.clientX + 'px';
+            spotlight.style.top = e.clientY + 'px';
+          }
+        }
+        
+        function updateSpotlightScale(isPointer) {
+          if (spotlight) {
+            if (isPointer) {
+              spotlight.style.width = '48px';
+              spotlight.style.height = '48px';
+              spotlight.style.opacity = '0.04';
+            } else {
+              spotlight.style.width = '24px';
+              spotlight.style.height = '24px';
+              spotlight.style.opacity = '0.08';
+            }
+          }
+        }
+        
+        function handleMouseMove(e) {
+          if (!spotlight) {
+            createSpotlight();
+          }
+          
+          updateSpotlightPosition(e);
+          
+          if (spotlight.style.opacity === '0') {
+            spotlight.style.opacity = '0.08';
+          }
+          
+          const target = e.target;
+          const computedStyle = window.getComputedStyle(target);
+          const isPointer = computedStyle.cursor === 'pointer' || 
+                           target.tagName === 'A' || 
+                           target.tagName === 'BUTTON' ||
+                           target.type === 'button' ||
+                           target.type === 'submit' ||
+                           target.getAttribute('role') === 'button' ||
+                           target.onclick !== null;
+          
+          if (isPointer !== isHoveringPointer) {
+            isHoveringPointer = isPointer;
+            updateSpotlightScale(isPointer);
+          }
+        }
+        
+        function handleMouseLeave() {
+          if (spotlight) {
+            spotlight.style.opacity = '0';
+          }
+        }
+        
+        document.addEventListener('mousemove', handleMouseMove, { passive: true });
+        document.addEventListener('mouseleave', handleMouseLeave, { passive: true });
+        
+        // Create spotlight on page load if mouse is already over the page
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', createSpotlight);
+        } else {
+          createSpotlight();
+        }
+      })();
+    </script>
   </head>
 
   <body>

@@ -23,9 +23,9 @@
         left: 0;
         width: 24px;
         height: 24px;
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.3);
         border-radius: 50%;
-        filter: blur(16px);
+        filter: blur(8px);
         pointer-events: none;
         z-index: 999999;
         transform: translate(-50%, -50%);
@@ -39,13 +39,16 @@
 
     <script id="cursor-tracker">
       (function() {
+        console.log('Cursor tracker script starting...');
         let spotlight = null;
         let isHoveringPointer = false;
         
         function createSpotlight() {
+          console.log('Creating spotlight element...');
           spotlight = document.createElement('div');
           spotlight.id = 'cursor-spotlight';
           document.body.appendChild(spotlight);
+          console.log('Spotlight element created and added to body');
         }
         
         function updateSpotlightPosition(e) {
@@ -57,14 +60,15 @@
         
         function updateSpotlightScale(isPointer) {
           if (spotlight) {
+            console.log('Updating spotlight scale, isPointer:', isPointer);
             if (isPointer) {
               spotlight.style.width = '48px';
               spotlight.style.height = '48px';
-              spotlight.style.opacity = '0.04';
+              spotlight.style.opacity = '0.2';
             } else {
               spotlight.style.width = '24px';
               spotlight.style.height = '24px';
-              spotlight.style.opacity = '0.08';
+              spotlight.style.opacity = '0.3';
             }
           }
         }
@@ -77,7 +81,8 @@
           updateSpotlightPosition(e);
           
           if (spotlight.style.opacity === '0') {
-            spotlight.style.opacity = '0.08';
+            console.log('Making spotlight visible');
+            spotlight.style.opacity = '0.3';
           }
           
           const target = e.target;
@@ -97,6 +102,7 @@
         }
         
         function handleMouseLeave() {
+          console.log('Mouse leaving document, hiding spotlight');
           if (spotlight) {
             spotlight.style.opacity = '0';
           }
@@ -104,14 +110,18 @@
         
         // Wait for DOM to be ready
         function initCursorTracker() {
+          console.log('Initializing cursor tracker...');
           document.addEventListener('mousemove', handleMouseMove, { passive: true });
           document.addEventListener('mouseleave', handleMouseLeave, { passive: true });
           createSpotlight();
+          console.log('Cursor tracker initialized');
         }
         
         if (document.readyState === 'loading') {
+          console.log('Document loading, waiting for DOMContentLoaded...');
           document.addEventListener('DOMContentLoaded', initCursorTracker);
         } else {
+          console.log('Document ready, initializing immediately');
           initCursorTracker();
         }
       })();

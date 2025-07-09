@@ -1,19 +1,12 @@
-
 import { Mail, Phone, MapPin, Shield, Scale, Cookie } from 'lucide-react';
-
 const FooterSection = () => {
-  return (
-    <footer className="bg-gradient-to-b from-black via-gray-950 to-slate-950 border-t border-gray-800/50">
+  return <footer className="bg-gradient-to-b from-black via-gray-950 to-slate-950 border-t border-gray-800/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid md:grid-cols-4 gap-8">
           {/* Logo and Description */}
           <div className="md:col-span-1">
             <div className="flex items-center space-x-3 mb-6">
-              <img 
-                src="/lovable-uploads/38d87268-cc87-427b-8e27-bf6629d3ade4.png" 
-                alt="MedDefend Logo" 
-                className="h-10 w-10"
-              />
+              <img src="/lovable-uploads/38d87268-cc87-427b-8e27-bf6629d3ade4.png" alt="MedDefend Logo" className="h-10 w-10" />
               <span className="text-2xl font-bold font-outfit text-white">MedDefend</span>
             </div>
             <p className="text-gray-300 text-sm leading-relaxed">
@@ -75,7 +68,7 @@ const FooterSection = () => {
               </li>
               <li className="flex items-center space-x-2 text-gray-300">
                 <Phone className="h-4 w-4" />
-                <span>(11) 9999-9999</span>
+                <span>(61) 98540-3873</span>
               </li>
               <li className="flex items-start space-x-2 text-gray-300">
                 <MapPin className="h-4 w-4 mt-0.5" />
@@ -97,8 +90,6 @@ const FooterSection = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default FooterSection;

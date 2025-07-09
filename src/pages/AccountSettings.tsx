@@ -70,7 +70,11 @@ const AccountSettings = () => {
                 </div>
                 <Switch 
                   checked={localSettings.theme === 'dark'} 
-                  onCheckedChange={(checked) => updateLocalSetting('theme', checked ? 'dark' : 'light')}
+                  onCheckedChange={(checked) => {
+                    const newTheme = checked ? 'dark' : 'light';
+                    updateLocalSetting('theme', newTheme);
+                    setTheme(newTheme);
+                  }}
                 />
               </div>
               

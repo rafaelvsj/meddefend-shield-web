@@ -22,14 +22,10 @@ const Login = () => {
 
   // Redirect based on user role if user is already logged in
   useEffect(() => {
-    console.log('Login redirect check:', { user: !!user, rolesLoading, isAdmin });
     if (user && !rolesLoading) {
-      // Prioriza admin: se tem role admin, vai para /admin, senão vai para /dashboard
       if (isAdmin) {
-        console.log('Redirecting to admin dashboard');
         navigate('/admin');
       } else {
-        console.log('Redirecting to user dashboard');
         navigate('/dashboard');
       }
     }

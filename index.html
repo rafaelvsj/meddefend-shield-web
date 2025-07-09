@@ -16,6 +16,32 @@
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
     
+    <style id="cursor-spotlight-style">
+      :root{ --spot-x:50vw; --spot-y:50vh; }
+      #cursor-spotlight{
+        position:fixed; inset:0; pointer-events:none;
+        background:radial-gradient(circle 120px at var(--spot-x) var(--spot-y),
+                    rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 70%);
+        mix-blend-mode:soft-light;      /* keeps colours intact */
+        transition:background-position .16s cubic-bezier(.22,.61,.36,1);
+        z-index:9999;                   /* above layout, below tooltips/modals */
+      }
+      @media (pointer:coarse){ #cursor-spotlight{display:none;} }
+    </style>
+
+    <script id="cursor-spotlight-script">
+    (function(){
+      if(matchMedia('(pointer:coarse)').matches) return;   // ignore touch screens
+      const s=document.createElement('div'); s.id='cursor-spotlight';
+      document.body.appendChild(s);
+      document.addEventListener('mousemove',e=>{
+        document.documentElement.style
+                .setProperty('--spot-x',e.clientX+'px');
+        document.documentElement.style
+                .setProperty('--spot-y',e.clientY+'px');
+      });
+    })();
+    </script>
     
   </head>
 

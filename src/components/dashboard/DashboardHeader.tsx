@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Bell, Settings, User, LogOut, UserCog, Shield, HelpCircle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,12 +10,31 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { NotificationModal } from '@/components/NotificationModal';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardHeaderProps {
   activeTab: string;
 }
 
 export const DashboardHeader = ({ activeTab }: DashboardHeaderProps) => {
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    const { error } = await signOut();
+    if (!error) {
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso.",
+      });
+      navigate('/');
+    }
+  };
   return (
     <header className="bg-white border-b border-medical-slate-200 px-4 lg:px-8 py-4">
       <div className="flex items-center justify-between">
@@ -58,7 +78,10 @@ export const DashboardHeader = ({ activeTab }: DashboardHeaderProps) => {
                 <div className="text-xs text-muted-foreground">há 1 dia</div>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-center">
+              <DropdownMenuItem 
+                className="text-center cursor-pointer"
+                onClick={() => setNotificationModalOpen(true)}
+              >
                 Ver todas as notificações
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -74,20 +97,20 @@ export const DashboardHeader = ({ activeTab }: DashboardHeaderProps) => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Configurações</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/account-settings')}>
                 <UserCog className="mr-2 h-4 w-4" />
                 Preferências da conta
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/security-settings')}>
                 <Shield className="mr-2 h-4 w-4" />
                 Segurança e privacidade
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/notification-settings')}>
                 <Bell className="mr-2 h-4 w-4" />
                 Notificações
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/help-support')}>
                 <HelpCircle className="mr-2 h-4 w-4" />
                 Ajuda e suporte
               </DropdownMenuItem>
@@ -104,16 +127,16 @@ export const DashboardHeader = ({ activeTab }: DashboardHeaderProps) => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/user-profile')}>
                 <User className="mr-2 h-4 w-4" />
                 Perfil
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/account-settings')}>
                 <Settings className="mr-2 h-4 w-4" />
                 Configurações
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem className="text-red-600" onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Sair
               </DropdownMenuItem>
@@ -121,6 +144,11 @@ export const DashboardHeader = ({ activeTab }: DashboardHeaderProps) => {
           </DropdownMenu>
         </div>
       </div>
+      
+      <NotificationModal 
+        open={notificationModalOpen} 
+        onOpenChange={setNotificationModalOpen}
+      />
     </header>
   );
 };

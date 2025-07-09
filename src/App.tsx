@@ -9,6 +9,11 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import UserProfile from "./pages/UserProfile";
+import AccountSettings from "./pages/AccountSettings";
+import SecuritySettings from "./pages/SecuritySettings";
+import NotificationSettings from "./pages/NotificationSettings";
+import HelpSupport from "./pages/HelpSupport";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import CancellationPolicy from "./pages/CancellationPolicy";
@@ -32,6 +37,31 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/user-profile" element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/account-settings" element={
+              <ProtectedRoute>
+                <AccountSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/security-settings" element={
+              <ProtectedRoute>
+                <SecuritySettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/notification-settings" element={
+              <ProtectedRoute>
+                <NotificationSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/help-support" element={
+              <ProtectedRoute>
+                <HelpSupport />
               </ProtectedRoute>
             } />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />

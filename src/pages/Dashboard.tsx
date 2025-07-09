@@ -236,7 +236,7 @@ const Dashboard = () => {
                       <Textarea 
                         value={inputText} 
                         onChange={(e) => setInputText(e.target.value)} 
-                        placeholder="Cole aqui o texto médico que deseja analisar para verificação de linguagem neutra e adequação profissional..." 
+                        placeholder="Insira aqui sua solicitação ou texto prévio para análise..." 
                         className="min-h-[200px] resize-none bg-white border-medical-slate-300 text-medical-slate-800 focus:border-medical-blue-500" 
                         aria-label="Campo de entrada de texto médico" 
                       />

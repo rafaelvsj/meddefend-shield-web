@@ -109,21 +109,6 @@ const AccountSettings = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label>Modelo padrão para análises</Label>
-                <Select defaultValue="cardiologia">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cardiologia">Cardiologia</SelectItem>
-                    <SelectItem value="neurologia">Neurologia</SelectItem>
-                    <SelectItem value="ortopedia">Ortopedia</SelectItem>
-                    <SelectItem value="geral">Clínica Geral</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label>Nível de detalhamento dos relatórios</Label>
                 <Select defaultValue="medio">
                   <SelectTrigger>

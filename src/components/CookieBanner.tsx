@@ -68,7 +68,7 @@ const CookieBanner = () => {
                 <Button 
                   onClick={acceptNecessary}
                   variant="outline"
-                  className="border-gray-600 text-gray-300 hover:text-white hover:border-gray-500 text-xs px-4 py-2"
+                  className="bg-red-800/80 border-red-700 text-white hover:bg-red-700/90 hover:text-white hover:border-red-600 text-xs px-4 py-2"
                   size="sm"
                 >
                   Apenas Necessários

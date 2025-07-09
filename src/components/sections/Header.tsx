@@ -39,7 +39,7 @@ const Header = ({ scrollToSection }: HeaderProps) => {
           {/* CTA Button */}
           <div className="hidden md:block">
             <Button asChild className="bg-white text-black hover:bg-gray-100 transition-all duration-300 hover:scale-105 border-0 rounded-full px-6 py-2 text-sm font-semibold shadow-lg">
-              <a href="/checkout.html">Acessar Plataforma</a>
+              <a href="/login">Acessar Plataforma</a>
             </Button>
           </div>
 

@@ -20,6 +20,7 @@ import TermsOfService from "./pages/TermsOfService";
 import CancellationPolicy from "./pages/CancellationPolicy";
 import CookiePolicy from "./pages/CookiePolicy";
 import Blog from "./pages/Blog";
+import Checkout from "./pages/Checkout";
 import CookieBanner from "./components/CookieBanner";
 import AdminLayout from "./components/AdminLayout";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
@@ -73,6 +74,7 @@ const App = () => (
             <Route path="/cancellation" element={<CancellationPolicy />} />
             <Route path="/cookies" element={<CookiePolicy />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/admin/*" element={
               <AdminProtectedRoute>
                 <AdminLayout />

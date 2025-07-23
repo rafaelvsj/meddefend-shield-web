@@ -36,7 +36,7 @@ const ContactSection = () => {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
-    window.location.href = '/checkout.html';
+    window.location.href = '/checkout';
   };
   return <section id="contato" className="py-20 bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900" data-animate>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

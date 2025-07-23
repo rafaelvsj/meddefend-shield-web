@@ -1,6 +1,7 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Home, 
   MessageCircle, 
@@ -8,7 +9,8 @@ import {
   CreditCard, 
   FileText, 
   Database, 
-  Settings 
+  Settings,
+  LogOut
 } from 'lucide-react';
 import { messagesApi } from '@/lib/api/messages';
 import MobileShell from '@/pages/admin/mobile/MobileShell';
@@ -27,6 +29,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import AdminHome from "@/pages/admin/AdminHome";
 import AdminMessages from "@/pages/admin/AdminMessages";
 import AdminUsers from "@/pages/admin/AdminUsers";
@@ -38,6 +41,12 @@ import AdminSettings from "@/pages/admin/AdminSettings";
 const AdminLayout = () => {
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    window.location.href = '/';
+  };
 
   const menuItems = [
     { title: "Home", url: "/admin", icon: Home },
@@ -166,10 +175,22 @@ const AdminLayout = () => {
         </Sidebar>
 
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <div className="h-4 w-px bg-sidebar-border" />
-            <h1 className="font-semibold">Admin Panel</h1>
+          <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="-ml-1" />
+              <div className="h-4 w-px bg-sidebar-border" />
+              <h1 className="font-semibold">Admin Panel</h1>
+            </div>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleLogout}
+              className="flex items-center gap-2 hover:bg-destructive/10 hover:text-destructive"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sair</span>
+            </Button>
           </header>
           
           <main className="flex-1 p-6">

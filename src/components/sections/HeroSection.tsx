@@ -39,7 +39,7 @@ const HeroSection = () => {
           </p>
           <div className={`transition-all duration-1000 delay-500 ${visibleElements.has('hero-content') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <Button asChild size="lg" className="bg-green-600 text-white hover:bg-green-700 px-10 py-6 text-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl border-0 rounded-full font-semibold font-inter shadow-2xl">
-              <a href="/checkout.html">Experimente Gratuitamente por 3 Dias</a>
+              <a href="/checkout.html">Experimente agora</a>
             </Button>
           </div>
           <p className={`text-sm text-gray-300 mt-6 font-light font-inter transition-all duration-1000 delay-700 ${visibleElements.has('hero-content') ? 'opacity-100' : 'opacity-0'}`}>

@@ -3,6 +3,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { redirectByRole } from '@/lib/utils/roleRedirect';
 
 interface AuthContextType {
   user: User | null;
@@ -29,6 +30,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Salvar role no localStorage quando houver sessão
+        if (session?.user) {
+          const userRole = session.user.user_metadata?.role || 'user';
+          window.localStorage.setItem('role', userRole);
+        } else {
+          // Limpar role quando não houver sessão
+          window.localStorage.removeItem('role');
+        }
       }
     );
 
@@ -37,6 +47,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // Salvar role no localStorage para sessão inicial
+      if (session?.user) {
+        const userRole = session.user.user_metadata?.role || 'user';
+        window.localStorage.setItem('role', userRole);
+      }
     });
 
     return () => subscription.unsubscribe();

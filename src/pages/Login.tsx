@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { redirectByRole } from "@/lib/utils/roleRedirect";
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -30,15 +31,10 @@ const Login = () => {
     });
     
     if (user && !rolesLoading) {
-      if (isAdmin) {
-        console.log('LOGIN DEBUG - Redirecting to /admin');
-        navigate('/admin');
-      } else {
-        console.log('LOGIN DEBUG - Redirecting to /dashboard');
-        navigate('/dashboard');
-      }
+      // Usar o novo sistema de redirecionamento por role
+      redirectByRole();
     }
-  }, [user, isAdmin, rolesLoading, navigate]);
+  }, [user, isAdmin, rolesLoading]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

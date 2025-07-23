@@ -14,9 +14,7 @@ const UrgencyCTA = ({
           A pergunta não é <strong>SE</strong> você será processado, mas <strong>QUANDO</strong>
         </p>
         <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg transition-all duration-300 hover:scale-105 hover:shadow-xl">
-          <a href="/checkout.html">🛡️ Proteja-se Agora
-
-        </a>
+          <a href="#pricing">🛡️ Proteja-se Agora</a>
         </Button>
         <p className="text-sm text-gray-400 mt-4">Não deixe sua documentação se tornar sua maior vulnerabilidade</p>
       </div>

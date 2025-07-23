@@ -1,12 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { AnaliseTab } from '@/components/dashboard/tabs/AnaliseTab';
 import { ModelosTab } from '@/components/dashboard/tabs/ModelosTab';
 import { HistoricoTab } from '@/components/dashboard/tabs/HistoricoTab';
+import { redirectByRole } from '@/lib/utils/roleRedirect';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('analise');
+
+  // Verificação de redirecionamento automático
+  useEffect(() => {
+    const role = window.localStorage.getItem('role');
+    if (role === 'admin') {
+      redirectByRole();
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-inter flex flex-col lg:flex-row">

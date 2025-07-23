@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
   public: {
     Tables: {
@@ -133,6 +133,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      custom_access_token_hook: {
+        Args: { event: Json }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _user_id: string

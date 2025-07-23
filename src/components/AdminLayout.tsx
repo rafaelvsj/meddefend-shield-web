@@ -1,5 +1,6 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { redirectByRole } from '@/lib/utils/roleRedirect';
 import { 
   Home, 
   MessageCircle, 
@@ -52,6 +53,14 @@ const AdminLayout = () => {
     { title: "AI Logs", url: "/admin/logs", icon: Database },
     { title: "Settings", url: "/admin/settings", icon: Settings },
   ];
+
+  // Verificação de redirecionamento automático
+  useEffect(() => {
+    const role = window.localStorage.getItem('role');
+    if (role !== 'admin') {
+      redirectByRole();
+    }
+  }, []);
 
   useEffect(() => {
     // Carregar contagem inicial

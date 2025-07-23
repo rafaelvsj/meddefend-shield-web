@@ -4,17 +4,26 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { AnaliseTab } from '@/components/dashboard/tabs/AnaliseTab';
 import { ModelosTab } from '@/components/dashboard/tabs/ModelosTab';
 import { HistoricoTab } from '@/components/dashboard/tabs/HistoricoTab';
-import { redirectByRole } from '@/lib/utils/roleRedirect';
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('analise');
 
   // Verificação de redirecionamento automático
   useEffect(() => {
-    const role = window.localStorage.getItem('role');
-    if (role === 'admin') {
-      redirectByRole();
-    }
+    const checkAndRedirect = async () => {
+      try {
+        // Verificar se o usuário é admin e redirecionar se necessário
+        const { data: isAdmin } = await supabase.rpc('is_admin');
+        if (isAdmin) {
+          window.location.href = '/admin';
+        }
+      } catch (error) {
+        console.error('Erro ao verificar role:', error);
+      }
+    };
+    
+    checkAndRedirect();
   }, []);
 
   return (

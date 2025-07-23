@@ -1,6 +1,6 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { redirectByRole } from '@/lib/utils/roleRedirect';
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Home, 
   MessageCircle, 
@@ -56,10 +56,21 @@ const AdminLayout = () => {
 
   // Verificação de redirecionamento automático
   useEffect(() => {
-    const role = window.localStorage.getItem('role');
-    if (role !== 'admin') {
-      redirectByRole();
-    }
+    const checkAndRedirect = async () => {
+      try {
+        // Verificar se o usuário é admin diretamente
+        const { data: isAdmin } = await supabase.rpc('is_admin');
+        if (!isAdmin) {
+          window.location.href = '/dashboard';
+        }
+      } catch (error) {
+        console.error('Erro ao verificar role:', error);
+        // Em caso de erro, redirecionar para dashboard
+        window.location.href = '/dashboard';
+      }
+    };
+    
+    checkAndRedirect();
   }, []);
 
   useEffect(() => {

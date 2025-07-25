@@ -50,6 +50,78 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_base: {
+        Row: {
+          content: string | null
+          created_at: string
+          created_by: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          original_name: string
+          processed_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          original_name: string
+          processed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          original_name?: string
+          processed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      llm_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           auto_save_analyses: boolean | null

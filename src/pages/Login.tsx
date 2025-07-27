@@ -22,13 +22,12 @@ const Login = () => {
   const { user, signIn, signUp, signInWithGoogle } = useAuth();
   const { isAdmin, loading: rolesLoading } = useUserRoles();
 
-  // Redirect based on user role if user is already logged in
+  // Check if user is already logged in and redirect to dashboard
   useEffect(() => {
     if (user && !rolesLoading) {
-      // Usar o novo sistema de redirecionamento por role
-      redirectByRole();
+      navigate('/dashboard');
     }
-  }, [user, isAdmin, rolesLoading]);
+  }, [user, rolesLoading, navigate]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,13 +217,13 @@ const Login = () => {
           {/* Footer */}
           <div className="mt-8 text-center">
             <p className="text-gray-600">
-              {isLogin ? 'Não tem uma conta?' : 'Já tem uma conta?'}{' '}
-              <button 
-                onClick={() => setIsLogin(!isLogin)}
+              Não tem uma conta?{' '}
+              <a 
+                href="/signup"
                 className="text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-300"
               >
-                {isLogin ? 'Criar conta gratuita' : 'Fazer login'}
-              </button>
+                Criar conta gratuita
+              </a>
             </p>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { AnaliseTab } from '@/components/dashboard/tabs/AnaliseTab';
@@ -13,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('analise');
   const { subscription, openCustomerPortal } = useSubscription();
+  const navigate = useNavigate();
 
   // Verificação de redirecionamento automático
   useEffect(() => {
@@ -91,11 +93,11 @@ const Dashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    onClick={() => window.location.href = '/checkout'}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                    size="sm"
-                  >
+                   <Button
+                     onClick={() => navigate('/checkout')}
+                     className="bg-green-600 hover:bg-green-700 text-white"
+                     size="sm"
+                   >
                     <Crown className="h-4 w-4 mr-2" />
                     Fazer Upgrade
                   </Button>

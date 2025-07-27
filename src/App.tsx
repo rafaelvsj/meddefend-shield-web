@@ -9,6 +9,7 @@ import { UserSettingsProvider } from "@/hooks/useUserSettings";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import UserProfile from "./pages/UserProfile";
 import AccountSettings from "./pages/AccountSettings";
@@ -39,6 +40,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />

@@ -79,68 +79,32 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Verificar se usuário está logado
+    if (!user) {
+      toast({
+        title: "Login necessário",
+        description: "Você precisa estar logado para fazer upgrade de plano.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
-      // Verificar se o usuário já está logado
-      let checkoutUser = user;
-      
-      if (!checkoutUser) {
-        console.log('Creating new user account for checkout...');
-        const { data: authData, error: signUpError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: `temp_${Date.now()}`, // Senha temporária
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard?payment=success`,
-            data: {
-              full_name: formData.nome,
-              crm: formData.crm,
-              especialidade: formData.especialidade,
-              telefone: formData.telefone
-            }
-          }
-        });
-
-        if (signUpError) {
-          // Se usuário já existe, tentar fazer login
-          if (signUpError.message.includes('already registered')) {
-            toast({
-              title: "Conta já existe",
-              description: "Por favor, faça login ou use outro email.",
-              variant: "destructive"
-            });
-            navigate('/login');
-            return;
-          }
-          throw signUpError;
-        }
-
-        checkoutUser = authData?.user;
-        
-        if (checkoutUser) {
-          toast({
-            title: "Conta criada",
-            description: "Redirecionando para pagamento...",
-          });
-          
-          // Aguardar um pouco para a conta ser processada
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-      }
-
-      // Agora fazer o checkout
-      console.log('Calling createCheckout with user:', checkoutUser?.id);
+      console.log('Calling createCheckout for logged user:', user.id, 'plan:', formData.plano);
       await createCheckout(formData.plano);
       toast({
         title: "Redirecionando para pagamento",
-        description: "Você será redirecionado para o Stripe em instantes.",
+        description: "Você será redirecionado para completar o pagamento.",
       });
     } catch (error) {
       console.error('Erro no checkout:', error);
       toast({
         title: "Erro no checkout",
-        description: "Ocorreu um erro ao processar sua solicitação. Tente novamente.",
-        variant: "destructive"
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -175,10 +139,17 @@ const Checkout = () => {
           <div>
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white text-2xl">Finalize sua assinatura</CardTitle>
-                <p className="text-gray-300">
-                  Preencha seus dados para começar a proteger sua prática médica
-                </p>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center">
+                    <Shield className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-white text-2xl">Upgrade de Plano</CardTitle>
+                    <p className="text-gray-300">
+                      Logado como: {user?.email}
+                    </p>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">

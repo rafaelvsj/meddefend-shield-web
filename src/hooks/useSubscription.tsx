@@ -85,9 +85,14 @@ export const useSubscription = () => {
   const createCheckout = useCallback(async (plan: string) => {
     console.log('[useSubscription] Creating checkout for plan:', plan, 'user:', user?.id);
     
-    // Para checkout sem usuário logado, vamos permitir a criação da sessão
     if (!user) {
-      console.log('[useSubscription] No user logged in, proceeding with guest checkout');
+      console.log('[useSubscription] No user logged in - checkout requires authentication');
+      toast({
+        title: "Login necessário",
+        description: "Você precisa fazer login para assinar um plano.",
+        variant: "destructive",
+      });
+      return;
     }
     
     try {

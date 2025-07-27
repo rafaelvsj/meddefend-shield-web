@@ -39,7 +39,7 @@ const PricingSection = ({
   const handlePlanSelection = (planName: string) => {
     if (planName === "Free") {
       if (!user) {
-        navigate('/login');
+        navigate('/signup');
       } else {
         navigate('/dashboard');
       }
@@ -48,6 +48,13 @@ const PricingSection = ({
 
     if (planName === "Clínicas") {
       scrollToSection('contato');
+      return;
+    }
+
+    // Para planos pagos
+    if (!user) {
+      // Usuário não logado - vai para signup gratuito
+      navigate('/signup');
       return;
     }
 
@@ -60,10 +67,10 @@ const PricingSection = ({
 
     const stripePlanId = planMap[planName];
     if (stripePlanId && createCheckout) {
-      createCheckout(stripePlanId);
-    } else if (stripePlanId && !user) {
-      // Se não estiver logado, redirecionar para login
-      navigate('/login');
+      // Usuário logado sem assinatura - vai para checkout (upgrade)
+      navigate('/checkout', { 
+        state: { selectedPlan: planName }
+      });
     }
   };
 
@@ -225,7 +232,9 @@ const PricingSection = ({
                   onClick={() => handlePlanSelection(plan.name)}
                   disabled={plan.isActive}
                 >
-                  {plan.isActive ? "Plano Atual" : plan.cta}
+                  {!user ? "Começar Gratuitamente" : 
+                   plan.isActive ? "Plano Atual" : 
+                   subscription?.subscribed ? "Alterar Plano" : "Fazer Upgrade"}
                 </Button>
               </CardContent>
             </Card>)}

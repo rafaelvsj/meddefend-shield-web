@@ -6,28 +6,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { useSubscription } from '@/hooks/useSubscription';
-import { SubscriptionGate } from '@/components/SubscriptionGate';
 
 export const AnaliseTab = () => {
-  const { subscription } = useSubscription();
   const [text, setText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<any>(null);
-  const [monthlyAnalyses, setMonthlyAnalyses] = useState(0);
 
   const handleAnalyze = async () => {
     if (!text.trim()) return;
-    
-    // Verificar limites baseados no plano
-    if (!subscription.subscribed) {
-      return; // Será bloqueado pelo SubscriptionGate
-    }
-    
-    // Verificar limite mensal para plano starter
-    if (subscription.subscription_tier === 'starter' && monthlyAnalyses >= 50) {
-      return; // Será bloqueado pelo SubscriptionGate
-    }
     
     setIsAnalyzing(true);
     
@@ -114,87 +100,54 @@ export const AnaliseTab = () => {
     URL.revokeObjectURL(url);
   };
 
-  // Verificar se usuário pode analisar
-  const canAnalyze = () => {
-    if (!subscription.subscribed) return false;
-    if (subscription.subscription_tier === 'starter' && monthlyAnalyses >= 50) return false;
-    return true;
-  };
-
-  const renderAnalysisContent = () => (
-    <Card className="bg-white border border-medical-slate-200 shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-medical-slate-800 flex items-center space-x-2">
-          <FileText className="h-5 w-5" />
-          <span>Insira aqui sua solicitação ou texto para análise</span>
-        </CardTitle>
-        {subscription.subscription_tier === 'starter' && (
-          <p className="text-sm text-gray-600">
-            Análises este mês: {monthlyAnalyses}/50
-          </p>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Insira aqui sua solicitação ou texto prévio para análise..."
-          className="min-h-[200px] bg-medical-slate-50 border-medical-slate-200 focus:border-medical-blue-400 resize-none"
-        />
-        
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button 
-            onClick={handleAnalyze}
-            disabled={!text.trim() || isAnalyzing || !canAnalyze()}
-            className="flex-1 sm:flex-none bg-medical-blue-600 hover:bg-medical-blue-700 text-white"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analisando...
-              </>
-            ) : (
-              <>
-                <Send className="mr-2 h-4 w-4" />
-                Analisar Texto
-              </>
-            )}
-          </Button>
-          
-          <Button 
-            onClick={copyToClipboard}
-            variant="outline"
-            disabled={!text.trim()}
-            className="flex-1 sm:flex-none border-medical-slate-200 text-medical-slate-600 hover:text-medical-slate-800"
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            Copiar
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {!subscription.subscribed ? (
-        <SubscriptionGate 
-          featureName="Análise de Documentos"
-          description="Analise seus documentos médicos com IA para garantir linguagem adequada e profissional."
-        >
-          {renderAnalysisContent()}
-        </SubscriptionGate>
-      ) : subscription.subscription_tier === 'starter' && monthlyAnalyses >= 50 ? (
-        <SubscriptionGate 
-          requiredTier="professional"
-          featureName="Análises Ilimitadas"
-          description="Você atingiu o limite de 50 análises mensais do plano Starter. Faça upgrade para análises ilimitadas."
-        >
-          {renderAnalysisContent()}
-        </SubscriptionGate>
-      ) : (
-        renderAnalysisContent()
-      )}
+      <Card className="bg-white border border-medical-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-medical-slate-800 flex items-center space-x-2">
+            <FileText className="h-5 w-5" />
+            <span>Insira aqui sua solicitação ou texto para análise</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Insira aqui sua solicitação ou texto prévio para análise..."
+            className="min-h-[200px] bg-medical-slate-50 border-medical-slate-200 focus:border-medical-blue-400 resize-none"
+          />
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button 
+              onClick={handleAnalyze}
+              disabled={!text.trim() || isAnalyzing}
+              className="flex-1 sm:flex-none bg-medical-blue-600 hover:bg-medical-blue-700 text-white"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Analisando...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Analisar Texto
+                </>
+              )}
+            </Button>
+            
+            <Button 
+              onClick={copyToClipboard}
+              variant="outline"
+              disabled={!text.trim()}
+              className="flex-1 sm:flex-none border-medical-slate-200 text-medical-slate-600 hover:text-medical-slate-800"
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Copiar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {analysis && (
         <Card className="bg-white border border-medical-slate-200 shadow-sm">

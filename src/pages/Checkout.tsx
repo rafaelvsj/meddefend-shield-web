@@ -9,7 +9,6 @@ import { CheckCircle, ArrowLeft, Shield, Clock, Users } from 'lucide-react';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -79,48 +78,19 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      toast({
+        title: "Login necessário",
+        description: "Você precisa estar logado para realizar a assinatura.",
+        variant: "destructive"
+      });
+      navigate('/login');
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-      // Se não estiver logado, criar conta primeiro
-      if (!user) {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: `temp_${Date.now()}`, // Senha temporária
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard?payment=success`,
-            data: {
-              full_name: formData.nome,
-              crm: formData.crm,
-              especialidade: formData.especialidade,
-              telefone: formData.telefone
-            }
-          }
-        });
-
-        if (signUpError) {
-          // Se usuário já existe, tentar fazer login
-          if (signUpError.message.includes('already registered')) {
-            toast({
-              title: "Conta já existe",
-              description: "Por favor, faça login ou use outro email.",
-              variant: "destructive"
-            });
-            navigate('/login');
-            return;
-          }
-          throw signUpError;
-        }
-
-        toast({
-          title: "Conta criada",
-          description: "Redirecionando para pagamento...",
-        });
-
-        // Aguardar um pouco para a conta ser criada
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-
       await createCheckout(formData.plano);
       toast({
         title: "Redirecionando para pagamento",
@@ -221,11 +191,12 @@ const Checkout = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="crm" className="text-gray-300">CRM</Label>
+                        <Label htmlFor="crm" className="text-gray-300">CRM *</Label>
                         <Input
                           id="crm"
                           name="crm"
                           type="text"
+                          required
                           value={formData.crm}
                           onChange={handleInputChange}
                           className="mt-1 bg-slate-700 border-slate-600 text-white focus:border-purple-400"

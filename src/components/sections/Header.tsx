@@ -36,11 +36,8 @@ const Header = ({ scrollToSection }: HeaderProps) => {
             <a href="/login" className="text-gray-200 hover:text-white transition-all duration-300 font-medium text-sm hover:scale-105">Login</a>
           </nav>
 
-          {/* CTA Buttons */}
-          <div className="hidden md:flex gap-3">
-            <Button asChild className="bg-green-600 text-white hover:bg-green-700 transition-all duration-300 hover:scale-105 border-0 rounded-full px-6 py-2 text-sm font-semibold shadow-lg">
-              <a href="/checkout">Fazer Upgrade</a>
-            </Button>
+          {/* CTA Button */}
+          <div className="hidden md:block">
             <Button asChild className="bg-white text-black hover:bg-gray-100 transition-all duration-300 hover:scale-105 border-0 rounded-full px-6 py-2 text-sm font-semibold shadow-lg">
               <a href="/login">Acessar Plataforma</a>
             </Button>
@@ -66,10 +63,7 @@ const Header = ({ scrollToSection }: HeaderProps) => {
               <button onClick={() => scrollToSection('contato')} className="block px-4 py-3 hover:bg-white/10 rounded-xl w-full text-left transition-all duration-300 font-medium text-sm text-gray-200 hover:text-white">Contato</button>
               <a href="/login" className="block px-4 py-3 hover:bg-white/10 rounded-xl transition-all duration-300 font-medium text-sm text-gray-200 hover:text-white">Login</a>
               <a href="/blog" className="block px-4 py-3 hover:bg-white/10 rounded-xl transition-all duration-300 font-medium text-sm text-gray-200 hover:text-white">Blog</a>
-              <Button asChild className="w-full mt-2 bg-green-600 text-white hover:bg-green-700 rounded-full text-sm font-semibold">
-                <a href="/checkout">Fazer Upgrade</a>
-              </Button>
-              <Button asChild className="w-full mt-2 bg-white text-black hover:bg-gray-100 rounded-full text-sm font-semibold">
+              <Button asChild className="w-full mt-4 bg-white text-black hover:bg-gray-100 rounded-full text-sm font-semibold">
                 <a href="/login">Acessar Plataforma</a>
               </Button>
             </div>

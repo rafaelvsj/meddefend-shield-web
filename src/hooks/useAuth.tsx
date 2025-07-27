@@ -36,8 +36,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const userRole = session.user.user_metadata?.role || 'user';
           window.localStorage.setItem('role', userRole);
           
-          // Não fazer chamadas automáticas de verificação de assinatura aqui
-          // O useSubscription vai cuidar disso quando necessário
+          // Verificar assinatura quando o usuário faz login
+          if (event === 'SIGNED_IN') {
+            supabase.functions.invoke('check-subscription').catch(console.error);
+          }
         } else {
           // Limpar role quando não houver sessão
           window.localStorage.removeItem('role');
@@ -56,8 +58,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userRole = session.user.user_metadata?.role || 'user';
         window.localStorage.setItem('role', userRole);
         
-        // Não fazer chamadas automáticas de verificação de assinatura aqui também
-        // O useSubscription vai cuidar disso quando necessário
+        // Verificar assinatura na sessão inicial
+        supabase.functions.invoke('check-subscription').catch(console.error);
       }
     });
 

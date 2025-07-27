@@ -23,46 +23,28 @@ serve(async (req) => {
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    if (!stripeKey.startsWith("sk_")) throw new Error("STRIPE_SECRET_KEY deve ser uma chave secreta (sk_), não pública (pk_)");
-    logStep("Stripe key verified", { keyType: stripeKey.substring(0, 7) + "..." });
+    logStep("Stripe key verified");
 
     // Create a Supabase client using the anon key
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
-    logStep("Supabase client created");
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
-    logStep("Extracting token from header");
-    
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) {
-      logStep("User authentication failed", { error: userError.message });
-      throw new Error(`Authentication error: ${userError.message}`);
-    }
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
-    if (!user?.email) {
-      logStep("No user or email found");
-      throw new Error("User not authenticated or email not available");
-    }
+    if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Get request body to determine plan
-    const body = await req.text();
-    logStep("Raw request body", { body });
-    
-    if (!body) {
-      throw new Error("No request body provided");
-    }
-    
-    const parsed = JSON.parse(body);
-    const { plan } = parsed;
-    logStep("Plan received and parsed", { plan, fullBody: parsed });
+    const { plan } = await req.json();
+    logStep("Plan received", { plan });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     

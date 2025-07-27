@@ -83,16 +83,12 @@ export const useSubscription = () => {
   }, [user, toast, lastCheckTime]);
 
   const createCheckout = useCallback(async (plan: string) => {
+    console.log('[useSubscription] Creating checkout for plan:', plan, 'user:', user?.id);
+    
+    // Para checkout sem usuário logado, vamos permitir a criação da sessão
     if (!user) {
-      toast({
-        title: "Login necessário",
-        description: "Você precisa fazer login para assinar um plano.",
-        variant: "destructive",
-      });
-      return;
+      console.log('[useSubscription] No user logged in, proceeding with guest checkout');
     }
-
-    console.log('[useSubscription] Creating checkout for plan:', plan, 'user:', user.id);
     
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {

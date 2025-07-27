@@ -82,9 +82,12 @@ const Checkout = () => {
     setIsLoading(true);
     
     try {
-      // Se não estiver logado, criar conta primeiro
-      if (!user) {
-        const { error: signUpError } = await supabase.auth.signUp({
+      // Verificar se o usuário já está logado
+      let checkoutUser = user;
+      
+      if (!checkoutUser) {
+        console.log('Creating new user account for checkout...');
+        const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email: formData.email,
           password: `temp_${Date.now()}`, // Senha temporária
           options: {
@@ -112,15 +115,21 @@ const Checkout = () => {
           throw signUpError;
         }
 
-        toast({
-          title: "Conta criada",
-          description: "Redirecionando para pagamento...",
-        });
-
-        // Aguardar um pouco para a conta ser criada
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        checkoutUser = authData?.user;
+        
+        if (checkoutUser) {
+          toast({
+            title: "Conta criada",
+            description: "Redirecionando para pagamento...",
+          });
+          
+          // Aguardar um pouco para a conta ser processada
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       }
 
+      // Agora fazer o checkout
+      console.log('Calling createCheckout with user:', checkoutUser?.id);
       await createCheckout(formData.plano);
       toast({
         title: "Redirecionando para pagamento",

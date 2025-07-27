@@ -10,7 +10,9 @@ import {
   FileText, 
   Database, 
   Settings,
-  LogOut
+  LogOut,
+  Brain,
+  BookOpen
 } from 'lucide-react';
 import { messagesApi } from '@/lib/api/messages';
 import MobileShell from '@/pages/admin/mobile/MobileShell';
@@ -37,6 +39,8 @@ import AdminBilling from "@/pages/admin/AdminBilling";
 import AdminTemplates from "@/pages/admin/AdminTemplates";
 import AdminLogs from "@/pages/admin/AdminLogs";
 import AdminSettings from "@/pages/admin/AdminSettings";
+import AdminKnowledgeBase from "@/pages/admin/AdminKnowledgeBase";
+import AdminLLMSettings from "@/pages/admin/AdminLLMSettings";
 
 const AdminLayout = () => {
   const location = useLocation();
@@ -58,6 +62,8 @@ const AdminLayout = () => {
     },
     { title: "Users", url: "/admin/users", icon: Users },
     { title: "Plans & Billing", url: "/admin/billing", icon: CreditCard },
+    { title: "Knowledge Base", url: "/admin/knowledge-base", icon: BookOpen },
+    { title: "LLM Settings", url: "/admin/llm-settings", icon: Brain },
     { title: "Templates", url: "/admin/templates", icon: FileText },
     { title: "AI Logs", url: "/admin/logs", icon: Database },
     { title: "Settings", url: "/admin/settings", icon: Settings },
@@ -199,6 +205,8 @@ const AdminLayout = () => {
               <Route path="/messages" element={<AdminMessages />} />
               <Route path="/users" element={<AdminUsers />} />
               <Route path="/billing" element={<AdminBilling />} />
+              <Route path="/knowledge-base" element={<AdminKnowledgeBase />} />
+              <Route path="/llm-settings" element={<AdminLLMSettings />} />
               <Route path="/templates" element={<AdminTemplates />} />
               <Route path="/logs" element={<AdminLogs />} />
               <Route path="/settings" element={<AdminSettings />} />

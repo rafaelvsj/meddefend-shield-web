@@ -6,22 +6,29 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, ArrowLeft, Shield, Clock, Users } from 'lucide-react';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { createCheckout } = useSubscription();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
     telefone: '',
     especialidade: '',
     crm: '',
-    plano: 'premium'
+    plano: 'starter'
   });
 
   const planos = {
-    basic: {
-      name: 'Básico',
-      price: 'R$ 97',
+    starter: {
+      name: 'Starter',
+      price: 'R$ 49,90',
       period: '/mês',
       features: [
         'Análise de até 50 documentos/mês',
@@ -31,9 +38,9 @@ const Checkout = () => {
       ],
       recommended: false
     },
-    premium: {
-      name: 'Premium',
-      price: 'R$ 197',
+    professional: {
+      name: 'Professional',
+      price: 'R$ 129,90',
       period: '/mês',
       features: [
         'Análise ilimitada de documentos',
@@ -45,12 +52,12 @@ const Checkout = () => {
       ],
       recommended: true
     },
-    enterprise: {
-      name: 'Enterprise',
-      price: 'R$ 497',
+    ultra: {
+      name: 'Ultra',
+      price: 'R$ 349,90',
       period: '/mês',
       features: [
-        'Tudo do Premium',
+        'Tudo do Professional',
         'API personalizada',
         'Integração com sistemas hospitalares',
         'Treinamento personalizado',
@@ -68,12 +75,37 @@ const Checkout = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aqui será implementada a integração com o sistema de pagamento
-    console.log('Dados do checkout:', formData);
-    // Por enquanto, redireciona para o login para acessar a plataforma
-    navigate('/login');
+    
+    if (!user) {
+      toast({
+        title: "Login necessário",
+        description: "Você precisa estar logado para realizar a assinatura.",
+        variant: "destructive"
+      });
+      navigate('/login');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      await createCheckout(formData.plano);
+      toast({
+        title: "Redirecionando para pagamento",
+        description: "Você será redirecionado para o Stripe em instantes.",
+      });
+    } catch (error) {
+      console.error('Erro no checkout:', error);
+      toast({
+        title: "Erro no checkout",
+        description: "Ocorreu um erro ao processar sua solicitação. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const selectedPlan = planos[formData.plano as keyof typeof planos];
@@ -218,9 +250,10 @@ const Checkout = () => {
 
                   <Button 
                     type="submit" 
-                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-medium"
+                    disabled={isLoading}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 text-lg font-medium disabled:opacity-50"
                   >
-                    Finalizar Assinatura - {selectedPlan.price}{selectedPlan.period}
+                    {isLoading ? 'Processando...' : `Finalizar Assinatura - ${selectedPlan.price}${selectedPlan.period}`}
                   </Button>
                 </form>
               </CardContent>
@@ -275,7 +308,7 @@ const Checkout = () => {
 
                 <div className="pt-6 border-t border-slate-600">
                   <p className="text-sm text-gray-400">
-                    * Este é um preview da página de checkout. O sistema de pagamento será implementado em breve.
+                    Pagamento seguro processado pelo Stripe. Você pode cancelar sua assinatura a qualquer momento.
                   </p>
                 </div>
               </CardContent>

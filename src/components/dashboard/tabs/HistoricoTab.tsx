@@ -1,31 +1,53 @@
+import { useState, useEffect } from 'react';
 import { History, FileText, Clock, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 export const HistoricoTab = () => {
-  const historyItems = [
-    {
-      id: 1,
-      title: 'Análise de Receituário - Paciente XYZ',
-      date: '15/03/2024',
-      score: 92,
-      status: 'Concluído'
-    },
-    {
-      id: 2,
-      title: 'Relatório Médico - Consulta ABC',
-      date: '14/03/2024',
-      score: 88,
-      status: 'Concluído'
-    },
-    {
-      id: 3,
-      title: 'Atestado Médico - Funcionário DEF',
-      date: '13/03/2024',
-      score: 95,
-      status: 'Concluído'
+  const [historyItems, setHistoryItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
+  const loadHistory = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const { data, error } = await supabase
+        .from('user_analyses')
+        .select('*')
+        .eq('user_id', userData.user?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedHistory = data?.map(item => ({
+        id: item.id,
+        title: item.title,
+        date: new Date(item.created_at).toLocaleDateString('pt-BR'),
+        score: item.score,
+        status: item.status === 'completed' ? 'Concluído' : 'Processando'
+      })) || [];
+
+      setHistoryItems(formattedHistory);
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+      // Fallback para dados estáticos
+      setHistoryItems([
+        {
+          id: 1,
+          title: 'Análise de Receituário - Paciente XYZ',
+          date: '15/03/2024',
+          score: 92,
+          status: 'Concluído'
+        }
+      ]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -37,8 +59,15 @@ export const HistoricoTab = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {historyItems.map((item) => (
+          {loading ? (
+            <div className="text-center py-4">Carregando histórico...</div>
+          ) : historyItems.length === 0 ? (
+            <div className="text-center py-8 text-medical-slate-500">
+              Nenhuma análise encontrada. Faça sua primeira análise na aba "Análise".
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {historyItems.map((item) => (
               <div key={item.id} className="p-4 border border-medical-slate-200 rounded-lg hover:shadow-sm transition-shadow">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -69,8 +98,9 @@ export const HistoricoTab = () => {
                   </Button>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

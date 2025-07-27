@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { redirectByRole } from "@/lib/utils/roleRedirect";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -23,13 +24,6 @@ const Login = () => {
 
   // Redirect based on user role if user is already logged in
   useEffect(() => {
-    console.log('LOGIN DEBUG - Redirect check:', { 
-      user: !!user, 
-      rolesLoading, 
-      isAdmin,
-      userEmail: user?.email 
-    });
-    
     if (user && !rolesLoading) {
       // Usar o novo sistema de redirecionamento por role
       redirectByRole();
@@ -57,6 +51,25 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     await signInWithGoogle();
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email.trim()) {
+      alert('Por favor, insira seu email primeiro');
+      return;
+    }
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+      
+      if (error) throw error;
+      
+      alert('Email de recuperação enviado! Verifique sua caixa de entrada.');
+    } catch (error: any) {
+      alert(`Erro ao enviar email de recuperação: ${error.message}`);
+    }
   };
 
   return (
@@ -177,9 +190,12 @@ const Login = () => {
                     Lembrar de mim
                   </Label>
                 </div>
-                <a href="#" className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-300">
+                <button 
+                  onClick={() => handlePasswordReset()}
+                  className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-300"
+                >
                   Esqueceu a senha?
-                </a>
+                </button>
               </div>
             )}
 

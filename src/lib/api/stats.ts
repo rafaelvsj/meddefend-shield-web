@@ -11,7 +11,7 @@ export interface AdminStats {
 export const statsApi = {
   async getStats(): Promise<AdminStats> {
     try {
-      const [newUsers, unreadMessages] = await Promise.all([
+      const [newUsers, unreadMessages, analyses, activeSubs] = await Promise.all([
         // Novos usuários nas últimas 24h
         supabase
           .from('profiles')
@@ -22,14 +22,37 @@ export const statsApi = {
         supabase
           .from('contact_messages')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'unread')
+          .eq('status', 'unread'),
+
+        // Análises realizadas nas últimas 24h (proxy para tokens IA)
+        supabase
+          .from('user_analyses')
+          .select('*', { count: 'exact', head: true })
+          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+
+        // Assinantes ativos
+        supabase
+          .from('subscribers')
+          .select('*', { count: 'exact', head: true })
+          .eq('subscribed', true)
       ]);
+
+      // Calcular churn dos últimos 30 dias
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { count: canceledSubs } = await supabase
+        .from('subscribers')
+        .select('*', { count: 'exact', head: true })
+        .eq('subscribed', false)
+        .gte('updated_at', thirtyDaysAgo);
+
+      const totalSubs = (activeSubs.count || 0) + (canceledSubs || 0);
+      const churnRate = totalSubs > 0 ? Math.round((canceledSubs || 0) / totalSubs * 100) : 0;
 
       return {
         newUsers24h: newUsers.count || 0,
-        iaTokens24h: Math.floor(Math.random() * 50000) + 25000, // Mock data - seria conectado ao sistema de tokens
-        churn30d: Math.floor(Math.random() * 15) + 5, // Mock data - seria calculado baseado em cancelamentos
-        activeSubs: Math.floor(Math.random() * 500) + 200, // Mock data - seria conectado ao sistema de assinaturas
+        iaTokens24h: (analyses.count || 0) * 1000, // Aproximação: cada análise = ~1000 tokens
+        churn30d: churnRate,
+        activeSubs: activeSubs.count || 0,
         unreadMessages: unreadMessages.count || 0
       };
     } catch (error) {

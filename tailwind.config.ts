@@ -70,25 +70,39 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Medical professional color palette
+				// Medical professional color palette - HSL format
 				medical: {
+					primary: 'hsl(var(--medical-primary))',
+					'primary-foreground': 'hsl(var(--medical-primary-foreground))',
+					secondary: 'hsl(var(--medical-secondary))',
+					'secondary-foreground': 'hsl(var(--medical-secondary-foreground))',
+					accent: 'hsl(var(--medical-accent))',
+					'accent-foreground': 'hsl(var(--medical-accent-foreground))',
+					success: 'hsl(var(--medical-success))',
+					'success-foreground': 'hsl(var(--medical-success-foreground))',
+					warning: 'hsl(var(--medical-warning))',
+					'warning-foreground': 'hsl(var(--medical-warning-foreground))',
+					error: 'hsl(var(--medical-error))',
+					'error-foreground': 'hsl(var(--medical-error-foreground))',
 					blue: {
-						50: '#eff6ff',
-						100: '#dbeafe',
-						500: '#3b82f6',
-						600: '#2563eb',
-						700: '#1d4ed8',
-						800: '#1e40af'
+						50: 'hsl(var(--medical-slate-50))',
+						100: 'hsl(var(--medical-slate-100))',
+						400: 'hsl(var(--medical-primary))',
+						500: 'hsl(var(--medical-primary))',
+						600: 'hsl(var(--medical-primary))',
+						700: 'hsl(var(--medical-primary))'
 					},
 					slate: {
-						50: '#f8fafc',
-						100: '#f1f5f9',
-						200: '#e2e8f0',
-						300: '#cbd5e1',
-						500: '#64748b',
-						600: '#475569',
-						700: '#334155',
-						800: '#1e293b'
+						50: 'hsl(var(--medical-slate-50))',
+						100: 'hsl(var(--medical-slate-100))',
+						200: 'hsl(var(--medical-slate-200))',
+						300: 'hsl(var(--medical-slate-300))',
+						400: 'hsl(var(--medical-slate-400))',
+						500: 'hsl(var(--medical-slate-500))',
+						600: 'hsl(var(--medical-slate-600))',
+						700: 'hsl(var(--medical-slate-700))',
+						800: 'hsl(var(--medical-slate-800))',
+						900: 'hsl(var(--medical-slate-900))'
 					}
 				}
 			},

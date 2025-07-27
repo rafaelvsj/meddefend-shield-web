@@ -14,39 +14,95 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Use the service role key to perform writes (upsert) in Supabase
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
+  logStep("Function started", { method: req.method, url: req.url });
 
   try {
-    logStep("Function started");
-
+    // Environment check
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
 
+    logStep("Environment check", { 
+      hasSupabaseUrl: !!supabaseUrl, 
+      hasServiceKey: !!supabaseServiceKey,
+      hasStripeKey: !!stripeKey
+    });
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Supabase configuration missing");
+    }
+
+    if (!stripeKey) {
+      logStep("No Stripe key - returning unsubscribed state");
+      return new Response(JSON.stringify({ subscribed: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    if (!stripeKey.startsWith("sk_")) {
+      logStep("Invalid Stripe key format", { keyStart: stripeKey.substring(0, 3) });
+      throw new Error("STRIPE_SECRET_KEY deve ser uma chave secreta (sk_), não pública (pk_)");
+    }
+    
+    logStep("Stripe key verified", { keyType: stripeKey.substring(0, 7) + "..." });
+
+    // Use the service role key to perform writes (upsert) in Supabase
+    const supabaseClient = createClient(
+      supabaseUrl,
+      supabaseServiceKey,
+      { auth: { persistSession: false } }
+    );
+
+    logStep("Supabase client created");
+
+    // Check if user is authenticated
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader) {
+      logStep("No authorization header - returning unsubscribed state");
+      return new Response(JSON.stringify({ subscribed: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
     logStep("Authenticating user with token");
     
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    if (userError) {
+      logStep("Authentication failed, returning unsubscribed state", { error: userError.message });
+      return new Response(JSON.stringify({ subscribed: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
+    if (!user?.email) {
+      logStep("No user or email found - returning unsubscribed state");
+      return new Response(JSON.stringify({ subscribed: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Initialize Stripe
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    logStep("Stripe client initialized");
+
+    // Search for customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    logStep("Customer search completed", { found: customers.data.length > 0 });
     
     if (customers.data.length === 0) {
       logStep("No customer found, updating unsubscribed state");
@@ -59,6 +115,7 @@ serve(async (req) => {
         subscription_end: null,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'email' });
+      
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -68,14 +125,18 @@ serve(async (req) => {
     const customerId = customers.data[0].id;
     logStep("Found Stripe customer", { customerId });
 
+    // Check for active subscriptions
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
       limit: 1,
     });
+    
     const hasActiveSub = subscriptions.data.length > 0;
     let subscriptionTier = null;
     let subscriptionEnd = null;
+
+    logStep("Subscription check completed", { hasActiveSub, count: subscriptions.data.length });
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
@@ -88,18 +149,19 @@ serve(async (req) => {
       const amount = price.unit_amount || 0;
       
       if (amount <= 5000) {
-        subscriptionTier = "Starter";
+        subscriptionTier = "starter";
       } else if (amount <= 15000) {
-        subscriptionTier = "Professional";
+        subscriptionTier = "professional";
       } else {
-        subscriptionTier = "Ultra";
+        subscriptionTier = "ultra";
       }
       logStep("Determined subscription tier", { priceId, amount, subscriptionTier });
     } else {
       logStep("No active subscription found");
     }
 
-    await supabaseClient.from("subscribers").upsert({
+    // Update database
+    const upsertResult = await supabaseClient.from("subscribers").upsert({
       email: user.email,
       user_id: user.id,
       stripe_customer_id: customerId,
@@ -109,21 +171,37 @@ serve(async (req) => {
       updated_at: new Date().toISOString(),
     }, { onConflict: 'email' });
 
-    logStep("Updated database with subscription info", { subscribed: hasActiveSub, subscriptionTier });
-    return new Response(JSON.stringify({
+    logStep("Database update completed", { 
+      success: !upsertResult.error, 
+      error: upsertResult.error?.message,
+      subscribed: hasActiveSub, 
+      subscriptionTier 
+    });
+
+    const response = {
       subscribed: hasActiveSub,
       subscription_tier: subscriptionTier,
       subscription_end: subscriptionEnd
-    }), {
+    };
+
+    logStep("Function completed successfully", response);
+
+    return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
+
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in check-subscription", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    logStep("ERROR in check-subscription", { message: errorMessage, stack: error?.stack });
+    
+    // Return a safe response instead of error
+    return new Response(JSON.stringify({ 
+      subscribed: false,
+      error: errorMessage 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status: 200, // Changed from 500 to 200 to prevent frontend errors
     });
   }
 });

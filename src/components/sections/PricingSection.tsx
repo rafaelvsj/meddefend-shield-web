@@ -13,9 +13,13 @@ const PricingSection = ({
 }: PricingSectionProps) => {
   const [visibleElements, setVisibleElements] = useState(new Set());
   const [isAnnual, setIsAnnual] = useState(true); // Começar com anual selecionado
-  const { subscription, createCheckout } = useSubscription();
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Só usar subscription hook se o usuário estiver logado
+  const subscriptionHook = useSubscription();
+  const subscription = user ? subscriptionHook.subscription : { subscribed: false };
+  const createCheckout = user ? subscriptionHook.createCheckout : null;
 
   useEffect(() => {
     const observer = new IntersectionObserver(entries => {
@@ -55,8 +59,11 @@ const PricingSection = ({
     };
 
     const stripePlanId = planMap[planName];
-    if (stripePlanId) {
+    if (stripePlanId && createCheckout) {
       createCheckout(stripePlanId);
+    } else if (stripePlanId && !user) {
+      // Se não estiver logado, redirecionar para login
+      navigate('/login');
     }
   };
 

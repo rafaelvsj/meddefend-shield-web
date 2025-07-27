@@ -29,6 +29,15 @@ const Dashboard = () => {
     };
     
     checkAndRedirect();
+
+    // Verificar parâmetros de sucesso de pagamento
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success') {
+      // Recarregar status da assinatura após pagamento bem-sucedido
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    }
   }, []);
 
   return (
@@ -40,42 +49,60 @@ const Dashboard = () => {
         
         <main className="flex-1 p-4 lg:p-8 bg-medical-slate-50 overflow-y-auto" role="main" aria-labelledby="main-heading">
           {/* Subscription Status Card */}
-          <Card className="mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 border-purple-200 dark:border-purple-800">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Crown className="h-5 w-5 text-purple-600" />
-                Status da Assinatura
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-lg font-semibold">
-                    {subscription.subscribed 
-                      ? `Plano ${subscription.subscription_tier}` 
-                      : 'Plano Gratuito'
-                    }
-                  </p>
-                  {subscription.subscription_end && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      Renova em: {new Date(subscription.subscription_end).toLocaleDateString('pt-BR')}
-                    </p>
-                  )}
-                </div>
-                {subscription.subscribed && (
-                  <Button 
-                    variant="outline" 
+          {subscription.subscribed ? (
+            <Card className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Crown className="h-5 w-5 text-green-600" />
+                    <div>
+                      <p className="font-medium text-green-800">
+                        Plano {subscription.subscription_tier?.charAt(0).toUpperCase() + subscription.subscription_tier?.slice(1)} Ativo
+                      </p>
+                      <p className="text-sm text-green-600">
+                        {subscription.subscription_end && `Válido até ${new Date(subscription.subscription_end).toLocaleDateString()}`}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
                     onClick={openCustomerPortal}
-                    className="flex items-center gap-2"
+                    variant="outline"
+                    size="sm"
+                    className="border-green-300 text-green-700 hover:bg-green-50"
                   >
-                    <CreditCard className="h-4 w-4" />
-                    Gerenciar Assinatura
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Gerenciar
                   </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Calendar className="h-5 w-5 text-yellow-600" />
+                    <div>
+                      <p className="font-medium text-yellow-800">
+                        Conta Gratuita
+                      </p>
+                      <p className="text-sm text-yellow-600">
+                        Faça upgrade para acessar todos os recursos
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => window.location.href = '/checkout'}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    size="sm"
+                  >
+                    <Crown className="h-4 w-4 mr-2" />
+                    Fazer Upgrade
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {activeTab === 'analise' && <AnaliseTab />}
           {activeTab === 'modelos' && <ModelosTab />}

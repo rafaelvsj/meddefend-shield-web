@@ -27,21 +27,45 @@ serve(async (req) => {
 
   try {
     logStep("Function started");
+    logStep("Environment check", { 
+      hasSupabaseUrl: !!Deno.env.get("SUPABASE_URL"), 
+      hasServiceKey: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+      hasStripeKey: !!Deno.env.get("STRIPE_SECRET_KEY")
+    });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    if (!stripeKey.startsWith("sk_")) throw new Error("STRIPE_SECRET_KEY deve ser uma chave secreta (sk_), não pública (pk_)");
+    if (!stripeKey) {
+      logStep("STRIPE_SECRET_KEY is not set");
+      throw new Error("STRIPE_SECRET_KEY is not set");
+    }
+    if (!stripeKey.startsWith("sk_")) {
+      logStep("Invalid Stripe key format", { keyStart: stripeKey.substring(0, 3) });
+      throw new Error("STRIPE_SECRET_KEY deve ser uma chave secreta (sk_), não pública (pk_)");
+    }
     logStep("Stripe key verified", { keyType: stripeKey.substring(0, 7) + "..." });
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader) {
+      logStep("No authorization header - returning unsubscribed state");
+      return new Response(JSON.stringify({ subscribed: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+    
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
     logStep("Authenticating user with token");
     
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    if (userError) {
+      logStep("Authentication failed, returning unsubscribed state", { error: userError.message });
+      return new Response(JSON.stringify({ subscribed: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });

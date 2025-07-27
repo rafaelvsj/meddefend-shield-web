@@ -38,7 +38,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           // Verificar assinatura quando o usuário faz login
           if (event === 'SIGNED_IN') {
-            supabase.functions.invoke('check-subscription').catch(console.error);
+            // Só chamar se realmente tiver sessão válida
+            setTimeout(() => {
+              supabase.functions.invoke('check-subscription').catch(console.error);
+            }, 1000);
           }
         } else {
           // Limpar role quando não houver sessão
@@ -58,8 +61,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userRole = session.user.user_metadata?.role || 'user';
         window.localStorage.setItem('role', userRole);
         
-        // Verificar assinatura na sessão inicial
-        supabase.functions.invoke('check-subscription').catch(console.error);
+        // Verificar assinatura na sessão inicial (só se tiver session válida)
+        setTimeout(() => {
+          supabase.functions.invoke('check-subscription').catch(console.error);
+        }, 1500);
       }
     });
 

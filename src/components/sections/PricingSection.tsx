@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Check, Crown, Shield, Zap, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 interface PricingSectionProps {
   scrollToSection: (sectionId: string) => void;
 }
@@ -10,6 +13,9 @@ const PricingSection = ({
 }: PricingSectionProps) => {
   const [visibleElements, setVisibleElements] = useState(new Set());
   const [isAnnual, setIsAnnual] = useState(true); // Começar com anual selecionado
+  const { subscription, createCheckout } = useSubscription();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const observer = new IntersectionObserver(entries => {
@@ -26,6 +32,34 @@ const PricingSection = ({
     return () => observer.disconnect();
   }, []);
   const beneficiosPadrao = ["Assistente de Escrita Defensiva ilimitado", "Checklist Contextual Inteligente", "Biblioteca Completa de Modelos", "Histórico de Documentos", "Suporte por email e Whatsapp", "Backup automático"];
+  const handlePlanSelection = (planName: string) => {
+    if (planName === "Free") {
+      if (!user) {
+        navigate('/login');
+      } else {
+        navigate('/dashboard');
+      }
+      return;
+    }
+
+    if (planName === "Clínicas") {
+      scrollToSection('contato');
+      return;
+    }
+
+    // Map plan names to stripe plan IDs
+    const planMap: { [key: string]: string } = {
+      "Starter": "starter",
+      "Professional": "professional", 
+      "Ultra": "ultra"
+    };
+
+    const stripePlanId = planMap[planName];
+    if (stripePlanId) {
+      createCheckout(stripePlanId);
+    }
+  };
+
   const plans = [{
     name: "Free",
     icon: <Shield className="h-8 w-8 text-gray-400" />,
@@ -38,7 +72,8 @@ const PricingSection = ({
     features: ["10 créditos não renováveis", "Assistente de Escrita Defensiva básico", "Acesso limitado aos modelos"],
     popular: false,
     cta: "Começar Grátis",
-    isFree: true
+    isFree: true,
+    isActive: subscription.subscribed === false
   }, {
     name: "Starter",
     icon: <Shield className="h-8 w-8 text-blue-400" />,
@@ -50,7 +85,8 @@ const PricingSection = ({
     description: "Ideal para médicos em início de carreira",
     features: ["50 créditos mensais", ...beneficiosPadrao],
     popular: false,
-    cta: "Escolher Starter"
+    cta: "Escolher Starter",
+    isActive: subscription.subscription_tier === "Starter"
   }, {
     name: "Professional",
     icon: <Crown className="h-8 w-8 text-purple-400" />,
@@ -62,7 +98,8 @@ const PricingSection = ({
     description: "Para médicos estabelecidos",
     features: ["150 créditos mensais", ...beneficiosPadrao],
     popular: true,
-    cta: "Mais Popular"
+    cta: "Mais Popular",
+    isActive: subscription.subscription_tier === "Professional"
   }, {
     name: "Ultra",
     icon: <Zap className="h-8 w-8 text-yellow-400" />,
@@ -74,7 +111,8 @@ const PricingSection = ({
     description: "Uso intensivo para especialistas",
     features: ["Aproximadamente 1.000 créditos/mês", ...beneficiosPadrao],
     popular: false,
-    cta: "Escolher Ultra"
+    cta: "Escolher Ultra",
+    isActive: subscription.subscription_tier === "Ultra"
   }, {
     name: "Clínicas",
     icon: <Building2 className="h-8 w-8 text-green-400" />,
@@ -118,12 +156,17 @@ const PricingSection = ({
         </div>
 
         <div className="grid lg:grid-cols-5 md:grid-cols-3 gap-6 mb-16" data-animate id="pricing-cards">
-          {plans.map((plan, index) => <Card key={index} className={`relative bg-gray-900/50 backdrop-blur-sm border-gray-700/50 hover:border-purple-500/50 transition-all duration-500 hover:scale-105 ${plan.popular ? 'ring-2 ring-purple-500/50 scale-105' : ''} ${plan.isFree ? 'border-gray-600' : ''} ${visibleElements.has('pricing-cards') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{
+          {plans.map((plan, index) => <Card key={index} className={`relative bg-gray-900/50 backdrop-blur-sm border-gray-700/50 hover:border-purple-500/50 transition-all duration-500 hover:scale-105 ${plan.popular ? 'ring-2 ring-purple-500/50 scale-105' : ''} ${plan.isFree ? 'border-gray-600' : ''} ${plan.isActive ? 'ring-2 ring-green-500/50 border-green-500/50' : ''} ${visibleElements.has('pricing-cards') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{
           transitionDelay: `${index * 100}ms`
         }}>
               {plan.popular && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
                   <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg whitespace-nowrap">
                     Mais Popular
+                  </div>
+                </div>}
+              {plan.isActive && <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                  <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg whitespace-nowrap">
+                    Seu Plano
                   </div>
                 </div>}
               
@@ -162,8 +205,20 @@ const PricingSection = ({
                       </li>)}
                   </ul>}
                 
-                <Button className={`w-full py-4 text-sm font-semibold rounded-full transition-all duration-300 hover:scale-105 ${plan.popular ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-2xl' : plan.isFree ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 hover:border-gray-500' : 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-600 hover:border-gray-500'}`} onClick={() => scrollToSection('contato')}>
-                  {plan.cta}
+                <Button 
+                  className={`w-full py-4 text-sm font-semibold rounded-full transition-all duration-300 hover:scale-105 ${
+                    plan.isActive 
+                      ? 'bg-green-600 hover:bg-green-700 text-white shadow-2xl' 
+                      : plan.popular 
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-2xl' 
+                        : plan.isFree 
+                          ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 hover:border-gray-500' 
+                          : 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-600 hover:border-gray-500'
+                  }`} 
+                  onClick={() => handlePlanSelection(plan.name)}
+                  disabled={plan.isActive}
+                >
+                  {plan.isActive ? "Plano Atual" : plan.cta}
                 </Button>
               </CardContent>
             </Card>)}

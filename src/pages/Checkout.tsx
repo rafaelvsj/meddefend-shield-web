@@ -221,12 +221,11 @@ const Checkout = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="crm" className="text-gray-300">CRM *</Label>
+                        <Label htmlFor="crm" className="text-gray-300">CRM</Label>
                         <Input
                           id="crm"
                           name="crm"
                           type="text"
-                          required
                           value={formData.crm}
                           onChange={handleInputChange}
                           className="mt-1 bg-slate-700 border-slate-600 text-white focus:border-purple-400"

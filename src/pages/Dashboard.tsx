@@ -29,6 +29,15 @@ const Dashboard = () => {
     };
     
     checkAndRedirect();
+
+    // Verificar parâmetros de sucesso de pagamento
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success') {
+      // Recarregar status da assinatura após pagamento bem-sucedido
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    }
   }, []);
 
   return (

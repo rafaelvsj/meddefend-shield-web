@@ -607,6 +607,18 @@ export type Database = {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: unknown
       }
+      search_similar_chunks: {
+        Args: {
+          query_embedding: string
+          similarity_threshold?: number
+          match_count?: number
+        }
+        Returns: {
+          content: string
+          source: string
+          similarity: number
+        }[]
+      }
       sparsevec_out: {
         Args: { "": unknown }
         Returns: unknown

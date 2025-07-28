@@ -118,6 +118,44 @@ export type Database = {
         }
         Relationships: []
       }
+      document_chunks: {
+        Row: {
+          chunk_index: number
+          chunk_size: number
+          content: string
+          created_at: string
+          embedding: string | null
+          id: string
+          knowledge_base_id: string
+        }
+        Insert: {
+          chunk_index: number
+          chunk_size: number
+          content: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          knowledge_base_id: string
+        }
+        Update: {
+          chunk_index?: number
+          chunk_size?: number
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          knowledge_base_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_chunks_knowledge_base_id_fkey"
+            columns: ["knowledge_base_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_base"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_templates: {
         Row: {
           category: string
@@ -319,6 +357,39 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          requests_count: number | null
+          tier_limit: number
+          tier_window: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          requests_count?: number | null
+          tier_limit: number
+          tier_window?: number
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          requests_count?: number | null
+          tier_limit?: number
+          tier_window?: number
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -421,14 +492,73 @@ export type Database = {
         }
         Relationships: []
       }
+      webhooks: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          created_by: string
+          events: string[]
+          id: string
+          last_triggered: string | null
+          name: string
+          secret_key: string | null
+          total_triggers: number | null
+          url: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          created_by: string
+          events: string[]
+          id?: string
+          last_triggered?: string | null
+          name: string
+          secret_key?: string | null
+          total_triggers?: number | null
+          url: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          created_by?: string
+          events?: string[]
+          id?: string
+          last_triggered?: string | null
+          name?: string
+          secret_key?: string | null
+          total_triggers?: number | null
+          url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
       custom_access_token_hook: {
         Args: { event: Json }
         Returns: Json
+      }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
       has_role: {
         Args: {
@@ -437,9 +567,81 @@ export type Database = {
         }
         Returns: boolean
       }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
     }
     Enums: {

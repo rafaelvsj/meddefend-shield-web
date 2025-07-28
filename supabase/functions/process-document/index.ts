@@ -128,6 +128,23 @@ serve(async (req) => {
     // Preparar conteúdo processado
     const processedContent = chunks.map(chunk => chunk.content).join('\n\n');
     
+    // Salvar chunks com embeddings no banco
+    const chunkInserts = chunks.map(chunk => ({
+      knowledge_base_id: fileId,
+      content: chunk.content,
+      embedding: `[${chunk.embedding.join(',')}]`, // PostgreSQL array format
+      chunk_index: chunk.metadata.chunk_index,
+      chunk_size: chunk.metadata.chunk_size
+    }));
+
+    const { error: chunksError } = await supabaseClient
+      .from('document_chunks')
+      .insert(chunkInserts);
+
+    if (chunksError) {
+      console.error('Error saving chunks:', chunksError);
+    }
+    
     // Atualizar arquivo com conteúdo processado
     const { error: updateError } = await supabaseClient
       .from('knowledge_base')
@@ -142,8 +159,6 @@ serve(async (req) => {
       throw new Error('Erro ao atualizar arquivo processado');
     }
 
-    // Em uma implementação completa, salvaríamos os chunks e embeddings
-    // em uma tabela separada para busca semântica
     console.log(`Documento processado: ${chunks.length} chunks gerados`);
 
     return new Response(JSON.stringify({ 

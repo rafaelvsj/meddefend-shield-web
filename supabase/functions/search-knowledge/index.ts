@@ -51,16 +51,30 @@ class KnowledgeSearcher {
   }
 
   async searchSimilarContent(query: string, limit: number = 3): Promise<SearchResult[]> {
-    // Gerar embedding da query
-    const queryEmbedding = await this.generateQueryEmbedding(query);
-    
-    // Buscar todos os documentos processados
-    // Em produção, isso seria otimizado com busca vetorial no banco
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Gerar embedding da query
+    const queryEmbedding = await this.generateQueryEmbedding(query);
+    
+    // Buscar chunks similares usando pgvector
+    const { data: similarChunks } = await supabaseClient.rpc('search_similar_chunks', {
+      query_embedding: queryEmbedding,
+      similarity_threshold: 0.7,
+      match_count: limit
+    });
+
+    if (similarChunks && similarChunks.length > 0) {
+      return similarChunks.map((chunk: any) => ({
+        content: chunk.content,
+        source: chunk.source,
+        similarity_score: chunk.similarity
+      }));
+    }
+
+    // Fallback para busca textual se não houver chunks com embeddings
     const { data: documents } = await supabaseClient
       .from('knowledge_base')
       .select('content, original_name')
@@ -68,21 +82,17 @@ class KnowledgeSearcher {
 
     if (!documents) return [];
 
-    // Calcular similaridade para cada documento
     const results: SearchResult[] = [];
     
     for (const doc of documents) {
       if (!doc.content) continue;
       
-      // Dividir conteúdo em parágrafos para busca mais granular
       const paragraphs = doc.content.split('\n\n').filter(p => p.trim().length > 50);
       
       for (const paragraph of paragraphs) {
-        // Em produção, usaríamos embeddings pré-calculados
-        // Aqui fazemos uma busca por palavras-chave simplificada
         const similarity = this.calculateTextSimilarity(query.toLowerCase(), paragraph.toLowerCase());
         
-        if (similarity > 0.3) { // Threshold mínimo
+        if (similarity > 0.3) {
           results.push({
             content: paragraph,
             source: doc.original_name,
@@ -92,7 +102,6 @@ class KnowledgeSearcher {
       }
     }
 
-    // Ordenar por similaridade e retornar top results
     return results
       .sort((a, b) => b.similarity_score - a.similarity_score)
       .slice(0, limit);

@@ -111,7 +111,7 @@ export const AnaliseTab = () => {
           description: error.message,
           variant: "destructive",
         });
-      } else if (error.message.includes('OPENAI_API_KEY')) {
+      } else if (error.message.includes('GEMINI_API_KEY')) {
         toast({
           title: "Configuração necessária",
           description: "A análise de IA não está disponível no momento. Contate o administrador.",

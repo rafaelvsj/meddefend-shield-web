@@ -70,10 +70,10 @@ serve(async (req) => {
   try {
     logStep('Request received', { method: req.method, url: req.url });
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      logStep('Missing OPENAI_API_KEY');
-      throw new Error('OPENAI_API_KEY not configured');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      logStep('Missing GEMINI_API_KEY');
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -128,20 +128,17 @@ serve(async (req) => {
     // Get appropriate prompt
     const systemPrompt = MEDICAL_PROMPTS[specialty as keyof typeof MEDICAL_PROMPTS] || MEDICAL_PROMPTS.geral;
 
-    // Call OpenAI API
-    logStep('Calling OpenAI API');
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Call Gemini API
+    logStep('Calling Gemini API');
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `${systemPrompt}
+        contents: [{
+          parts: [{
+            text: `${systemPrompt}
 
 IMPORTANTE: Retorne sua resposta em formato JSON com a seguinte estrutura:
 {
@@ -152,35 +149,48 @@ IMPORTANTE: Retorne sua resposta em formato JSON com a seguinte estrutura:
   "sugestoes_especificas": ["lista", "de", "sugestões", "específicas"],
   "conformidade": "[nível de conformidade com padrões médicos]",
   "clareza": "[avaliação da clareza do documento]"
-}`
-          },
-          {
-            role: 'user',
-            content: `Analise este documento médico:\n\n${text}`
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 2000
+}
+
+Analise este documento médico:
+
+${text}`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 2000,
+        },
       }),
     });
 
     if (!response.ok) {
       const error = await response.text();
-      logStep('OpenAI API error', { status: response.status, error });
-      throw new Error(`OpenAI API error: ${response.status}`);
+      logStep('Gemini API error', { status: response.status, error });
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const aiResponse = await response.json();
-    logStep('OpenAI response received', { usage: aiResponse.usage });
+    logStep('Gemini response received', { candidatesCount: aiResponse.candidates?.length });
 
     // Parse AI response
     let analysisResult;
     try {
-      analysisResult = JSON.parse(aiResponse.choices[0].message.content);
+      const geminiContent = aiResponse.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!geminiContent) {
+        throw new Error('No content in Gemini response');
+      }
+      
+      // Try to extract JSON from response
+      const jsonMatch = geminiContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        analysisResult = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found in response');
+      }
     } catch (e) {
-      logStep('Failed to parse AI response as JSON', aiResponse.choices[0].message.content);
+      logStep('Failed to parse AI response as JSON', aiResponse.candidates?.[0]?.content?.parts?.[0]?.text);
       // Fallback to text analysis
-      const content = aiResponse.choices[0].message.content;
+      const content = aiResponse.candidates?.[0]?.content?.parts?.[0]?.text || 'Análise não disponível';
       analysisResult = {
         score: 75, // Default score
         categoria: specialty,

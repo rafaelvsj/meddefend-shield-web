@@ -85,6 +85,24 @@ const Checkout = () => {
     }));
   };
 
+  const validateForm = () => {
+    const errors: string[] = [];
+    
+    if (!formData.nome.trim()) errors.push("Nome é obrigatório");
+    if (!formData.email.trim()) errors.push("Email é obrigatório");
+    if (!formData.telefone.trim()) errors.push("Telefone é obrigatório");
+    if (!formData.crm.trim()) errors.push("CRM é obrigatório");
+    if (!formData.especialidade.trim()) errors.push("Especialidade é obrigatória");
+    
+    // Validação de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (formData.email && !emailRegex.test(formData.email)) {
+      errors.push("Email inválido");
+    }
+    
+    return errors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -96,6 +114,17 @@ const Checkout = () => {
         variant: "destructive",
       });
       navigate('/login');
+      return;
+    }
+    
+    // Validar formulário
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      toast({
+        title: "Dados incompletos",
+        description: validationErrors.join(", "),
+        variant: "destructive",
+      });
       return;
     }
     

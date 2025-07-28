@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { UserSettingsProvider } from "@/hooks/useUserSettings";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import EnhancedProtectedRoute from "@/components/EnhancedProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -22,6 +23,10 @@ import CancellationPolicy from "./pages/CancellationPolicy";
 import CookiePolicy from "./pages/CookiePolicy";
 import Blog from "./pages/Blog";
 import Checkout from "./pages/Checkout";
+import ResetPassword from "./pages/ResetPassword";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
+import ServerError from "./pages/ServerError";
 import CookieBanner from "./components/CookieBanner";
 import AdminLayout from "./components/AdminLayout";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
@@ -41,35 +46,39 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancel" element={<PaymentCancel />} />
+            <Route path="/server-error" element={<ServerError />} />
             <Route path="/dashboard" element={
-              <ProtectedRoute>
+              <EnhancedProtectedRoute>
                 <Dashboard />
-              </ProtectedRoute>
+              </EnhancedProtectedRoute>
             } />
             <Route path="/user-profile" element={
-              <ProtectedRoute>
+              <EnhancedProtectedRoute>
                 <UserProfile />
-              </ProtectedRoute>
+              </EnhancedProtectedRoute>
             } />
             <Route path="/account-settings" element={
-              <ProtectedRoute>
+              <EnhancedProtectedRoute>
                 <AccountSettings />
-              </ProtectedRoute>
+              </EnhancedProtectedRoute>
             } />
             <Route path="/security-settings" element={
-              <ProtectedRoute>
+              <EnhancedProtectedRoute>
                 <SecuritySettings />
-              </ProtectedRoute>
+              </EnhancedProtectedRoute>
             } />
             <Route path="/notification-settings" element={
-              <ProtectedRoute>
+              <EnhancedProtectedRoute>
                 <NotificationSettings />
-              </ProtectedRoute>
+              </EnhancedProtectedRoute>
             } />
             <Route path="/help-support" element={
-              <ProtectedRoute>
+              <EnhancedProtectedRoute>
                 <HelpSupport />
-              </ProtectedRoute>
+              </EnhancedProtectedRoute>
             } />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />

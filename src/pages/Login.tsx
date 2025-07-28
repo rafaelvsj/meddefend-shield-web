@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,16 +18,19 @@ const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   
   const { user, signIn, signUp, signInWithGoogle } = useAuth();
   const { isAdmin, loading: rolesLoading } = useUserRoles();
 
-  // Check if user is already logged in and redirect to dashboard
+  // Check if user is already logged in and redirect intelligently
   useEffect(() => {
     if (user && !rolesLoading) {
-      navigate('/dashboard');
+      // Redirect to the intended destination or dashboard
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     }
-  }, [user, rolesLoading, navigate]);
+  }, [user, rolesLoading, navigate, location]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,12 +192,12 @@ const Login = () => {
                     Lembrar de mim
                   </Label>
                 </div>
-                <button 
-                  onClick={() => handlePasswordReset()}
+                <Link 
+                  to="/reset-password"
                   className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-300"
                 >
                   Esqueceu a senha?
-                </button>
+                </Link>
               </div>
             )}
 

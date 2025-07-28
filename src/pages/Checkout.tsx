@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,15 @@ const Checkout = () => {
   const { createCheckout } = useSubscription();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check authentication and handle redirection
+  useEffect(() => {
+    if (!user) {
+      // Store current path for redirect after login
+      localStorage.setItem('checkout_redirect', '/checkout');
+      navigate('/login');
+    }
+  }, [user, navigate]);
   const [formData, setFormData] = useState({
     nome: '',
     email: '',

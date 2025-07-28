@@ -106,6 +106,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: error.message,
         variant: "destructive",
       });
+    } else {
+      // Check if user came from checkout and redirect accordingly
+      const redirectPath = localStorage.getItem('checkout_redirect');
+      if (redirectPath) {
+        localStorage.removeItem('checkout_redirect');
+        setTimeout(() => {
+          window.location.href = redirectPath;
+        }, 100);
+      }
     }
 
     return { error };

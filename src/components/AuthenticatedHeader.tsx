@@ -1,14 +1,13 @@
-
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
-interface HeaderProps {
+interface AuthenticatedHeaderProps {
   scrollToSection: (sectionId: string) => void;
 }
 
-const Header = ({ scrollToSection }: HeaderProps) => {
+const AuthenticatedHeader = ({ scrollToSection }: AuthenticatedHeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useAuth();
 
@@ -107,4 +106,4 @@ const Header = ({ scrollToSection }: HeaderProps) => {
   );
 };
 
-export default Header;
+export default AuthenticatedHeader;

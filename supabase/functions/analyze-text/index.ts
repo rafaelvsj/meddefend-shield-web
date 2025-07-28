@@ -8,41 +8,77 @@ const corsHeaders = {
 };
 
 const MEDICAL_PROMPTS = {
-  cardiologia: `Você é um especialista em análise de documentos médicos de cardiologia. Analise o texto fornecido e identifique:
-1. Precisão médica e terminologia
-2. Estrutura e organização do documento
-3. Completude das informações
-4. Conformidade com diretrizes médicas
-5. Clareza para pacientes e outros médicos
+  cardiologia: `Você é um especialista em análise de documentos médicos de cardiologia com foco em MEDICINA DEFENSIVA.
 
-Forneça um score de 0-100 e sugestões específicas de melhoria.`,
+CONTEXTO LEGAL: Analise considerando:
+- Riscos de negligência médica
+- Conformidade com diretrizes do CFM
+- Padrões de documentação hospitalar
+- Proteção legal do profissional
+
+ANÁLISE DETALHADA:
+1. **Precisão diagnóstica** e terminologia cardiológica
+2. **Documentação defensiva** - registros que protegem legalmente
+3. **Conformidade com protocolos** do SBC e ACC/AHA
+4. **Completude de informações** essenciais para defesa legal
+5. **Clareza comunicativa** para pacientes e colegas
+6. **Identificação de vulnerabilidades** legais no documento
+
+RACIOCÍNIO: Use suas capacidades de thinking para explicar o processo de análise legal.`,
   
-  neurologia: `Você é um especialista em análise de documentos médicos de neurologia. Analise o texto fornecido e identifique:
-1. Precisão neurológica e terminologia específica
-2. Avaliação neurológica adequada
-3. Estrutura do documento
-4. Completude das informações neurológicas
-5. Clareza diagnóstica
+  neurologia: `Você é um especialista em análise de documentos médicos de neurologia com foco em MEDICINA DEFENSIVA.
 
-Forneça um score de 0-100 e sugestões específicas de melhoria.`,
+CONTEXTO LEGAL: Analise considerando:
+- Riscos de erro diagnóstico neurológico
+- Conformidade com diretrizes da ABN
+- Documentação de exame neurológico completo
+- Proteção contra processos por atraso diagnóstico
+
+ANÁLISE DETALHADA:
+1. **Avaliação neurológica completa** e documentada
+2. **Raciocínio diagnóstico explícito** para defesa legal
+3. **Conformidade com protocolos** da ABN e sociedades internacionais
+4. **Documentação de diagnósticos diferenciais** considerados
+5. **Registros temporais** adequados para cronologia
+6. **Identificação de gaps** que possam gerar responsabilização
+
+RACIOCÍNIO: Demonstre o processo de análise de risco legal neurológico.`,
   
-  ortopedia: `Você é um especialista em análise de documentos médicos de ortopedia. Analise o texto fornecido e identifique:
-1. Precisão ortopédica e terminologia
-2. Descrição anatômica adequada
-3. Estrutura do documento
-4. Completude das informações
-5. Clareza para tratamento
+  ortopedia: `Você é um especialista em análise de documentos médicos de ortopedia com foco em MEDICINA DEFENSIVA.
 
-Forneça um score de 0-100 e sugestões específicas de melhoria.`,
+CONTEXTO LEGAL: Analise considerando:
+- Riscos de complicações cirúrgicas
+- Conformidade com SBOT e AOTrauma
+- Documentação de consentimento informado
+- Proteção em procedimentos invasivos
+
+ANÁLISE DETALHADA:
+1. **Descrição anatômica precisa** e mensurável
+2. **Documentação de riscos** e alternativas apresentadas
+3. **Conformidade com guidelines** ortopédicos atuais
+4. **Registros pré e pós-operatórios** completos
+5. **Comunicação de prognóstico** adequada
+6. **Identificação de exposições** legais potenciais
+
+RACIOCÍNIO: Explique a análise de risco cirúrgico e legal.`,
   
-  geral: `Você é um especialista em análise de documentos médicos gerais. Analise o texto fornecido e identifique:
-1. Precisão médica geral
-2. Estrutura e organização
-3. Completude das informações
-4. Conformidade com padrões médicos
-5. Clareza comunicativa
+  geral: `Você é um especialista em análise de documentos médicos gerais com foco em MEDICINA DEFENSIVA.
 
-Forneça um score de 0-100 e sugestões específicas de melhoria.`
+CONTEXTO LEGAL: Analise considerando:
+- Conformidade com CFM e CRM
+- Padrões de prontuário médico
+- Proteção contra alegações de má prática
+- Documentação adequada para defesa processual
+
+ANÁLISE DETALHADA:
+1. **Estrutura de prontuário** conforme resoluções CFM
+2. **Linguagem técnica apropriada** e defensiva
+3. **Completude de informações** obrigatórias
+4. **Conformidade com protocolos** ministeriais
+5. **Clareza na comunicação** médico-paciente
+6. **Identificação de vulnerabilidades** jurídicas
+
+RACIOCÍNIO: Use thinking para demonstrar análise de compliance médico-legal.`
 };
 
 interface AnalysisRequest {
@@ -130,7 +166,7 @@ serve(async (req) => {
 
     // Call Gemini API
     logStep('Calling Gemini API');
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -140,25 +176,29 @@ serve(async (req) => {
           parts: [{
             text: `${systemPrompt}
 
-IMPORTANTE: Retorne sua resposta em formato JSON com a seguinte estrutura:
+IMPORTANTE: Use suas capacidades de THINKING/RACIOCÍNIO para analisar este documento de forma defensiva.
+
+ESTRUTURA DE RESPOSTA: Retorne em JSON:
 {
+  "thinking_process": "[Seu processo de raciocínio sobre riscos legais e compliance]",
   "score": [número de 0-100],
   "categoria": "[categoria principal do documento]",
-  "pontos_fortes": ["lista", "de", "pontos", "fortes"],
-  "areas_melhoria": ["lista", "de", "áreas", "para", "melhoria"],
-  "sugestoes_especificas": ["lista", "de", "sugestões", "específicas"],
-  "conformidade": "[nível de conformidade com padrões médicos]",
-  "clareza": "[avaliação da clareza do documento]"
+  "vulnerabilidades_legais": ["lista", "de", "vulnerabilidades", "identificadas"],
+  "pontos_defensivos": ["aspectos", "que", "protegem", "legalmente"],
+  "areas_melhoria": ["áreas", "críticas", "para", "melhoria"],
+  "sugestoes_especificas": ["sugestões", "detalhadas", "de", "medicina", "defensiva"],
+  "conformidade_cfm": "[nível de conformidade com CFM/CRM]",
+  "risco_processual": "[baixo/médio/alto e justificativa]"
 }
 
-Analise este documento médico:
+DOCUMENTO PARA ANÁLISE:
 
 ${text}`
           }]
         }],
         generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 2000,
+          temperature: 0.2, // Lower for more consistent legal analysis
+          maxOutputTokens: 3000, // Increased for detailed thinking process
         },
       }),
     });

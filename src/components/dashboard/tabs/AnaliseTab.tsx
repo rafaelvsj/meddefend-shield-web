@@ -69,20 +69,33 @@ export const AnaliseTab = () => {
         throw new Error(data.error);
       }
 
-      // Set the real analysis results
+      // Set the real analysis results with defensive medicine focus
       const analysisResult = {
         overallScore: data.score,
-        suggestions: data.suggestions?.map((text: string, index: number) => ({
-          type: index % 3 === 0 ? 'warning' : index % 3 === 1 ? 'info' : 'success',
-          text
-        })) || [],
+        suggestions: [
+          ...(data.analysis_result?.vulnerabilidades_legais || []).map((text: string) => ({
+            type: 'warning',
+            text: `⚖️ Vulnerabilidade Legal: ${text}`
+          })),
+          ...(data.analysis_result?.pontos_defensivos || []).map((text: string) => ({
+            type: 'success',
+            text: `🛡️ Proteção Legal: ${text}`
+          })),
+          ...(data.suggestions || []).map((text: string, index: number) => ({
+            type: 'info',
+            text
+          }))
+        ],
         improvements: data.improvements?.map((text: string) => {
           const parts = text.split(' -> ');
           return {
             original: parts[0] || text,
-            suggested: parts[1] || 'Ver sugestão detalhada'
+            suggested: parts[1] || 'Ver sugestão detalhada de medicina defensiva'
           };
-        }) || []
+        }) || [],
+        thinkingProcess: data.analysis_result?.thinking_process,
+        riskLevel: data.analysis_result?.risco_processual,
+        cfmCompliance: data.analysis_result?.conformidade_cfm
       };
 
       setAnalysis(analysisResult);
@@ -236,6 +249,34 @@ export const AnaliseTab = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Risk Level and CFM Compliance */}
+            {(analysis.riskLevel || analysis.cfmCompliance) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {analysis.riskLevel && (
+                  <div className="p-3 bg-slate-50 rounded-lg">
+                    <h5 className="font-medium text-slate-800 mb-1">Risco Processual</h5>
+                    <p className="text-sm text-slate-600">{analysis.riskLevel}</p>
+                  </div>
+                )}
+                {analysis.cfmCompliance && (
+                  <div className="p-3 bg-slate-50 rounded-lg">
+                    <h5 className="font-medium text-slate-800 mb-1">Conformidade CFM</h5>
+                    <p className="text-sm text-slate-600">{analysis.cfmCompliance}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Thinking Process */}
+            {analysis.thinkingProcess && (
+              <div className="mb-4">
+                <h4 className="font-semibold text-medical-slate-800 mb-2">🧠 Processo de Raciocínio (Gemini 2.5 Flash)</h4>
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800 whitespace-pre-line">{analysis.thinkingProcess}</p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-3">
               {analysis.suggestions.map((suggestion: any, index: number) => (
                 <Alert key={index} className={`border-l-4 ${

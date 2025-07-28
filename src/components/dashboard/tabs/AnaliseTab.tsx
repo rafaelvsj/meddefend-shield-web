@@ -52,7 +52,8 @@ export const AnaliseTab = () => {
 
     try {
       // Call real AI analysis edge function
-      const { data, error } = await supabase.functions.invoke('analyze-text', {
+      // Usar a nova versão modular da análise
+      const { data, error } = await supabase.functions.invoke('analyze-text-v2', {
         body: {
           text: text.trim(),
           specialty: 'geral', // Can be made configurable later

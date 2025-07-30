@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { logger, withLogging } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -94,21 +95,22 @@ interface AnalysisResponse {
   analysis_result: any;
 }
 
-const logStep = (step: string, data?: any) => {
-  console.log(`[analyze-text] ${step}:`, data ? JSON.stringify(data, null, 2) : '');
-};
+const FUNCTION_NAME = 'analyze-text';
 
-serve(async (req) => {
+serve(withLogging(FUNCTION_NAME, async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  const context = { function_name: FUNCTION_NAME, request_id: requestId };
+
   try {
-    logStep('Request received', { method: req.method, url: req.url });
+    logger.info('Request received', { ...context, method: req.method, url: req.url });
 
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     if (!GEMINI_API_KEY) {
-      logStep('Missing GEMINI_API_KEY');
+      logger.error('Missing GEMINI_API_KEY', context);
       throw new Error('GEMINI_API_KEY not configured');
     }
 
@@ -121,12 +123,12 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader);
     
     if (authError || !user) {
-      logStep('Authentication failed', authError);
+      logger.error('Authentication failed', { ...context, error: authError?.message });
       throw new Error('Authentication required');
     }
 
     const { text, specialty = 'geral', userId }: AnalysisRequest = await req.json();
-    logStep('Request data', { textLength: text.length, specialty, userId });
+    logger.info('Request data', { ...context, user_id: user.id, textLength: text.length, specialty, userId });
 
     // Check subscription and monthly limits
     const { data: subscription } = await supabase
@@ -143,7 +145,7 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .gte('created_at', `${currentMonth}-01`);
 
-    logStep('Usage check', { subscription, monthlyAnalyses });
+    logger.debug('Usage check', { ...context, user_id: user.id, subscription, monthlyAnalyses });
 
     // Rate limiting based on subscription
     const limits = {
@@ -157,7 +159,7 @@ serve(async (req) => {
     const limit = limits[userTier as keyof typeof limits] || limits.free;
 
     if ((monthlyAnalyses || 0) >= limit) {
-      logStep('Rate limit exceeded', { monthlyAnalyses, limit, userTier });
+      logger.warn('Rate limit exceeded', { ...context, user_id: user.id, monthlyAnalyses, limit, userTier });
       throw new Error(`Monthly limit of ${limit} analyses exceeded for ${userTier} plan`);
     }
 
@@ -165,7 +167,7 @@ serve(async (req) => {
     const systemPrompt = MEDICAL_PROMPTS[specialty as keyof typeof MEDICAL_PROMPTS] || MEDICAL_PROMPTS.geral;
 
     // Call Gemini API
-    logStep('Calling Gemini API');
+    logger.info('Calling Gemini API', { ...context, user_id: user.id });
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
@@ -205,12 +207,12 @@ ${text}`
 
     if (!response.ok) {
       const error = await response.text();
-      logStep('Gemini API error', { status: response.status, error });
+      logger.error('Gemini API error', { ...context, user_id: user.id, status: response.status, error });
       throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const aiResponse = await response.json();
-    logStep('Gemini response received', { candidatesCount: aiResponse.candidates?.length });
+    logger.info('Gemini response received', { ...context, user_id: user.id, candidatesCount: aiResponse.candidates?.length });
 
     // Parse AI response
     let analysisResult;
@@ -228,7 +230,7 @@ ${text}`
         throw new Error('No JSON found in response');
       }
     } catch (e) {
-      logStep('Failed to parse AI response as JSON', aiResponse.candidates?.[0]?.content?.parts?.[0]?.text);
+      logger.warn('Failed to parse AI response as JSON', { ...context, user_id: user.id, response: aiResponse.candidates?.[0]?.content?.parts?.[0]?.text });
       // Fallback to text analysis
       const content = aiResponse.candidates?.[0]?.content?.parts?.[0]?.text || 'Análise não disponível';
       analysisResult = {
@@ -270,7 +272,7 @@ ${text}`
       .single();
 
     if (saveError) {
-      logStep('Failed to save analysis', saveError);
+      logger.error('Failed to save analysis', { ...context, user_id: user.id }, new Error(saveError.message));
       throw new Error('Failed to save analysis');
     }
 
@@ -283,7 +285,7 @@ ${text}`
         action: 'analysis_completed'
       });
 
-    logStep('Analysis completed successfully', { analysisId: savedAnalysis.id, score: analysisResponse.score });
+    logger.info('Analysis completed successfully', { ...context, user_id: user.id, analysisId: savedAnalysis.id, score: analysisResponse.score });
 
     return new Response(JSON.stringify({
       ...analysisResponse,
@@ -294,7 +296,7 @@ ${text}`
     });
 
   } catch (error: any) {
-    logStep('Error in analyze-text function', error);
+    logger.error('Error in analyze-text function', context, error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
@@ -306,4 +308,4 @@ ${text}`
       }
     );
   }
-});
+}));

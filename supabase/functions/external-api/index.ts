@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logger, withLogging } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -139,8 +140,8 @@ class APIManager {
       return await endpoint.handler(req, params);
 
     } catch (error) {
-      console.error('API Error:', error);
-      return new Response(JSON.stringify({ error: error.message }), {
+      logger.error('API handler error', { function_name: 'external-api', endpoint: path }, error as Error);
+      return new Response(JSON.stringify({ error: (error as Error).message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -274,7 +275,7 @@ class APIManager {
     const body = await req.json();
     
     // Processar webhook trigger
-    console.log('Webhook triggered:', body);
+    logger.info('Webhook triggered', { function_name: 'external-api', webhook_data: body });
     
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -314,12 +315,20 @@ class APIManager {
   }
 }
 
-serve(async (req) => {
+const FUNCTION_NAME = 'external-api';
+
+serve(withLogging(FUNCTION_NAME, async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  const context = { function_name: FUNCTION_NAME, request_id: requestId };
+
   try {
+    logger.info('External API request received', { ...context, method: req.method, url: req.url });
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -329,10 +338,10 @@ serve(async (req) => {
     return await apiManager.handleRequest(req);
 
   } catch (error) {
-    console.error('Error in external-api function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    logger.error('Error in external-api function', context, error as Error);
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-});
+}));

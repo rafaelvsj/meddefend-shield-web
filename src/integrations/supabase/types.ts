@@ -46,6 +46,45 @@ export type Database = {
           },
         ]
       }
+      api_keys: {
+        Row: {
+          created_at: string
+          encrypted_key: string
+          expires_at: string
+          id: string
+          last_rotation: string | null
+          next_rotation: string | null
+          rotation_count: number
+          service_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_key: string
+          expires_at: string
+          id?: string
+          last_rotation?: string | null
+          next_rotation?: string | null
+          rotation_count?: number
+          service_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_key?: string
+          expires_at?: string
+          id?: string
+          last_rotation?: string | null
+          next_rotation?: string | null
+          rotation_count?: number
+          service_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -228,6 +267,57 @@ export type Database = {
         }
         Relationships: []
       }
+      job_queue: {
+        Row: {
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          id: string
+          max_attempts: number
+          payload: Json
+          priority: number
+          scheduled_at: string
+          started_at: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          max_attempts?: number
+          payload: Json
+          priority?: number
+          scheduled_at?: string
+          started_at?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          max_attempts?: number
+          payload?: Json
+          priority?: number
+          scheduled_at?: string
+          started_at?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       knowledge_base: {
         Row: {
           content: string | null
@@ -297,6 +387,33 @@ export type Database = {
           setting_value?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      metrics_snapshots: {
+        Row: {
+          created_at: string
+          id: string
+          labels: Json | null
+          metric_name: string
+          metric_value: number
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          labels?: Json | null
+          metric_name: string
+          metric_value: number
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          labels?: Json | null
+          metric_name?: string
+          metric_value?: number
+          timestamp?: string
         }
         Relationships: []
       }
@@ -459,6 +576,48 @@ export type Database = {
         }
         Relationships: []
       }
+      trace_spans: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          end_time: string | null
+          id: string
+          metadata: Json | null
+          operation_name: string
+          parent_span_id: string | null
+          span_id: string
+          start_time: string
+          status: string
+          trace_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          end_time?: string | null
+          id?: string
+          metadata?: Json | null
+          operation_name: string
+          parent_span_id?: string | null
+          span_id: string
+          start_time: string
+          status?: string
+          trace_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          end_time?: string | null
+          id?: string
+          metadata?: Json | null
+          operation_name?: string
+          parent_span_id?: string | null
+          span_id?: string
+          start_time?: string
+          status?: string
+          trace_id?: string
+        }
+        Relationships: []
+      }
       user_analyses: {
         Row: {
           analysis_result: Json | null
@@ -574,6 +733,14 @@ export type Database = {
         Returns: unknown
       }
       cleanup_expired_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_traces: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

@@ -44,3 +44,12 @@ verify_jwt = false
 
 [functions.admin-logs]
 verify_jwt = true
+
+[functions.worker]
+verify_jwt = true
+
+[functions.metrics]
+verify_jwt = true
+
+[functions.key-rotation]
+verify_jwt = true

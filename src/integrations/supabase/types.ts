@@ -82,6 +82,39 @@ export type Database = {
         }
         Relationships: []
       }
+      cache_entries: {
+        Row: {
+          access_count: number
+          created_at: string
+          expires_at: string
+          id: string
+          key: string
+          last_accessed: string
+          size_bytes: number
+          value: string
+        }
+        Insert: {
+          access_count?: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          key: string
+          last_accessed?: string
+          size_bytes: number
+          value: string
+        }
+        Update: {
+          access_count?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          key?: string
+          last_accessed?: string
+          size_bytes?: number
+          value?: string
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
@@ -539,6 +572,10 @@ export type Database = {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      cleanup_expired_cache: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       custom_access_token_hook: {
         Args: { event: Json }

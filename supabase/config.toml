@@ -6,6 +6,12 @@ verify_jwt = true
 [functions.analyze-text-v2]
 verify_jwt = true
 
+[functions.backup]
+verify_jwt = true
+
+[functions.cache]
+verify_jwt = true
+
 [functions.check-subscription]
 verify_jwt = false
 

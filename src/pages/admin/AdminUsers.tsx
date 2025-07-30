@@ -10,35 +10,27 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Users, Settings } from "lucide-react";
+import { Users, Settings, Loader2 } from "lucide-react";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
 
 const AdminUsers = () => {
-  const users = [
-    {
-      id: 1,
-      name: "Dr. João Silva",
-      email: "joao@medico.com",
-      plan: "Premium",
-      status: "Active",
-      lastLogin: "2 hours ago"
-    },
-    {
-      id: 2,
-      name: "Dra. Maria Santos",
-      email: "maria@hospital.com",
-      plan: "Pro",
-      status: "Active",
-      lastLogin: "1 day ago"
-    },
-    {
-      id: 3,
-      name: "Dr. Pedro Costa",
-      email: "pedro@clinica.com",
-      plan: "Basic",
-      status: "Inactive",
-      lastLogin: "1 week ago"
-    }
-  ];
+  const { users, loading, error } = useAdminUsers();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-destructive">Error loading users: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -81,7 +73,7 @@ const AdminUsers = () => {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.plan === 'Premium' ? 'default' : 'secondary'}>
+                    <Badge variant={user.plan === 'premium' ? 'default' : 'secondary'}>
                       {user.plan}
                     </Badge>
                   </TableCell>
@@ -90,7 +82,9 @@ const AdminUsers = () => {
                       {user.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{user.lastLogin}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString("pt-BR") : "Never"}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

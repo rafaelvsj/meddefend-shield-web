@@ -1,39 +1,36 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
+import { useAdminBilling } from "@/hooks/useAdminBilling";
 
 const AdminBilling = () => {
-  const plans = [
-    { name: "Basic", price: "R$ 29", users: 145, revenue: "R$ 4,205" },
-    { name: "Pro", price: "R$ 59", users: 89, revenue: "R$ 5,251" },
-    { name: "Premium", price: "R$ 99", users: 67, revenue: "R$ 6,633" }
-  ];
+  const { data, loading, error } = useAdminBilling();
 
-  const recentTransactions = [
-    {
-      id: 1,
-      user: "Dr. João Silva",
-      plan: "Premium",
-      amount: "R$ 99,00",
-      status: "Completed",
-      date: "Today"
-    },
-    {
-      id: 2,
-      user: "Dra. Maria Santos",
-      plan: "Pro",
-      amount: "R$ 59,00",
-      status: "Completed",
-      date: "Yesterday"
-    },
-    {
-      id: 3,
-      user: "Dr. Pedro Costa",
-      plan: "Basic",
-      amount: "R$ 29,00",
-      status: "Pending",
-      date: "2 days ago"
-    }
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-destructive">Error loading billing data: {error}</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-muted-foreground">No billing data available</p>
+      </div>
+    );
+  }
+
+  const { plans, recentTransactions } = data;
 
   return (
     <div className="space-y-6">

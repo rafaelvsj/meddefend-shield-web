@@ -4,8 +4,45 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Loader2 } from "lucide-react";
+import { useSystemSettings } from "@/hooks/useSystemSettings";
+import { useState, useEffect } from "react";
 
 const AdminSettings = () => {
+  const { settings, loading, saving, updateSettings } = useSystemSettings();
+  const [localSettings, setLocalSettings] = useState(settings);
+
+  useEffect(() => {
+    if (settings) {
+      setLocalSettings(settings);
+    }
+  }, [settings]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!settings) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-muted-foreground">No settings available</p>
+      </div>
+    );
+  }
+
+  const handleSave = () => {
+    if (localSettings) {
+      updateSettings(localSettings);
+    }
+  };
+
+  const handleReset = () => {
+    setLocalSettings(settings);
+  };
   return (
     <div className="space-y-6">
       <div>
@@ -26,12 +63,21 @@ const AdminSettings = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="system-name">System Name</Label>
-              <Input id="system-name" defaultValue="MedDefend Admin" />
+              <Input 
+                id="system-name" 
+                value={localSettings?.system_name || ""} 
+                onChange={(e) => setLocalSettings(prev => prev ? {...prev, system_name: e.target.value} : null)}
+              />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="admin-email">Admin Email</Label>
-              <Input id="admin-email" type="email" defaultValue="admin@meddefend.com" />
+              <Input 
+                id="admin-email" 
+                type="email" 
+                value={localSettings?.admin_email || ""} 
+                onChange={(e) => setLocalSettings(prev => prev ? {...prev, admin_email: e.target.value} : null)}
+              />
             </div>
             
             <div className="flex items-center justify-between">
@@ -41,7 +87,10 @@ const AdminSettings = () => {
                   Enable to restrict access during updates
                 </p>
               </div>
-              <Switch />
+              <Switch 
+                checked={localSettings?.maintenance_mode === "true"}
+                onCheckedChange={(checked) => setLocalSettings(prev => prev ? {...prev, maintenance_mode: checked.toString()} : null)}
+              />
             </div>
           </CardContent>
         </Card>
@@ -61,19 +110,32 @@ const AdminSettings = () => {
                   Automatically retry failed AI requests
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={localSettings?.auto_retry_analyses === "true"}
+                onCheckedChange={(checked) => setLocalSettings(prev => prev ? {...prev, auto_retry_analyses: checked.toString()} : null)}
+              />
             </div>
             
             <Separator />
             
             <div className="space-y-2">
               <Label htmlFor="max-retries">Max Retry Attempts</Label>
-              <Input id="max-retries" type="number" defaultValue="3" />
+              <Input 
+                id="max-retries" 
+                type="number" 
+                value={localSettings?.max_retry_attempts || ""} 
+                onChange={(e) => setLocalSettings(prev => prev ? {...prev, max_retry_attempts: e.target.value} : null)}
+              />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="timeout">Request Timeout (seconds)</Label>
-              <Input id="timeout" type="number" defaultValue="30" />
+              <Input 
+                id="timeout" 
+                type="number" 
+                value={localSettings?.request_timeout || ""} 
+                onChange={(e) => setLocalSettings(prev => prev ? {...prev, request_timeout: e.target.value} : null)}
+              />
             </div>
           </CardContent>
         </Card>
@@ -93,7 +155,10 @@ const AdminSettings = () => {
                   Require 2FA for admin access
                 </p>
               </div>
-              <Switch />
+              <Switch 
+                checked={localSettings?.require_2fa === "true"}
+                onCheckedChange={(checked) => setLocalSettings(prev => prev ? {...prev, require_2fa: checked.toString()} : null)}
+              />
             </div>
             
             <div className="flex items-center justify-between">
@@ -103,21 +168,34 @@ const AdminSettings = () => {
                   Auto-logout inactive sessions
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={localSettings?.session_timeout === "true"}
+                onCheckedChange={(checked) => setLocalSettings(prev => prev ? {...prev, session_timeout: checked.toString()} : null)}
+              />
             </div>
             
             <Separator />
             
             <div className="space-y-2">
               <Label htmlFor="session-duration">Session Duration (hours)</Label>
-              <Input id="session-duration" type="number" defaultValue="8" />
+              <Input 
+                id="session-duration" 
+                type="number" 
+                value={localSettings?.session_duration || ""} 
+                onChange={(e) => setLocalSettings(prev => prev ? {...prev, session_duration: e.target.value} : null)}
+              />
             </div>
           </CardContent>
         </Card>
         
         <div className="flex justify-end gap-2">
-          <Button variant="outline">Reset to Defaults</Button>
-          <Button>Save Changes</Button>
+          <Button variant="outline" onClick={handleReset} disabled={saving}>
+            Reset to Defaults
+          </Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Changes
+          </Button>
         </div>
       </div>
     </div>

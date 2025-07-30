@@ -8,46 +8,37 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Loader2 } from "lucide-react";
+import { useAdminLogs } from "@/hooks/useAdminLogs";
 
 const AdminLogs = () => {
-  const logs = [
-    {
-      id: 1,
-      timestamp: "2024-01-09 14:30:15",
-      user: "Dr. João Silva",
-      action: "AI Analysis",
-      model: "Cardiologia",
-      status: "Success",
-      duration: "2.3s"
-    },
-    {
-      id: 2,
-      timestamp: "2024-01-09 14:28:42",
-      user: "Dra. Maria Santos",
-      action: "Document Upload",
-      model: "Neurologia",
-      status: "Success",
-      duration: "1.1s"
-    },
-    {
-      id: 3,
-      timestamp: "2024-01-09 14:25:33",
-      user: "Dr. Pedro Costa",
-      action: "AI Analysis",
-      model: "Pneumologia",
-      status: "Error",
-      duration: "0.5s"
-    },
-    {
-      id: 4,
-      timestamp: "2024-01-09 14:20:18",
-      user: "Dr. Ana Lima",
-      action: "Report Export",
-      model: "Dermatologia",
-      status: "Success",
-      duration: "3.2s"
-    }
-  ];
+  const { data, loading, error } = useAdminLogs();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-destructive">Error loading logs: {error}</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-muted-foreground">No log data available</p>
+      </div>
+    );
+  }
+
+  const { stats, logs } = data;
 
   return (
     <div className="space-y-6">
@@ -64,7 +55,7 @@ const AdminLogs = () => {
             <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
+            <div className="text-2xl font-bold">{stats.totalRequests}</div>
             <p className="text-xs text-muted-foreground">Today</p>
           </CardContent>
         </Card>
@@ -74,7 +65,7 @@ const AdminLogs = () => {
             <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">98.5%</div>
+            <div className="text-2xl font-bold">{stats.successRate}</div>
             <p className="text-xs text-muted-foreground">Last 24h</p>
           </CardContent>
         </Card>
@@ -84,7 +75,7 @@ const AdminLogs = () => {
             <CardTitle className="text-sm font-medium">Avg Response</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2.1s</div>
+            <div className="text-2xl font-bold">{stats.avgResponse}</div>
             <p className="text-xs text-muted-foreground">Processing time</p>
           </CardContent>
         </Card>
@@ -94,7 +85,7 @@ const AdminLogs = () => {
             <CardTitle className="text-sm font-medium">Active Models</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{stats.activeModels}</div>
             <p className="text-xs text-muted-foreground">Specializations</p>
           </CardContent>
         </Card>

@@ -18,10 +18,117 @@ interface DocumentChunk {
 }
 
 class DocumentProcessor {
-  private async extractTextFromFile(filePath: string, fileType: string): Promise<string> {
-    // Simulação de extração de texto - em produção usaria bibliotecas específicas
-    // Para PDFs: pdf-parse, para DOCs: mammoth, etc.
-    return `Texto extraído do arquivo ${filePath} (${fileType})`;
+  private async extractTextFromFile(fileBuffer: ArrayBuffer, fileType: string): Promise<string> {
+    try {
+      switch (fileType.toLowerCase()) {
+        case 'application/pdf':
+        case 'pdf':
+          return await this.extractFromPDF(fileBuffer);
+          
+        case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        case 'docx':
+          return await this.extractFromDOCX(fileBuffer);
+          
+        case 'text/plain':
+        case 'txt':
+          return new TextDecoder().decode(fileBuffer);
+          
+        case 'text/html':
+        case 'html':
+          return this.stripHTML(new TextDecoder().decode(fileBuffer));
+          
+        default:
+          // Try to extract as plain text
+          const text = new TextDecoder().decode(fileBuffer);
+          if (text.length > 0) return text;
+          throw new Error(`Unsupported file type: ${fileType}`);
+      }
+    } catch (error) {
+      throw new Error(`Text extraction failed: ${(error as Error).message}`);
+    }
+  }
+
+  private async extractFromPDF(buffer: ArrayBuffer): Promise<string> {
+    // Using a simplified PDF text extraction
+    // In production, would use: https://deno.land/x/pdf_parser or similar
+    try {
+      const uint8Array = new Uint8Array(buffer);
+      const text = new TextDecoder().decode(uint8Array);
+      
+      // Basic PDF text extraction - look for text between streams
+      const textPattern = /stream\s*(.*?)\s*endstream/gs;
+      const matches = text.match(textPattern);
+      
+      if (matches) {
+        return matches
+          .map(match => match.replace(/stream|endstream/g, '').trim())
+          .filter(text => text.length > 0)
+          .join('\n');
+      }
+      
+      // Fallback: try to find readable text
+      const readableText = text.replace(/[^\x20-\x7E\n\r]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+        
+      if (readableText.length < 50) {
+        throw new Error('No readable text found in PDF');
+      }
+      
+      return readableText;
+    } catch (error) {
+      throw new Error(`PDF extraction failed: ${(error as Error).message}`);
+    }
+  }
+
+  private async extractFromDOCX(buffer: ArrayBuffer): Promise<string> {
+    // Simplified DOCX extraction - in production would use mammoth.js equivalent
+    try {
+      const uint8Array = new Uint8Array(buffer);
+      
+      // DOCX is a ZIP file - we need to extract the document.xml
+      // This is a simplified approach - in production use proper ZIP parsing
+      const text = new TextDecoder().decode(uint8Array);
+      
+      // Look for XML text content patterns
+      const xmlTextPattern = /<w:t[^>]*>([^<]+)<\/w:t>/g;
+      const matches = [...text.matchAll(xmlTextPattern)];
+      
+      if (matches.length > 0) {
+        return matches
+          .map(match => match[1])
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+      
+      // Fallback: extract readable text
+      const readableText = text.replace(/[^\x20-\x7E\n\r]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+        
+      if (readableText.length < 50) {
+        throw new Error('No readable text found in DOCX');
+      }
+      
+      return readableText;
+    } catch (error) {
+      throw new Error(`DOCX extraction failed: ${(error as Error).message}`);
+    }
+  }
+
+  private stripHTML(html: string): string {
+    return html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private chunkText(text: string, chunkSize: number = 1000): string[] {
@@ -65,9 +172,9 @@ class DocumentProcessor {
     return data.embedding?.values || [];
   }
 
-  async processDocument(filePath: string, fileName: string, fileType: string): Promise<DocumentChunk[]> {
+  async processDocument(fileBuffer: ArrayBuffer, fileName: string, fileType: string): Promise<DocumentChunk[]> {
     // Extrair texto do documento
-    const text = await this.extractTextFromFile(filePath, fileType);
+    const text = await this.extractTextFromFile(fileBuffer, fileType);
     
     // Dividir em chunks
     const chunks = this.chunkText(text);
@@ -117,10 +224,23 @@ serve(async (req) => {
       throw new Error('Arquivo não encontrado');
     }
 
+    // Download do arquivo do storage
+    const { data: fileData, error: downloadError } = await supabaseClient
+      .storage
+      .from('knowledge-base')
+      .download(file.file_name);
+
+    if (downloadError || !fileData) {
+      throw new Error('Erro ao baixar arquivo do storage');
+    }
+
+    // Converter para ArrayBuffer
+    const fileBuffer = await fileData.arrayBuffer();
+
     // Processar documento
     const processor = new DocumentProcessor();
     const chunks = await processor.processDocument(
-      file.file_name,
+      fileBuffer,
       file.original_name,
       file.file_type
     );
@@ -132,7 +252,7 @@ serve(async (req) => {
     const chunkInserts = chunks.map(chunk => ({
       knowledge_base_id: fileId,
       content: chunk.content,
-      embedding: `[${chunk.embedding.join(',')}]`, // PostgreSQL array format
+      embedding: chunk.embedding, // Use native vector type
       chunk_index: chunk.metadata.chunk_index,
       chunk_size: chunk.metadata.chunk_size
     }));

@@ -8,6 +8,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { Users, Settings } from "lucide-react";
 
 const AdminUsers = () => {
   const users = [
@@ -39,11 +42,19 @@ const AdminUsers = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Users</h2>
-        <p className="text-muted-foreground">
-          Manage user accounts and subscriptions
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Users</h2>
+          <p className="text-muted-foreground">
+            Manage user accounts and subscriptions
+          </p>
+        </div>
+        <Button asChild>
+          <Link to="/admin/users/roles" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Role Manager
+          </Link>
+        </Button>
       </div>
       
       <Card>

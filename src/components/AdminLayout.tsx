@@ -41,6 +41,7 @@ import AdminLogs from "@/pages/admin/AdminLogs";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminKnowledgeBase from "@/pages/admin/AdminKnowledgeBase";
 import AdminLLMSettings from "@/pages/admin/AdminLLMSettings";
+import AdminUserRoles from "@/pages/admin/AdminUserRoles";
 
 const AdminLayout = () => {
   const location = useLocation();
@@ -204,6 +205,7 @@ const AdminLayout = () => {
               <Route path="/" element={<AdminHome />} />
               <Route path="/messages" element={<AdminMessages />} />
               <Route path="/users" element={<AdminUsers />} />
+              <Route path="/users/roles" element={<AdminUserRoles />} />
               <Route path="/billing" element={<AdminBilling />} />
               <Route path="/knowledge-base" element={<AdminKnowledgeBase />} />
               <Route path="/llm-settings" element={<AdminLLMSettings />} />

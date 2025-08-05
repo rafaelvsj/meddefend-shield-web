@@ -12,16 +12,27 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const start = Date.now();
+  
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
+    // Initialize Supabase clients - service role for admin operations
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
+    const authClient = createClient(supabaseUrl, supabaseAnonKey);
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get authenticated user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.error("Missing Authorization header");
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-billing',
+        action: 'auth_check',
+        status: 'error',
+        error: 'no_authorization_header'
+      }));
       return new Response(
         JSON.stringify({ error: "Authorization header required" }),
         { 
@@ -32,11 +43,18 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data, error: authError } = await supabaseClient.auth.getUser(token);
+    const { data, error: authError } = await authClient.auth.getUser(token);
     const user = data.user;
 
     if (authError || !user) {
-      console.error("Authentication failed:", authError?.message);
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-billing',
+        admin_id: null,
+        action: 'auth_verify',
+        status: 'error',
+        error: authError?.message || 'invalid_token'
+      }));
       return new Response(
         JSON.stringify({ error: "User not authenticated" }),
         { 
@@ -46,14 +64,23 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is admin
-    const { data: roleData } = await supabaseClient
+    // Check if user is admin using service client
+    const { data: roleData, error: roleError } = await serviceClient
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .single();
 
-    if (!roleData || roleData.role !== "admin") {
+    if (roleError || !roleData || roleData.role !== "admin") {
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-billing',
+        admin_id: user.id,
+        action: 'role_check',
+        status: 'error',
+        error: 'access_denied',
+        role: roleData?.role || 'none'
+      }));
       return new Response(
         JSON.stringify({ error: "Forbidden: Admin access required" }),
         { 
@@ -63,10 +90,22 @@ serve(async (req) => {
       );
     }
 
-    // Get subscription stats by tier
-    const { data: subscriptions } = await supabaseClient
+    // Get subscription stats by tier using service client
+    const { data: subscriptions, error: subsError } = await serviceClient
       .from("subscribers")
       .select("subscription_tier, subscribed");
+
+    if (subsError) {
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-billing',
+        admin_id: user.id,
+        action: 'fetch_subscriptions',
+        status: 'error',
+        error: subsError.message
+      }));
+      throw subsError;
+    }
 
     // Calculate plan statistics
     const planStats = {
@@ -91,8 +130,8 @@ serve(async (req) => {
       }
     });
 
-    // Get recent transactions (using user_analyses as proxy for now)
-    const { data: recentAnalyses } = await supabaseClient
+    // Get recent transactions (using user_analyses as proxy for now) using service client
+    const { data: recentAnalyses, error: analysesError } = await serviceClient
       .from("user_analyses")
       .select(`
         id,
@@ -104,6 +143,18 @@ serve(async (req) => {
       `)
       .order("created_at", { ascending: false })
       .limit(10);
+
+    if (analysesError) {
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-billing',
+        admin_id: user.id,
+        action: 'fetch_analyses',
+        status: 'error',
+        error: analysesError.message
+      }));
+      throw analysesError;
+    }
 
     const recentTransactions = recentAnalyses?.map((analysis, index) => ({
       id: analysis.id,
@@ -135,12 +186,26 @@ serve(async (req) => {
       }
     ];
 
+    const totalRevenue = planStats.Basic.revenue + planStats.Pro.revenue + planStats.Premium.revenue;
+    const totalUsers = planStats.Basic.users + planStats.Pro.users + planStats.Premium.users;
+
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      function: 'admin-billing',
+      admin_id: user.id,
+      action: 'fetch_billing_data',
+      status: 'success',
+      total_users: totalUsers,
+      total_revenue: totalRevenue,
+      execution_time_ms: Date.now() - start
+    }));
+
     return new Response(
       JSON.stringify({ 
         plans,
         recentTransactions,
-        totalRevenue: planStats.Basic.revenue + planStats.Pro.revenue + planStats.Premium.revenue,
-        totalUsers: planStats.Basic.users + planStats.Pro.users + planStats.Premium.users
+        totalRevenue,
+        totalUsers
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

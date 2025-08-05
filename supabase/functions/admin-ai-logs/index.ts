@@ -12,16 +12,27 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const start = Date.now();
+  
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
+    // Initialize Supabase clients - service role for admin operations
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
+    const authClient = createClient(supabaseUrl, supabaseAnonKey);
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get authenticated user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.error("Missing Authorization header");
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-ai-logs',
+        action: 'auth_check',
+        status: 'error',
+        error: 'no_authorization_header'
+      }));
       return new Response(
         JSON.stringify({ error: "Authorization header required" }),
         { 
@@ -32,11 +43,18 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data, error: authError } = await supabaseClient.auth.getUser(token);
+    const { data, error: authError } = await authClient.auth.getUser(token);
     const user = data.user;
 
     if (authError || !user) {
-      console.error("Authentication failed:", authError?.message);
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-ai-logs',
+        admin_id: null,
+        action: 'auth_verify',
+        status: 'error',
+        error: authError?.message || 'invalid_token'
+      }));
       return new Response(
         JSON.stringify({ error: "User not authenticated" }),
         { 
@@ -46,14 +64,23 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is admin
-    const { data: roleData } = await supabaseClient
+    // Check if user is admin using service client
+    const { data: roleData, error: roleError } = await serviceClient
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .single();
 
-    if (!roleData || roleData.role !== "admin") {
+    if (roleError || !roleData || roleData.role !== "admin") {
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-ai-logs',
+        admin_id: user.id,
+        action: 'role_check',
+        status: 'error',
+        error: 'access_denied',
+        role: roleData?.role || 'none'
+      }));
       return new Response(
         JSON.stringify({ error: "Forbidden: Admin access required" }),
         { 
@@ -63,8 +90,8 @@ serve(async (req) => {
       );
     }
 
-    // Get AI analysis logs
-    const { data: analyses } = await supabaseClient
+    // Get AI analysis logs using service client
+    const { data: analyses, error: analysesError } = await serviceClient
       .from("user_analyses")
       .select(`
         id,
@@ -78,12 +105,36 @@ serve(async (req) => {
       .order("created_at", { ascending: false })
       .limit(50);
 
-    // Get audit logs
-    const { data: auditLogs } = await supabaseClient
+    if (analysesError) {
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-ai-logs',
+        admin_id: user.id,
+        action: 'fetch_ai_logs',
+        status: 'error',
+        error: analysesError.message
+      }));
+      throw analysesError;
+    }
+
+    // Get audit logs using service client
+    const { data: auditLogs, error: auditError } = await serviceClient
       .from("audit_logs")
       .select("*")
       .order("timestamp", { ascending: false })
       .limit(50);
+
+    if (auditError) {
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-ai-logs',
+        admin_id: user.id,
+        action: 'fetch_audit_logs',
+        status: 'error',
+        error: auditError.message
+      }));
+      throw auditError;
+    }
 
     // Calculate statistics
     const today = new Date();
@@ -118,6 +169,17 @@ serve(async (req) => {
       avgResponse: "2.1s", // Simulated average
       activeModels: 8 // Count of different specializations
     };
+
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      function: 'admin-ai-logs',
+      admin_id: user.id,
+      action: 'fetch_logs_data',
+      status: 'success',
+      ai_logs_count: formattedLogs.length,
+      audit_logs_count: auditLogs?.length || 0,
+      execution_time_ms: Date.now() - start
+    }));
 
     return new Response(
       JSON.stringify({ 

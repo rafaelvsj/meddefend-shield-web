@@ -12,16 +12,27 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const start = Date.now();
+  
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
+    // Initialize Supabase clients - service role for admin operations
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
+    const authClient = createClient(supabaseUrl, supabaseAnonKey);
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get authenticated user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.error("Missing Authorization header");
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-users',
+        action: 'auth_check',
+        status: 'error',
+        error: 'no_authorization_header'
+      }));
       return new Response(
         JSON.stringify({ error: "Authorization header required" }),
         { 
@@ -32,11 +43,18 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data, error: authError } = await supabaseClient.auth.getUser(token);
+    const { data, error: authError } = await authClient.auth.getUser(token);
     const user = data.user;
 
     if (authError || !user) {
-      console.error("Authentication failed:", authError?.message);
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-users',
+        admin_id: null,
+        action: 'auth_verify',
+        status: 'error',
+        error: authError?.message || 'invalid_token'
+      }));
       return new Response(
         JSON.stringify({ error: "User not authenticated" }),
         { 
@@ -46,14 +64,23 @@ serve(async (req) => {
       );
     }
 
-    // Check if user is admin
-    const { data: roleData } = await supabaseClient
+    // Check if user is admin using service client
+    const { data: roleData, error: roleError } = await serviceClient
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .single();
 
-    if (!roleData || roleData.role !== "admin") {
+    if (roleError || !roleData || roleData.role !== "admin") {
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-users',
+        admin_id: user.id,
+        action: 'role_check',
+        status: 'error',
+        error: 'access_denied',
+        role: roleData?.role || 'none'
+      }));
       return new Response(
         JSON.stringify({ error: "Forbidden: Admin access required" }),
         { 
@@ -63,8 +90,8 @@ serve(async (req) => {
       );
     }
 
-    // Get users with their profiles, roles and subscriptions
-    const { data: users, error } = await supabaseClient
+    // Get users with their profiles, roles and subscriptions using service client
+    const { data: users, error } = await serviceClient
       .from("profiles")
       .select(`
         id,
@@ -82,6 +109,14 @@ serve(async (req) => {
       `);
 
     if (error) {
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-users',
+        admin_id: user.id,
+        action: 'fetch_users',
+        status: 'error',
+        error: error.message
+      }));
       throw error;
     }
 
@@ -96,6 +131,16 @@ serve(async (req) => {
       lastLogin: user.updated_at,
       createdAt: user.created_at
     })) || [];
+
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      function: 'admin-users',
+      admin_id: user.id,
+      action: 'fetch_users',
+      status: 'success',
+      users_count: formattedUsers.length,
+      execution_time_ms: Date.now() - start
+    }));
 
     return new Response(
       JSON.stringify({ users: formattedUsers }),

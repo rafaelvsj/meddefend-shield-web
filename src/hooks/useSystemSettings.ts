@@ -20,14 +20,15 @@ export const useSystemSettings = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSettings = async () => {
+  const fetchSettings = async (retryCount = 0) => {
     try {
       setLoading(true);
+      setError(null);
       
       // Get current session to ensure we have a valid token
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) {
-        throw new Error('No active session');
+        throw new Error('No active session - please login again');
       }
 
       const { data, error } = await supabase.functions.invoke('admin-system-settings', {
@@ -37,11 +38,22 @@ export const useSystemSettings = () => {
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        // If it's a 403 and we haven't retried, try refreshing session
+        if (error.message?.includes('403') && retryCount === 0) {
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (!refreshError) {
+            return fetchSettings(1); // Retry once with refreshed token
+          }
+        }
+        throw new Error(error.message || 'Failed to load settings');
+      }
       
       setSettings(data.settings);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch settings');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch settings';
+      setError(errorMessage);
+      console.error('System settings fetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -50,11 +62,12 @@ export const useSystemSettings = () => {
   const updateSettings = async (newSettings: Partial<SystemSettings>) => {
     try {
       setSaving(true);
+      setError(null);
       
       // Get current session to ensure we have a valid token
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) {
-        throw new Error('No active session');
+        throw new Error('No active session - please login again');
       }
 
       const { error } = await supabase.functions.invoke('admin-system-settings', {
@@ -65,13 +78,16 @@ export const useSystemSettings = () => {
         body: { settings: newSettings }
       });
       
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message || 'Failed to update settings');
+      }
       
       setSettings(prev => prev ? { ...prev, ...newSettings } : null);
       toast.success('Settings updated successfully');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update settings';
       setError(errorMessage);
+      console.error('Settings update error:', err);
       toast.error(errorMessage);
     } finally {
       setSaving(false);

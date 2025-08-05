@@ -15,8 +15,8 @@ async function makeRequest(endpoint: string, options: RequestInit = {}): Promise
   });
 }
 
-Deno.test("Admin Logs - Missing authorization", async () => {
-  const response = await fetch(`${BASE_URL}/admin-ai-logs`, {
+Deno.test("Admin Settings - Missing authorization", async () => {
+  const response = await fetch(`${BASE_URL}/admin-system-settings`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -26,8 +26,8 @@ Deno.test("Admin Logs - Missing authorization", async () => {
   assertEquals(response.status, 401, "Should require authorization");
 });
 
-Deno.test("Admin Logs - Non-admin user", async () => {
-  const response = await makeRequest("admin-ai-logs", {
+Deno.test("Admin Settings - Non-admin user", async () => {
+  const response = await makeRequest("admin-system-settings", {
     method: 'GET'
   });
   
@@ -36,25 +36,25 @@ Deno.test("Admin Logs - Non-admin user", async () => {
     "Should reject non-admin users");
 });
 
-Deno.test("Admin Logs - Response structure", async () => {
-  const response = await makeRequest("admin-ai-logs", {
-    method: 'GET'
-  });
-  
-  if (response.status === 200) {
-    const data = await response.json();
-    assertEquals(typeof data.stats, "object", "Should return stats object");
-    assertEquals(Array.isArray(data.logs), true, "Should return logs array");
-    assertEquals(Array.isArray(data.auditLogs), true, "Should return audit logs array");
-  }
-});
-
-Deno.test("Admin Logs - CORS headers", async () => {
-  const response = await makeRequest("admin-ai-logs", {
+Deno.test("Admin Settings - CORS headers", async () => {
+  const response = await makeRequest("admin-system-settings", {
     method: 'OPTIONS'
   });
   
   assertEquals(response.status, 200, "OPTIONS should return 200");
   assertEquals(response.headers.get("Access-Control-Allow-Origin"), "*",
     "Should have CORS headers");
+});
+
+Deno.test("Admin Settings - Response structure", async () => {
+  const response = await makeRequest("admin-system-settings", {
+    method: 'GET'
+  });
+  
+  if (response.status === 200) {
+    const data = await response.json();
+    assertEquals(typeof data.settings, "object", "Should return settings object");
+    assertEquals(typeof data.settings.system_name, "string", "Should have system_name");
+    assertEquals(typeof data.settings.admin_email, "string", "Should have admin_email");
+  }
 });

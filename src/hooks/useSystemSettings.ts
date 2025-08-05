@@ -23,8 +23,18 @@ export const useSystemSettings = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
+      
+      // Get current session to ensure we have a valid token
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        throw new Error('No active session');
+      }
+
       const { data, error } = await supabase.functions.invoke('admin-system-settings', {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
       });
       
       if (error) throw error;
@@ -40,8 +50,18 @@ export const useSystemSettings = () => {
   const updateSettings = async (newSettings: Partial<SystemSettings>) => {
     try {
       setSaving(true);
+      
+      // Get current session to ensure we have a valid token
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        throw new Error('No active session');
+      }
+
       const { error } = await supabase.functions.invoke('admin-system-settings', {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
         body: { settings: newSettings }
       });
       

@@ -36,6 +36,17 @@ Deno.test("Admin Users - Non-admin user", async () => {
     "Should reject non-admin users");
 });
 
+Deno.test("Admin Users - Response structure", async () => {
+  const response = await makeRequest("admin-users", {
+    method: 'GET'
+  });
+  
+  if (response.status === 200) {
+    const data = await response.json();
+    assertEquals(Array.isArray(data.users), true, "Should return users array");
+  }
+});
+
 Deno.test("Admin Users - CORS headers", async () => {
   const response = await makeRequest("admin-users", {
     method: 'OPTIONS'

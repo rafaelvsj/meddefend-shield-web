@@ -53,3 +53,21 @@ verify_jwt = true
 
 [functions.key-rotation]
 verify_jwt = true
+
+[functions.admin-users]
+verify_jwt = true
+
+[functions.admin-billing]
+verify_jwt = true
+
+[functions.admin-ai-logs]
+verify_jwt = true
+
+[functions.admin-system-settings]
+verify_jwt = true
+
+[functions.admin-update-user-role]
+verify_jwt = true
+
+[functions.admin-update-user-plan-role]
+verify_jwt = true

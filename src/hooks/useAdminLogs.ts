@@ -32,7 +32,18 @@ export const useAdminLogs = () => {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const { data: logsData, error } = await supabase.functions.invoke('admin-ai-logs');
+      
+      // Get current session to ensure we have a valid token
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        throw new Error('No active session');
+      }
+
+      const { data: logsData, error } = await supabase.functions.invoke('admin-ai-logs', {
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
+      });
       
       if (error) throw error;
       

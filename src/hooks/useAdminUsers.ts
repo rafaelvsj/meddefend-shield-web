@@ -20,7 +20,18 @@ export const useAdminUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('admin-users');
+      
+      // Get current session to ensure we have a valid token
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        throw new Error('No active session');
+      }
+
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
+      });
       
       if (error) throw error;
       

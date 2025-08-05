@@ -36,6 +36,20 @@ Deno.test("Admin Billing - Non-admin user", async () => {
     "Should reject non-admin users");
 });
 
+Deno.test("Admin Billing - Response structure", async () => {
+  const response = await makeRequest("admin-billing", {
+    method: 'GET'
+  });
+  
+  if (response.status === 200) {
+    const data = await response.json();
+    assertEquals(Array.isArray(data.plans), true, "Should return plans array");
+    assertEquals(Array.isArray(data.recentTransactions), true, "Should return transactions array");
+    assertEquals(typeof data.totalRevenue, "number", "Should return total revenue");
+    assertEquals(typeof data.totalUsers, "number", "Should return total users");
+  }
+});
+
 Deno.test("Admin Billing - CORS headers", async () => {
   const response = await makeRequest("admin-billing", {
     method: 'OPTIONS'

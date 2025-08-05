@@ -90,47 +90,76 @@ serve(async (req) => {
       );
     }
 
-    // Get users with their profiles, roles and subscriptions using service client
-    const { data: users, error } = await serviceClient
+    // Get all profiles first
+    const { data: profiles, error: profilesError } = await serviceClient
       .from("profiles")
-      .select(`
-        id,
-        full_name,
-        email,
-        created_at,
-        updated_at,
-        user_roles (
-          role
-        ),
-        subscribers (
-          subscription_tier,
-          subscribed
-        )
-      `);
+      .select("id, full_name, email, created_at, updated_at");
 
-    if (error) {
+    if (profilesError) {
       console.log(JSON.stringify({
         timestamp: new Date().toISOString(),
         function: 'admin-users',
         admin_id: user.id,
-        action: 'fetch_users',
+        action: 'fetch_profiles',
         status: 'error',
-        error: error.message
+        error: profilesError.message
       }));
-      throw error;
+      throw profilesError;
     }
 
-    // Format the data
-    const formattedUsers = users?.map(user => ({
-      id: user.id,
-      name: user.full_name || "Unknown",
-      email: user.email || "No email",
-      plan: user.subscribers?.[0]?.subscription_tier || "free",
-      role: user.user_roles?.[0]?.role || "user",
-      status: user.subscribers?.[0]?.subscribed ? "Active" : "Inactive",
-      lastLogin: user.updated_at,
-      createdAt: user.created_at
-    })) || [];
+    // Get all user roles
+    const { data: userRoles, error: rolesError } = await serviceClient
+      .from("user_roles")
+      .select("user_id, role");
+
+    if (rolesError) {
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-users',
+        admin_id: user.id,
+        action: 'fetch_roles',
+        status: 'error',
+        error: rolesError.message
+      }));
+      throw rolesError;
+    }
+
+    // Get all subscribers
+    const { data: subscribers, error: subscribersError } = await serviceClient
+      .from("subscribers")
+      .select("user_id, subscription_tier, subscribed");
+
+    if (subscribersError) {
+      console.log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        function: 'admin-users',
+        admin_id: user.id,
+        action: 'fetch_subscribers',
+        status: 'error',
+        error: subscribersError.message
+      }));
+      throw subscribersError;
+    }
+
+    // Manual JOIN in JavaScript
+    const users = profiles?.map(profile => {
+      // Find user role
+      const userRole = userRoles?.find(role => role.user_id === profile.id);
+      // Find subscription
+      const subscription = subscribers?.find(sub => sub.user_id === profile.id);
+
+      return {
+        id: profile.id,
+        name: profile.full_name || "Unknown",
+        email: profile.email || "No email",
+        plan: subscription?.subscription_tier || "free",
+        role: userRole?.role || "user",
+        status: subscription?.subscribed ? "Active" : "Inactive",
+        lastLogin: profile.updated_at,
+        createdAt: profile.created_at
+      };
+    }) || [];
+
 
     console.log(JSON.stringify({
       timestamp: new Date().toISOString(),
@@ -138,12 +167,15 @@ serve(async (req) => {
       admin_id: user.id,
       action: 'fetch_users',
       status: 'success',
-      users_count: formattedUsers.length,
+      users_count: users.length,
+      profiles_count: profiles?.length || 0,
+      roles_count: userRoles?.length || 0,
+      subscribers_count: subscribers?.length || 0,
       execution_time_ms: Date.now() - start
     }));
 
     return new Response(
-      JSON.stringify({ users: formattedUsers }),
+      JSON.stringify({ users }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }

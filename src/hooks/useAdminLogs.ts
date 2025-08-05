@@ -40,11 +40,14 @@ export const useAdminLogs = () => {
         throw new Error('No active session - please login again');
       }
 
+      console.log('🔍 Invoking admin-ai-logs function...');
       const { data: logsData, error } = await supabase.functions.invoke('admin-ai-logs', {
         headers: {
           Authorization: `Bearer ${session.session.access_token}`,
         },
       });
+      
+      console.log('📊 admin-ai-logs response:', { logsData, error });
       
       if (error) {
         // If it's a 403 and we haven't retried, try refreshing session

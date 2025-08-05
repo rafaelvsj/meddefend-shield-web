@@ -40,11 +40,14 @@ export const useAdminBilling = () => {
         throw new Error('No active session - please login again');
       }
 
+      console.log('🔍 Invoking admin-billing function...');
       const { data: billingData, error } = await supabase.functions.invoke('admin-billing', {
         headers: {
           Authorization: `Bearer ${session.session.access_token}`,
         },
       });
+      
+      console.log('📊 admin-billing response:', { billingData, error });
       
       if (error) {
         // If it's a 403 and we haven't retried, try refreshing session

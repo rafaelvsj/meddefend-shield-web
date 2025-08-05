@@ -28,11 +28,14 @@ export const useAdminUsers = () => {
         throw new Error('No active session - please login again');
       }
 
+      console.log('🔍 Invoking admin-users function...');
       const { data, error } = await supabase.functions.invoke('admin-users', {
         headers: {
           Authorization: `Bearer ${session.session.access_token}`,
         },
       });
+      
+      console.log('📊 admin-users response:', { data, error });
       
       if (error) {
         // If it's a 403 and we haven't retried, try refreshing session

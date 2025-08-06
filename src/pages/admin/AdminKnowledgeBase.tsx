@@ -33,6 +33,9 @@ const AdminKnowledgeBase = () => {
   const [testing, setTesting] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [qualityReport, setQualityReport] = useState<any>(null);
+  const [selectedFileForQuality, setSelectedFileForQuality] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -428,11 +431,92 @@ const AdminKnowledgeBase = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const handleValidateQuality = async (fileId?: string) => {
+    setValidating(true);
+    try {
+      const action = fileId ? 'validate_document' : 'validate_batch';
+      const body = fileId ? { action, documentId: fileId } : { action, batchSize: 10 };
+
+      console.log('[AdminKnowledgeBase] Iniciando validação de qualidade...');
+      
+      const { data, error } = await supabase.functions
+        .invoke('quality-validator', { body });
+
+      if (error) {
+        throw new Error(`Erro na validação: ${error.message}`);
+      }
+
+      console.log('[AdminKnowledgeBase] Resultado da validação:', data);
+      
+      if (fileId) {
+        setQualityReport(data.report);
+        setSelectedFileForQuality(fileId);
+        toast({
+          title: "Validação concluída",
+          description: `Qualidade geral: ${(data.report.overallQuality * 100).toFixed(1)}%`,
+        });
+      } else {
+        toast({
+          title: "Validação em lote concluída",
+          description: `${data.summary.totalDocuments} documentos analisados. Qualidade média: ${(data.summary.averageQuality * 100).toFixed(1)}%`,
+        });
+        setQualityReport(data);
+      }
+      
+    } catch (error) {
+      console.error('[AdminKnowledgeBase] Erro na validação:', error);
+      toast({
+        title: "Erro na validação",
+        description: error instanceof Error ? error.message : "Falha ao validar qualidade",
+        variant: "destructive",
+      });
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const handleCleanupCorrupted = async () => {
+    try {
+      console.log('[AdminKnowledgeBase] Iniciando limpeza de documentos corrompidos...');
+      
+      const { data, error } = await supabase.functions
+        .invoke('quality-validator', {
+          body: { action: 'cleanup_corrupted' }
+        });
+
+      if (error) {
+        throw new Error(`Erro na limpeza: ${error.message}`);
+      }
+
+      toast({
+        title: "Limpeza concluída",
+        description: data.message,
+      });
+
+      await loadFiles();
+      
+    } catch (error) {
+      console.error('[AdminKnowledgeBase] Erro na limpeza:', error);
+      toast({
+        title: "Erro na limpeza",
+        description: error instanceof Error ? error.message : "Falha ao limpar documentos",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusBadge = (status: string, createdAt?: string) => {
+    const now = new Date();
+    const created = createdAt ? new Date(createdAt) : now;
+    const hoursSinceCreated = (now.getTime() - created.getTime()) / (1000 * 60 * 60);
+    
     switch (status) {
       case 'processed':
         return <Badge variant="default" className="gap-1"><CheckCircle className="w-3 h-3" />Processado</Badge>;
       case 'processing':
+        if (hoursSinceCreated > 1) {
+          return <Badge variant="destructive" className="gap-1"><AlertCircle className="w-3 h-3" />Travado ({hoursSinceCreated.toFixed(1)}h)</Badge>;
+        }
         return <Badge variant="secondary" className="gap-1"><Clock className="w-3 h-3" />Processando</Badge>;
       case 'error':
         return <Badge variant="destructive" className="gap-1"><AlertCircle className="w-3 h-3" />Erro</Badge>;
@@ -476,6 +560,23 @@ const AdminKnowledgeBase = () => {
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             {retrying ? 'Reprocessando...' : 'Retry Falhas'}
+          </Button>
+
+          <Button 
+            variant="outline" 
+            onClick={() => handleValidateQuality()}
+            disabled={validating}
+          >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            {validating ? 'Validando...' : 'Validar Qualidade'}
+          </Button>
+
+          <Button 
+            variant="destructive" 
+            onClick={handleCleanupCorrupted}
+            size="sm"
+          >
+            Limpar Corrompidos
           </Button>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

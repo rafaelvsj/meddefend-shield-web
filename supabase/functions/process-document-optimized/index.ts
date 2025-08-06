@@ -2,6 +2,167 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Enhanced PDF parsing with multiple fallback strategies
+class EnhancedPDFExtractor {
+  static async extractText(buffer: ArrayBuffer, fileName: string): Promise<{
+    text: string;
+    quality: number;
+    method: string;
+    warnings: string[];
+  }> {
+    const warnings: string[] = [];
+    
+    try {
+      // Method 1: Try pdf-parse (most reliable)
+      const pdfParse = await import('https://esm.sh/pdf-parse@1.1.1');
+      console.log(`[PDFExtractor] Tentando pdf-parse para ${fileName}`);
+      
+      const data = await pdfParse.default(new Uint8Array(buffer));
+      const text = data.text || '';
+      
+      if (this.isValidText(text)) {
+        const quality = this.calculateTextQuality(text);
+        console.log(`[PDFExtractor] pdf-parse sucesso - Qualidade: ${quality}`);
+        return {
+          text: this.cleanText(text),
+          quality,
+          method: 'pdf-parse',
+          warnings
+        };
+      } else {
+        warnings.push('pdf-parse retornou texto de baixa qualidade');
+      }
+    } catch (error) {
+      console.warn(`[PDFExtractor] pdf-parse falhou:`, error);
+      warnings.push(`pdf-parse falhou: ${error.message}`);
+    }
+
+    try {
+      // Method 2: Try basic text extraction
+      console.log(`[PDFExtractor] Tentando extração básica para ${fileName}`);
+      const text = await this.basicTextExtraction(buffer);
+      
+      if (this.isValidText(text)) {
+        const quality = this.calculateTextQuality(text);
+        console.log(`[PDFExtractor] Extração básica sucesso - Qualidade: ${quality}`);
+        return {
+          text: this.cleanText(text),
+          quality,
+          method: 'basic',
+          warnings
+        };
+      } else {
+        warnings.push('Extração básica retornou texto de baixa qualidade');
+      }
+    } catch (error) {
+      console.warn(`[PDFExtractor] Extração básica falhou:`, error);
+      warnings.push(`Extração básica falhou: ${error.message}`);
+    }
+
+    // If all methods fail, return structured error
+    throw new Error(`Falha em todos os métodos de extração. Warnings: ${warnings.join('; ')}`);
+  }
+
+  private static async basicTextExtraction(buffer: ArrayBuffer): Promise<string> {
+    const text = new TextDecoder().decode(buffer);
+    
+    // Extract text between stream/endstream markers
+    const streamRegex = /stream\s*([\s\S]*?)\s*endstream/g;
+    const textParts: string[] = [];
+    let match;
+    
+    while ((match = streamRegex.exec(text)) !== null) {
+      const streamContent = match[1];
+      if (streamContent && !this.isBinaryContent(streamContent)) {
+        textParts.push(streamContent);
+      }
+    }
+    
+    return textParts.join(' ').trim();
+  }
+
+  private static isValidText(text: string): boolean {
+    if (!text || text.length < 10) return false;
+    
+    // Check for PDF garbage patterns
+    const garbagePatterns = [
+      /%PDF-/,
+      /endobj/,
+      /startxref/,
+      /xref/,
+      /trailer/,
+      /^\s*\d+\s+\d+\s+obj/m,
+      /<<\s*\/[A-Z]/
+    ];
+    
+    const garbageCount = garbagePatterns.reduce((count, pattern) => {
+      return count + (pattern.test(text) ? 1 : 0);
+    }, 0);
+    
+    // If more than 2 garbage patterns found, consider invalid
+    if (garbageCount > 2) {
+      console.warn(`[PDFExtractor] Texto contém ${garbageCount} padrões de lixo PDF`);
+      return false;
+    }
+    
+    // Check text quality - should have reasonable word/char ratio
+    const wordCount = text.split(/\s+/).filter(word => word.length > 1).length;
+    const charCount = text.length;
+    const ratio = wordCount / charCount;
+    
+    return ratio > 0.05; // At least 5% should be words
+  }
+
+  private static calculateTextQuality(text: string): number {
+    const totalChars = text.length;
+    if (totalChars === 0) return 0;
+    
+    // Count readable characters
+    const readableChars = text.match(/[a-zA-ZÀ-ÿ0-9\s.,;:!?()-]/g)?.length || 0;
+    const readabilityScore = readableChars / totalChars;
+    
+    // Count words vs total characters
+    const words = text.split(/\s+/).filter(word => /^[a-zA-ZÀ-ÿ]/.test(word));
+    const wordScore = Math.min(words.length / 100, 1); // Normalize to max 1
+    
+    // Penalty for PDF artifacts
+    const artifactPenalty = this.countPDFArtifacts(text) * 0.1;
+    
+    const finalScore = Math.max(0, Math.min(1, (readabilityScore * 0.7 + wordScore * 0.3 - artifactPenalty)));
+    
+    return Math.round(finalScore * 100) / 100;
+  }
+
+  private static countPDFArtifacts(text: string): number {
+    const artifacts = [
+      /obj\s*$/gm,
+      /endobj/g,
+      /stream/g,
+      /endstream/g,
+      /%PDF/g,
+      /xref/g,
+      /trailer/g
+    ];
+    
+    return artifacts.reduce((count, pattern) => {
+      return count + (text.match(pattern)?.length || 0);
+    }, 0);
+  }
+
+  private static isBinaryContent(content: string): boolean {
+    // Check for high percentage of non-printable characters
+    const nonPrintable = content.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\xFF]/g)?.length || 0;
+    return (nonPrintable / content.length) > 0.3;
+  }
+
+  private static cleanText(text: string): string {
+    return text
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ') // Remove control chars
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',

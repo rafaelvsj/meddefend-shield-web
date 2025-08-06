@@ -63,22 +63,57 @@ const AdminKnowledgeBase = () => {
     try {
       console.log('[AdminKnowledgeBase] Testando configuração do sistema...');
       
-      const { data, error } = await supabase.functions.invoke('test-knowledge-config');
-      
-      if (error) {
-        console.error('[AdminKnowledgeBase] Erro no teste de configuração:', error);
-        toast({
-          title: "Erro de configuração",
-          description: `Falha no teste: ${error.message}`,
-          variant: "destructive",
-        });
-      } else {
-        console.log('[AdminKnowledgeBase] Teste de configuração bem-sucedido:', data);
-        toast({
-          title: "Configuração OK",
-          description: "Todas as configurações estão funcionando corretamente",
-        });
+      // 1. Testar autenticação
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error('Falha na autenticação: ' + (authError?.message || 'Usuário não encontrado'));
       }
+      console.log('[AdminKnowledgeBase] ✅ Autenticação OK:', user.id);
+      
+      // 2. Testar inserção na knowledge_base
+      console.log('[AdminKnowledgeBase] Testando inserção na knowledge_base...');
+      const testRecord = {
+        file_name: `teste-${Date.now()}.txt`,
+        original_name: 'arquivo-teste.txt',
+        file_type: 'text/plain',
+        file_size: 123,
+        status: 'pending',
+        created_by: user.id
+      };
+      
+      const { data: insertData, error: insertError } = await supabase
+        .from('knowledge_base')
+        .insert(testRecord)
+        .select()
+        .single();
+      
+      if (insertError) {
+        console.error('[AdminKnowledgeBase] ❌ Erro na inserção:', insertError);
+        throw new Error('Falha na inserção: ' + insertError.message);
+      }
+      console.log('[AdminKnowledgeBase] ✅ Inserção OK:', insertData);
+      
+      // 3. Testar process-document
+      console.log('[AdminKnowledgeBase] Testando process-document...');
+      const { data: processData, error: processError } = await supabase.functions
+        .invoke('process-document', {
+          body: { fileId: insertData.id }
+        });
+      
+      if (processError) {
+        console.warn('[AdminKnowledgeBase] ⚠️ Process-document com erro:', processError);
+      } else {
+        console.log('[AdminKnowledgeBase] ✅ Process-document OK:', processData);
+      }
+      
+      toast({
+        title: "Teste Concluído",
+        description: `✅ Auth: OK | ✅ Insert: OK | ${processError ? '⚠️' : '✅'} Process: ${processError ? 'Erro' : 'OK'}`,
+      });
+      
+      // Recarregar para mostrar o registro de teste
+      await loadFiles();
+      
     } catch (error) {
       console.error('[AdminKnowledgeBase] Erro crítico no teste:', error);
       toast({

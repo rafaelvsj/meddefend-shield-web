@@ -28,7 +28,7 @@ const AdminKnowledgeBase = () => {
   const [files, setFiles] = useState<KnowledgeBaseFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [viewContent, setViewContent] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -58,45 +58,96 @@ const AdminKnowledgeBase = () => {
   };
 
   const handleFileUpload = async () => {
-    if (!selectedFile) return;
+    if (selectedFiles.length === 0) return;
 
     setUploading(true);
+    
     try {
-      // Upload para storage
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('knowledge-base')
-        .upload(fileName, selectedFile);
+      const uploadPromises = selectedFiles.map(async (file) => {
+        try {
+          console.log(`Iniciando upload do arquivo: ${file.name}`);
+          
+          // Upload para storage
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('knowledge-base')
+            .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error(`Erro no upload para storage do arquivo ${file.name}:`, uploadError);
+            throw uploadError;
+          }
 
-      // Criar registro na tabela
-      const { error: insertError } = await supabase
-        .from('knowledge_base')
-        .insert({
-          file_name: fileName,
-          original_name: selectedFile.name,
-          file_type: selectedFile.type,
-          file_size: selectedFile.size,
-          status: 'pending'
-        });
+          console.log(`Arquivo ${file.name} enviado para storage com sucesso`);
 
-      if (insertError) throw insertError;
+          // Criar registro na tabela
+          const { data: insertData, error: insertError } = await supabase
+            .from('knowledge_base')
+            .insert({
+              file_name: fileName,
+              original_name: file.name,
+              file_type: file.type,
+              file_size: file.size,
+              status: 'pending'
+            })
+            .select()
+            .single();
 
-      toast({
-        title: "Sucesso",
-        description: "Arquivo enviado com sucesso",
+          if (insertError) {
+            console.error(`Erro ao inserir registro do arquivo ${file.name}:`, insertError);
+            throw insertError;
+          }
+
+          console.log(`Registro criado para arquivo ${file.name}:`, insertData);
+
+          // Chamar processamento automático
+          const { error: processError } = await supabase.functions.invoke('process-document', {
+            body: { fileId: insertData.id }
+          });
+
+          if (processError) {
+            console.error(`Erro no processamento do arquivo ${file.name}:`, processError);
+            // Não fazer throw aqui - o arquivo foi salvo, apenas o processamento falhou
+          } else {
+            console.log(`Processamento iniciado para arquivo ${file.name}`);
+          }
+
+          return { success: true, fileName: file.name };
+        } catch (error) {
+          console.error(`Erro geral no upload do arquivo ${file.name}:`, error);
+          return { success: false, fileName: file.name, error };
+        }
       });
 
-      setSelectedFile(null);
+      const results = await Promise.all(uploadPromises);
+      const successful = results.filter(r => r.success);
+      const failed = results.filter(r => !r.success);
+
+      if (successful.length > 0) {
+        toast({
+          title: "Sucesso",
+          description: `${successful.length} arquivo(s) enviado(s) com sucesso`,
+        });
+      }
+
+      if (failed.length > 0) {
+        console.error('Arquivos com falha:', failed);
+        toast({
+          title: "Erro parcial",
+          description: `${failed.length} arquivo(s) falharam no upload`,
+          variant: "destructive",
+        });
+      }
+
+      setSelectedFiles([]);
       loadFiles();
     } catch (error) {
-      console.error('Erro no upload:', error);
+      console.error('Erro geral no processo de upload:', error);
       toast({
         title: "Erro",
-        description: "Falha ao enviar arquivo",
+        description: "Falha ao enviar arquivos",
         variant: "destructive",
       });
     } finally {
@@ -172,36 +223,54 @@ const AdminKnowledgeBase = () => {
           <DialogTrigger asChild>
             <Button>
               <Upload className="w-4 h-4 mr-2" />
-              Enviar Arquivo
+              Enviar Arquivos
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Enviar Arquivo</DialogTitle>
+              <DialogTitle>Enviar Arquivos</DialogTitle>
               <DialogDescription>
-                Adicione novos documentos à base de conhecimento
+                Adicione novos documentos à base de conhecimento. Você pode selecionar múltiplos arquivos.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="file">Selecionar Arquivo</Label>
+                <Label htmlFor="file">Selecionar Arquivos</Label>
                 <Input
                   id="file"
                   type="file"
+                  multiple
                   accept=".pdf,.doc,.docx,.txt,.md"
-                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  onChange={(e) => setSelectedFiles(Array.from(e.target.files || []))}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Formatos suportados: PDF, DOC, DOCX, TXT, MD
+                  Formatos suportados: PDF, DOC, DOCX, TXT, MD. Você pode selecionar múltiplos arquivos.
                 </p>
+                {selectedFiles.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Arquivos selecionados:</p>
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between text-sm text-muted-foreground bg-muted p-2 rounded">
+                        <span>{file.name} ({formatFileSize(file.size)})</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedFiles(files => files.filter((_, i) => i !== index))}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               
               <div className="flex justify-end gap-2">
                 <Button
                   onClick={handleFileUpload}
-                  disabled={!selectedFile || uploading}
+                  disabled={selectedFiles.length === 0 || uploading}
                 >
-                  {uploading ? "Enviando..." : "Enviar"}
+                  {uploading ? `Enviando ${selectedFiles.length} arquivo(s)...` : `Enviar ${selectedFiles.length} arquivo(s)`}
                 </Button>
               </div>
             </div>

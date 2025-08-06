@@ -28,23 +28,28 @@ const PipelineTestPanel = () => {
     const startTime = Date.now();
 
     try {
-      // Buscar documento pendente
+      // Usar documento específico que falhou
+      const testFileId = 'f055de65-c4ba-472e-964f-6ff784b332c3';
+      
+      console.log(`[PipelineTest] Testando com documento específico: ${testFileId}`);
+
+      // Verificar se documento existe
       const { data: kbDoc, error: fetchError } = await supabase
         .from('knowledge_base')
-        .select('id, file_name, status')
-        .eq('status', 'pending')
-        .limit(1)
+        .select('id, file_name, status, original_name')
+        .eq('id', testFileId)
         .single();
 
-      if (fetchError || !kbDoc) {
-        throw new Error('Nenhum documento pendente encontrado para teste');
+      if (fetchError) {
+        throw new Error(`Erro ao buscar documento: ${fetchError.message}`);
       }
 
-      console.log(`[PipelineTest] Testando com documento: ${kbDoc.file_name} (${kbDoc.id})`);
+      console.log(`[PipelineTest] Documento encontrado:`, kbDoc);
 
       // Chamar a função process-document-optimized
+      console.log('[PipelineTest] Invocando function...');
       const { data, error } = await supabase.functions.invoke('process-document-optimized', {
-        body: { fileId: kbDoc.id }
+        body: { fileId: testFileId }
       });
 
       const duration = Date.now() - startTime;

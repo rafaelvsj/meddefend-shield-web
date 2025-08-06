@@ -31,6 +31,7 @@ const AdminKnowledgeBase = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [viewContent, setViewContent] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -323,6 +324,7 @@ const AdminKnowledgeBase = () => {
       }
 
       setSelectedFiles([]);
+      setIsDialogOpen(false);
       console.log(`[AdminKnowledgeBase] Recarregando lista de arquivos...`);
       await loadFiles();
       
@@ -413,9 +415,9 @@ const AdminKnowledgeBase = () => {
             {testing ? 'Testando...' : 'Testar Config'}
           </Button>
           
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={() => setIsDialogOpen(true)}>
                 <Upload className="w-4 h-4 mr-2" />
                 Enviar Arquivos
               </Button>
@@ -460,6 +462,13 @@ const AdminKnowledgeBase = () => {
                 </div>
                 
                 <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                    disabled={uploading}
+                  >
+                    Cancelar
+                  </Button>
                   <Button
                     onClick={handleFileUpload}
                     disabled={selectedFiles.length === 0 || uploading}

@@ -878,13 +878,39 @@ class EmbeddingGenerator {
 
   static async generateForChunks(chunks: string[], fileName: string, fileType: string): Promise<DocumentChunk[]> {
     const documentChunks: DocumentChunk[] = [];
+    const maxRetries = 3;
     
     for (let i = 0; i < chunks.length; i++) {
       console.log(`[process-document] Processando chunk ${i + 1}/${chunks.length}`);
       
-      try {
-        const embedding = await this.generateEmbedding(chunks[i]);
-        
+      let retryCount = 0;
+      let success = false;
+      let embedding: number[] | null = null;
+      
+      while (!success && retryCount < maxRetries) {
+        try {
+          embedding = await this.generateEmbedding(chunks[i]);
+          
+          if (!embedding || embedding.length === 0) {
+            throw new Error('Embedding vazio retornado');
+          }
+          
+          success = true;
+        } catch (error) {
+          retryCount++;
+          console.error(`[process-document] Tentativa ${retryCount} falhou para chunk ${i + 1}:`, error);
+          
+          if (retryCount < maxRetries) {
+            console.log(`[process-document] Aguardando antes de retry do chunk ${i + 1}...`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          } else {
+            console.error(`[process-document] Falha total no chunk ${i + 1} após ${maxRetries} tentativas`);
+            throw error;
+          }
+        }
+      }
+      
+      if (embedding) {
         documentChunks.push({
           content: chunks[i],
           embedding,
@@ -895,14 +921,11 @@ class EmbeddingGenerator {
             file_type: fileType
           }
         });
-        
-        // Pequena pausa para evitar rate limiting
-        if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
-      } catch (error) {
-        console.error(`[process-document] Erro ao processar chunk ${i}:`, error);
-        // Continua com os outros chunks em caso de erro
+      }
+      
+      // Pequena pausa para evitar rate limiting
+      if (i < chunks.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
 
@@ -1092,6 +1115,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('[process-document] Erro fatal:', error);
+    console.error('[process-document] Stack trace:', error instanceof Error ? error.stack : 'N/A');
+    console.error('[process-document] Tipo do erro:', typeof error);
     
     // Tentar atualizar status para erro se possível
     try {
@@ -1106,7 +1131,11 @@ serve(async (req) => {
         
         await supabaseClient
           .from('knowledge_base')
-          .update({ status: 'error' })
+          .update({ 
+            status: 'error',
+            processed_at: new Date().toISOString(),
+            content: `Erro no processamento: ${error instanceof Error ? error.message : 'Erro desconhecido'}. Timestamp: ${new Date().toISOString()}`
+          })
           .eq('id', fileId);
       }
     } catch (updateError) {
@@ -1114,8 +1143,9 @@ serve(async (req) => {
     }
     
     return new Response(JSON.stringify({ 
-      error: error.message,
-      success: false
+      error: error instanceof Error ? error.message : 'Erro desconhecido',
+      success: false,
+      timestamp: new Date().toISOString()
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

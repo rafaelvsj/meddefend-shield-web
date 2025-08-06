@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import PipelineTestPanel from "@/components/PipelineTestPanel";
 
 interface KnowledgeBaseFile {
   id: string;
@@ -777,6 +778,9 @@ const AdminKnowledgeBase = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Nova seção de teste do pipeline */}
+      <PipelineTestPanel />
     </div>
   );
 };

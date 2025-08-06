@@ -66,31 +66,64 @@ class DocumentProcessor {
     
     try {
       const uint8Array = new Uint8Array(buffer);
-      const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
       
-      // Método básico de extração de PDF - procurar por texto legível
-      const readableChars = /[\x20-\x7E\s]/g;
-      const matches = text.match(readableChars);
+      // Converter para string com encoding latin1 para preservar bytes
+      let text = '';
+      for (let i = 0; i < uint8Array.length; i++) {
+        text += String.fromCharCode(uint8Array[i]);
+      }
       
-      if (matches && matches.length > 100) {
-        const extractedText = matches.join('').replace(/\s+/g, ' ').trim();
+      // Procurar por objetos de stream de texto no PDF
+      const streamPattern = /stream\s*([\s\S]*?)\s*endstream/g;
+      const textObjects: string[] = [];
+      let match;
+      
+      while ((match = streamPattern.exec(text)) !== null) {
+        const streamContent = match[1];
         
-        if (extractedText.length > 50) {
-          console.log(`[process-document] PDF processado: ${extractedText.length} caracteres extraídos`);
-          return extractedText;
+        // Procurar por texto legível no stream
+        const readableText = this.extractReadableText(streamContent);
+        if (readableText.length > 10) {
+          textObjects.push(readableText);
         }
       }
       
-      // Fallback: tentar método alternativo
-      const lines = text.split('\n').filter(line => {
-        const cleanLine = line.replace(/[^\x20-\x7E]/g, '').trim();
-        return cleanLine.length > 5 && cleanLine.match(/[a-zA-Z]/);
-      });
+      // Buscar também por comandos de texto diretos
+      const textCommandPattern = /\(([^)]+)\)\s*Tj/g;
+      while ((match = textCommandPattern.exec(text)) !== null) {
+        const textContent = match[1];
+        if (textContent && textContent.length > 1) {
+          textObjects.push(textContent);
+        }
+      }
       
-      if (lines.length > 0) {
-        const result = lines.join(' ').replace(/\s+/g, ' ').trim();
-        console.log(`[process-document] PDF processado (método alternativo): ${result.length} caracteres`);
-        return result;
+      // Método alternativo: buscar padrões de texto entre parênteses
+      const textInParensPattern = /\(([^)]{3,})\)/g;
+      while ((match = textInParensPattern.exec(text)) !== null) {
+        const textContent = match[1];
+        if (textContent && /[a-zA-ZÀ-ÿ]/.test(textContent)) {
+          textObjects.push(textContent);
+        }
+      }
+      
+      if (textObjects.length > 0) {
+        const result = textObjects
+          .join(' ')
+          .replace(/\\[nr]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        if (result.length > 50) {
+          console.log(`[process-document] PDF processado: ${result.length} caracteres extraídos`);
+          return result;
+        }
+      }
+      
+      // Último recurso: extrair texto legível de qualquer lugar
+      const fallbackText = this.extractReadableText(text);
+      if (fallbackText.length > 100) {
+        console.log(`[process-document] PDF processado (fallback): ${fallbackText.length} caracteres`);
+        return fallbackText;
       }
       
       throw new Error('Não foi possível extrair texto legível do PDF');
@@ -98,6 +131,22 @@ class DocumentProcessor {
       console.error(`[process-document] Erro no processamento de PDF:`, error);
       throw new Error(`Falha ao processar PDF: ${(error as Error).message}`);
     }
+  }
+
+  private extractReadableText(content: string): string {
+    // Remove caracteres de controle e mantém apenas texto legível
+    const readable = content
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ')
+      .replace(/[^\x20-\x7E\u00C0-\u017F\u0100-\u024F\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    // Filtrar apenas linhas que parecem ter conteúdo textual significativo
+    const lines = readable.split(/\s+/).filter(word => {
+      return word.length > 2 && /[a-zA-ZÀ-ÿ]/.test(word);
+    });
+    
+    return lines.join(' ');
   }
 
   private async extractFromDOCX(buffer: ArrayBuffer): Promise<string> {

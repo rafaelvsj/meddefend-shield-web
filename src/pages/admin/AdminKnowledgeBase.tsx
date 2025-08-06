@@ -72,6 +72,16 @@ const AdminKnowledgeBase = () => {
       
       // 2. Testar inserção na knowledge_base
       console.log('[AdminKnowledgeBase] Testando inserção na knowledge_base...');
+      
+      // Verificar session e token
+      const { data: session } = await supabase.auth.getSession();
+      console.log('[AdminKnowledgeBase] 🔍 Session info:', {
+        sessionExists: !!session.session,
+        accessToken: session.session?.access_token ? 'EXISTS' : 'MISSING',
+        userId: session.session?.user?.id,
+        userEmail: session.session?.user?.email
+      });
+      
       const testRecord = {
         file_name: `teste-${Date.now()}.txt`,
         original_name: 'arquivo-teste.txt',
@@ -82,6 +92,8 @@ const AdminKnowledgeBase = () => {
       };
       
       console.log('[AdminKnowledgeBase] 🔍 Tentando inserir registro:', testRecord);
+      console.log('[AdminKnowledgeBase] 🔍 User ID do registro:', user.id);
+      console.log('[AdminKnowledgeBase] 🔍 User ID da session:', session.session?.user?.id);
       
       const { data: insertData, error: insertError } = await supabase
         .from('knowledge_base')

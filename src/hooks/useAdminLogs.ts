@@ -1,33 +1,31 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-interface KnowledgeBaseEntry {
+interface LogEntry {
   id: string;
-  file_name: string;
-  original_name: string;
-  file_type: string;
+  timestamp: string;
+  user: string;
+  action: string;
+  model: string;
   status: string;
-  file_size: number;
-  created_at: string;
-  processed_at: string | null;
-  created_by: string;
+  duration: string;
 }
 
-interface KnowledgeBaseStats {
-  totalFiles: number;
-  processedFiles: number;
-  pendingFiles: number;
-  errorFiles: number;
+interface LogStats {
+  totalRequests: number;
   successRate: string;
+  avgResponse: string;
+  activeModels: number;
 }
 
-interface KnowledgeBaseData {
-  stats?: KnowledgeBaseStats;
-  logs?: KnowledgeBaseEntry[];
+interface LogsData {
+  stats: LogStats;
+  logs: LogEntry[];
+  auditLogs: any[];
 }
 
 export const useAdminLogs = () => {
-  const [data, setData] = useState<{ stats: any; logs: any[] } | null>(null);
+  const [data, setData] = useState<LogsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,24 +40,16 @@ export const useAdminLogs = () => {
         throw new Error('No active session - please login again');
       }
 
-      console.log('🔍 Invoking admin-kb-logs function...');
+      console.log('🔍 Invoking admin-ai-logs function...');
+      const { data: logsData, error } = await supabase.functions.invoke('admin-ai-logs', {
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
+      });
       
-      // Get both stats and logs
-      const [statsResult, logsResult] = await Promise.all([
-        supabase.functions.invoke('admin-kb-logs', {
-          headers: { Authorization: `Bearer ${session.session.access_token}` },
-          body: JSON.stringify({ action: 'stats' })
-        }),
-        supabase.functions.invoke('admin-kb-logs', {
-          headers: { Authorization: `Bearer ${session.session.access_token}` },
-          body: JSON.stringify({ action: 'logs' })
-        })
-      ]);
+      console.log('📊 admin-ai-logs response:', { logsData, error });
       
-      console.log('📊 admin-kb-logs response:', { statsResult, logsResult });
-      
-      if (statsResult.error || logsResult.error) {
-        const error = statsResult.error || logsResult.error;
+      if (error) {
         // If it's a 403 and we haven't retried, try refreshing session
         if (error.message?.includes('403') && retryCount === 0) {
           const { error: refreshError } = await supabase.auth.refreshSession();
@@ -70,10 +60,7 @@ export const useAdminLogs = () => {
         throw new Error(error.message || 'Failed to load logs');
       }
       
-      setData({
-        stats: statsResult.data || {},
-        logs: logsResult.data || []
-      });
+      setData(logsData);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch logs';
       setError(errorMessage);

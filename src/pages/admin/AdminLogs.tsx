@@ -43,40 +43,20 @@ const AdminLogs = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Knowledge Base Logs</h2>
+        <h2 className="text-3xl font-bold tracking-tight">AI Logs</h2>
         <p className="text-muted-foreground">
-          Monitor knowledge base uploads and processing activities
+          Monitor AI analysis activities and performance
         </p>
       </div>
       
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Files</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalFiles}</div>
-            <p className="text-xs text-muted-foreground">Uploaded</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Processed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.processedFiles}</div>
-            <p className="text-xs text-muted-foreground">Successfully</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingFiles}</div>
-            <p className="text-xs text-muted-foreground">In queue</p>
+            <div className="text-2xl font-bold">{stats.totalRequests}</div>
+            <p className="text-xs text-muted-foreground">Today</p>
           </CardContent>
         </Card>
         
@@ -86,7 +66,27 @@ const AdminLogs = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.successRate}</div>
-            <p className="text-xs text-muted-foreground">Processing</p>
+            <p className="text-xs text-muted-foreground">Last 24h</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Avg Response</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.avgResponse}</div>
+            <p className="text-xs text-muted-foreground">Processing time</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Active Models</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.activeModels}</div>
+            <p className="text-xs text-muted-foreground">Specializations</p>
           </CardContent>
         </Card>
       </div>
@@ -94,39 +94,33 @@ const AdminLogs = () => {
       <Card>
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest knowledge base uploads and processing</CardDescription>
+          <CardDescription>Latest AI analysis requests and results</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>File Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Size</TableHead>
+                <TableHead>Timestamp</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Action</TableHead>
+                <TableHead>Model</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Uploaded</TableHead>
-                <TableHead>Processed</TableHead>
+                <TableHead>Duration</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell className="font-medium">{log.original_name}</TableCell>
-                  <TableCell className="uppercase text-xs">{log.file_type}</TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {log.file_size ? `${Math.round(log.file_size / 1024)}KB` : '-'}
-                  </TableCell>
+                  <TableCell className="font-mono text-xs">{log.timestamp}</TableCell>
+                  <TableCell>{log.user}</TableCell>
+                  <TableCell>{log.action}</TableCell>
+                  <TableCell>{log.model}</TableCell>
                   <TableCell>
-                    <Badge variant={log.status === 'processed' ? 'default' : log.status === 'error' ? 'destructive' : 'secondary'}>
+                    <Badge variant={log.status === 'Success' ? 'default' : 'destructive'}>
                       {log.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {new Date(log.created_at).toLocaleString()}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {log.processed_at ? new Date(log.processed_at).toLocaleString() : '-'}
-                  </TableCell>
+                  <TableCell className="font-mono text-xs">{log.duration}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

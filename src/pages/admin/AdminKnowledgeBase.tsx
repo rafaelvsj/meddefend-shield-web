@@ -153,10 +153,18 @@ const AdminKnowledgeBase = () => {
       await loadFiles();
       
     } catch (error) {
-      console.error('[AdminKnowledgeBase] Erro crítico no teste:', error);
+      console.error('[AdminKnowledgeBase] ❌ ERRO CRÍTICO NO TESTE:', error);
+      console.error('[AdminKnowledgeBase] ❌ Stack trace:', error instanceof Error ? error.stack : 'N/A');
+      console.error('[AdminKnowledgeBase] ❌ Tipo do erro:', typeof error);
+      console.error('[AdminKnowledgeBase] ❌ Detalhes completos:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        name: error instanceof Error ? error.name : 'Unknown',
+        // TypeScript compatibility fix
+      });
+      
       toast({
-        title: "Erro crítico",
-        description: "Falha ao testar configuração do sistema",
+        title: "❌ ERRO CRÍTICO DETECTADO",
+        description: `${error instanceof Error ? error.message : 'Erro desconhecido'}`,
         variant: "destructive",
       });
     } finally {

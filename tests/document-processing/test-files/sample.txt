@@ -1,0 +1,16 @@
+Este é um arquivo de teste em texto simples.
+
+Título Principal
+Este documento contém várias seções para testar a extração de texto.
+
+Lista de itens:
+- Item 1: Primeiro item da lista
+- Item 2: Segundo item da lista
+- Item 3: Terceiro item da lista
+
+Parágrafo com texto médico:
+O paciente apresentou sintomas de cefaleia intensa, acompanhada de náuseas e fotofobia. 
+Foi realizada avaliação neurológica completa, incluindo tomografia computadorizada do crânio.
+
+Conclusão:
+O processamento deste arquivo deve resultar em similaridade ≥ 99%.

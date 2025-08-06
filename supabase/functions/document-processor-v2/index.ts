@@ -7,14 +7,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Universal Document Processor - Multi-format support
+// Universal Document Processor - Multi-format support with external extraction service
 class UniversalDocumentProcessor {
   private supabase: any;
   private geminiApiKey: string;
+  private extractorServiceUrl: string;
+  private useUniversalPipeline: boolean;
 
   constructor(supabaseClient: any, geminiKey: string) {
     this.supabase = supabaseClient;
     this.geminiApiKey = geminiKey;
+    this.extractorServiceUrl = Deno.env.get('EXTRACTOR_SERVICE_URL') || 'http://localhost:8000';
+    this.useUniversalPipeline = Deno.env.get('USE_UNIVERSAL_PIPELINE') === 'true';
   }
 
   async logProcessingStep(fileId: string, stage: string, message: string, score?: number, metadata?: any) {
@@ -25,6 +29,56 @@ class UniversalDocumentProcessor {
       score,
       metadata: metadata || {}
     });
+  }
+
+  async callExtractionService(buffer: ArrayBuffer, fileName: string): Promise<{
+    text: string;
+    markdown: string;
+    similarity: number;
+    extraction_method: string;
+    ocr_used: boolean;
+    mime_type: string;
+  }> {
+    console.log(`[EXTRACTOR-SERVICE] Calling extraction service for ${fileName}`);
+    
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      const blob = new Blob([buffer]);
+      formData.append('file', blob, fileName);
+
+      // Call extraction service
+      const response = await fetch(`${this.extractorServiceUrl}/extract`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Extraction service failed: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Extraction service returned failure');
+      }
+
+      console.log(`[EXTRACTOR-SERVICE] Success: ${result.extraction_method}, similarity: ${result.similarity}`);
+      
+      return {
+        text: result.original_text,
+        markdown: result.markdown,
+        similarity: result.similarity,
+        extraction_method: result.extraction_method,
+        ocr_used: result.ocr_used,
+        mime_type: result.mime_type
+      };
+      
+    } catch (error) {
+      console.error(`[EXTRACTOR-SERVICE] Error: ${error.message}`);
+      throw error;
+    }
   }
 
   detectMimeType(fileName: string, buffer: ArrayBuffer): string {
@@ -67,102 +121,39 @@ class UniversalDocumentProcessor {
     return mimeMap[ext || ''] || 'application/octet-stream';
   }
 
-  async extractTextFromPDF(buffer: ArrayBuffer): Promise<{ text: string; method: string }> {
-    console.log("[PDF] Attempting native Deno PDF extraction...");
-    
-    try {
-      // Simple PDF text extraction using string search
-      const uint8 = new Uint8Array(buffer);
-      const decoder = new TextDecoder('utf-8', { fatal: false });
-      const pdfString = decoder.decode(uint8);
-      
-      // Look for text objects in PDF structure
-      const textMatches = pdfString.match(/\(([^)]+)\)/g) || [];
-      const cleanText = textMatches
-        .map(match => match.slice(1, -1))
-        .filter(text => text.length > 3 && /[a-zA-Z]/.test(text))
-        .join(' ');
-
-      if (cleanText.length > 50) {
-        return { text: cleanText, method: 'native-pdf-parser' };
-      }
-      
-      throw new Error('Insufficient text extracted');
-    } catch (error) {
-      console.warn("[PDF] Native extraction failed:", error.message);
-      throw new Error(`PDF extraction failed: ${error.message}`);
-    }
-  }
-
-  async extractTextFromHTML(buffer: ArrayBuffer): Promise<{ text: string; method: string }> {
-    const decoder = new TextDecoder();
-    const html = decoder.decode(buffer);
-    
-    // Simple HTML tag removal
-    const textContent = html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    return { text: textContent, method: 'html-parser' };
-  }
-
-  async extractTextFromPlain(buffer: ArrayBuffer): Promise<{ text: string; method: string }> {
-    const decoder = new TextDecoder();
-    const text = decoder.decode(buffer);
-    return { text, method: 'plain-text' };
-  }
-
-  async extractTextFromOffice(buffer: ArrayBuffer, mimeType: string): Promise<{ text: string; method: string }> {
-    // For DOCX/PPTX, we need to extract from the ZIP structure
-    // This is a simplified implementation - in production, use proper libraries
-    throw new Error(`Office format ${mimeType} requires specialized extraction service`);
-  }
-
-  async extractTextFromImage(buffer: ArrayBuffer): Promise<{ text: string; method: string; ocr_used: boolean }> {
-    // OCR would require external service or tesseract.js
-    throw new Error('OCR not implemented - requires external service');
-  }
-
-  async extractText(buffer: ArrayBuffer, fileName: string, mimeType: string): Promise<{
+  async extractTextFallback(buffer: ArrayBuffer, fileName: string, mimeType: string): Promise<{
     text: string;
     method: string;
     ocr_used: boolean;
   }> {
-    console.log(`[EXTRACTOR] Processing ${fileName} as ${mimeType}`);
+    console.log(`[FALLBACK] Using fallback extraction for ${fileName} as ${mimeType}`);
 
     try {
-      if (mimeType === 'application/pdf') {
-        const result = await this.extractTextFromPDF(buffer);
-        return { ...result, ocr_used: false };
-      }
-      
       if (mimeType === 'text/html') {
-        const result = await this.extractTextFromHTML(buffer);
-        return { ...result, ocr_used: false };
+        const decoder = new TextDecoder();
+        const html = decoder.decode(buffer);
+        
+        // Simple HTML tag removal
+        const textContent = html
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        return { text: textContent, method: 'html-fallback', ocr_used: false };
       }
       
       if (mimeType === 'text/plain') {
-        const result = await this.extractTextFromPlain(buffer);
-        return { ...result, ocr_used: false };
+        const decoder = new TextDecoder();
+        const text = decoder.decode(buffer);
+        return { text, method: 'plain-text-fallback', ocr_used: false };
       }
       
-      if (mimeType.includes('officedocument')) {
-        const result = await this.extractTextFromOffice(buffer, mimeType);
-        return { ...result, ocr_used: false };
-      }
-      
-      if (mimeType.startsWith('image/')) {
-        const result = await this.extractTextFromImage(buffer);
-        return { ...result, ocr_used: true };
-      }
-      
-      throw new Error(`Unsupported mime type: ${mimeType}`);
+      throw new Error(`No fallback available for ${mimeType}`);
       
     } catch (error) {
-      console.error(`[EXTRACTOR] Error processing ${mimeType}:`, error);
+      console.error(`[FALLBACK] Error processing ${mimeType}:`, error);
       throw error;
     }
   }
@@ -353,20 +344,50 @@ serve(async (req) => {
     console.log(`[PROCESSOR-V2] Detected mime type: ${mimeType}`);
     await processor.logProcessingStep(fileId, 'MIME_DETECTED', `Type: ${mimeType}`);
 
-    // Extract text
-    const extractionResult = await processor.extractText(buffer, fileData.original_name, mimeType);
-    await processor.logProcessingStep(fileId, 'EXTRACTED', `Method: ${extractionResult.method}, Chars: ${extractionResult.text.length}`, undefined, {
-      method: extractionResult.method,
-      ocr_used: extractionResult.ocr_used,
-      char_count: extractionResult.text.length
-    });
+    // Extract text using external service or fallback
+    let extractionResult;
+    let markdownContent;
+    let similarityScore;
 
-    // Convert to markdown
-    const markdownContent = processor.convertToMarkdown(extractionResult.text, fileData.original_name);
+    if (processor.useUniversalPipeline) {
+      try {
+        console.log("[PROCESSOR-V2] Using universal extraction service");
+        const serviceResult = await processor.callExtractionService(buffer, fileData.original_name);
+        
+        extractionResult = {
+          text: serviceResult.text,
+          method: serviceResult.extraction_method,
+          ocr_used: serviceResult.ocr_used
+        };
+        markdownContent = serviceResult.markdown;
+        similarityScore = serviceResult.similarity;
+        mimeType = serviceResult.mime_type; // Update with detected type
+        
+        await processor.logProcessingStep(fileId, 'EXTRACTED', `Method: ${extractionResult.method}, Chars: ${extractionResult.text.length}`, undefined, {
+          method: extractionResult.method,
+          ocr_used: extractionResult.ocr_used,
+          char_count: extractionResult.text.length,
+          service_used: 'external'
+        });
+      } catch (error) {
+        console.warn("[PROCESSOR-V2] External service failed, using fallback:", error.message);
+        await processor.logProcessingStep(fileId, 'SERVICE_FAILED', `External service error: ${error.message}`);
+        
+        // Use fallback extraction
+        extractionResult = await processor.extractTextFallback(buffer, fileData.original_name, mimeType);
+        markdownContent = processor.convertToMarkdown(extractionResult.text, fileData.original_name);
+        similarityScore = processor.calculateSimilarity(extractionResult.text, markdownContent);
+        
+        await processor.logProcessingStep(fileId, 'FALLBACK_USED', `Fallback method: ${extractionResult.method}`);
+      }
+    } else {
+      console.log("[PROCESSOR-V2] Using fallback extraction (universal pipeline disabled)");
+      extractionResult = await processor.extractTextFallback(buffer, fileData.original_name, mimeType);
+      markdownContent = processor.convertToMarkdown(extractionResult.text, fileData.original_name);
+      similarityScore = processor.calculateSimilarity(extractionResult.text, markdownContent);
+    }
+
     await processor.logProcessingStep(fileId, 'MARKDOWN', `Converted to markdown, Length: ${markdownContent.length}`);
-
-    // Calculate similarity
-    const similarityScore = processor.calculateSimilarity(extractionResult.text, markdownContent);
     await processor.logProcessingStep(fileId, 'SIMILARITY', `Score: ${similarityScore.toFixed(4)}`, similarityScore);
 
     // Quality gate - require 99% similarity

@@ -437,7 +437,7 @@ const AdminKnowledgeBase = () => {
       const action = fileId ? 'validate_document' : 'validate_batch';
       const body = fileId ? { action, documentId: fileId } : { action, batchSize: 10 };
 
-      console.log('[AdminKnowledgeBase] Iniciando validação de qualidade...');
+      console.log('[AdminKnowledgeBase] 🔍 Iniciando validação de qualidade...');
       
       const { data, error } = await supabase.functions
         .invoke('quality-validator', { body });
@@ -446,27 +446,27 @@ const AdminKnowledgeBase = () => {
         throw new Error(`Erro na validação: ${error.message}`);
       }
 
-      console.log('[AdminKnowledgeBase] Resultado da validação:', data);
+      console.log('[AdminKnowledgeBase] ✅ Resultado da validação:', data);
       
       if (fileId) {
         setQualityReport(data.report);
         setSelectedFileForQuality(fileId);
         toast({
-          title: "Validação concluída",
-          description: `Qualidade geral: ${(data.report.overallQuality * 100).toFixed(1)}%`,
+          title: "✅ Validação Individual",
+          description: `${data.report.documentName}: ${(data.report.overallQuality * 100).toFixed(1)}% | ${data.report.chunkCount} chunks | ${data.report.corruptedChunks} corrompidos`,
         });
       } else {
         toast({
-          title: "Validação em lote concluída",
-          description: `${data.summary.totalDocuments} documentos analisados. Qualidade média: ${(data.summary.averageQuality * 100).toFixed(1)}%`,
+          title: "✅ Validação em Lote",
+          description: `${data.summary.totalDocuments} docs | Média: ${(data.summary.averageQuality * 100).toFixed(1)}% | ${data.summary.poorQuality} ruins`,
         });
         setQualityReport(data);
       }
       
     } catch (error) {
-      console.error('[AdminKnowledgeBase] Erro na validação:', error);
+      console.error('[AdminKnowledgeBase] ❌ Erro na validação:', error);
       toast({
-        title: "Erro na validação",
+        title: "❌ Erro na validação",
         description: error instanceof Error ? error.message : "Falha ao validar qualidade",
         variant: "destructive",
       });

@@ -9,249 +9,359 @@ const corsHeaders = {
 
 interface QualityReport {
   documentId: string;
+  documentName: string;
   overallQuality: number;
-  textQuality: number;
-  structureQuality: number;
-  chunkQuality: number;
-  issues: string[];
+  extractionMethod: string | null;
+  chunkCount: number;
+  corruptedChunks: number;
+  qualityIssues: {
+    hasPDFArtifacts: boolean;
+    lowTextDensity: boolean;
+    binaryContent: boolean;
+    emptyChunks: boolean;
+    suspiciousPatterns: string[];
+  };
+  statistics: {
+    averageChunkSize: number;
+    totalCharacters: number;
+    readableCharacters: number;
+    readabilityRatio: number;
+  };
   recommendations: string[];
-  contentSample: string;
-  stats: {
-    totalChunks: number;
-    avgChunkSize: number;
-    readablePercentage: number;
-    artifactCount: number;
+  sampleContent: {
+    firstChunk: string;
+    randomChunk: string;
   };
 }
 
 class DocumentQualityValidator {
   static async validateDocument(supabase: any, documentId: string): Promise<QualityReport> {
-    console.log(`[QualityValidator] Analisando documento: ${documentId}`);
-
-    // Buscar documento e seus chunks
+    console.log(`[QualityValidator] Validating document: ${documentId}`);
+    
+    // Buscar documento
     const { data: document, error: docError } = await supabase
       .from('knowledge_base')
       .select('*')
       .eq('id', documentId)
       .single();
-
+    
     if (docError || !document) {
-      throw new Error(`Documento não encontrado: ${docError?.message}`);
+      throw new Error(`Document not found: ${docError?.message || 'Unknown error'}`);
     }
-
-    const { data: chunks, error: chunkError } = await supabase
+    
+    // Buscar chunks do documento
+    const { data: chunks, error: chunksError } = await supabase
       .from('document_chunks')
       .select('*')
       .eq('knowledge_base_id', documentId)
       .order('chunk_index');
-
-    if (chunkError) {
-      throw new Error(`Erro ao buscar chunks: ${chunkError.message}`);
+    
+    if (chunksError) {
+      throw new Error(`Failed to fetch chunks: ${chunksError.message}`);
     }
-
-    const issues: string[] = [];
-    const recommendations: string[] = [];
-
-    // 1. Análise da qualidade do texto principal
-    const textQuality = this.analyzeTextQuality(document.content || '');
-    if (textQuality < 0.5) {
-      issues.push(`Qualidade do texto baixa: ${textQuality.toFixed(2)}`);
-      recommendations.push('Considere reprocessar o documento com método de extração diferente');
-    }
-
-    // 2. Análise dos chunks
-    const chunkQuality = this.analyzeChunkQuality(chunks || []);
-    if (chunkQuality < 0.6) {
-      issues.push(`Qualidade dos chunks baixa: ${chunkQuality.toFixed(2)}`);
-      recommendations.push('Chunks contêm muito lixo técnico ou estão mal segmentados');
-    }
-
-    // 3. Análise estrutural
-    const structureQuality = this.analyzeStructure(document.content || '');
-    if (structureQuality < 0.4) {
-      issues.push(`Estrutura do documento pobre: ${structureQuality.toFixed(2)}`);
-      recommendations.push('Documento precisa de melhor estruturação em markdown');
-    }
-
-    // 4. Detectar problemas específicos
-    this.detectSpecificIssues(document, chunks || [], issues, recommendations);
-
-    // 5. Calcular estatísticas
-    const stats = this.calculateStats(chunks || [], document.content || '');
-
-    // 6. Qualidade geral
-    const overallQuality = (textQuality * 0.4 + chunkQuality * 0.4 + structureQuality * 0.2);
-
+    
+    const chunkList = chunks || [];
+    console.log(`[QualityValidator] Found ${chunkList.length} chunks for document ${document.original_name}`);
+    
+    // Analisar qualidade
+    const textQuality = this.analyzeTextQuality(chunkList);
+    const chunkQuality = this.analyzeChunkQuality(chunkList);
+    const structureAnalysis = this.analyzeDocumentStructure(document, chunkList);
+    const issueDetection = this.detectSpecificIssues(chunkList);
+    const statistics = this.calculateStatistics(chunkList);
+    const samples = this.generateContentSamples(chunkList);
+    
+    // Calcular score geral
+    const overallQuality = (
+      textQuality * 0.4 +
+      chunkQuality * 0.3 +
+      structureAnalysis * 0.2 +
+      (1 - (issueDetection.severityScore / 10)) * 0.1
+    );
+    
+    const recommendations = this.generateRecommendations(
+      overallQuality, 
+      issueDetection, 
+      statistics
+    );
+    
     return {
       documentId,
-      overallQuality,
-      textQuality,
-      structureQuality,
-      chunkQuality,
-      issues,
+      documentName: document.original_name,
+      overallQuality: Math.round(overallQuality * 100) / 100,
+      extractionMethod: document.extraction_method,
+      chunkCount: chunkList.length,
+      corruptedChunks: issueDetection.corruptedCount,
+      qualityIssues: {
+        hasPDFArtifacts: issueDetection.hasPDFArtifacts,
+        lowTextDensity: issueDetection.lowTextDensity,
+        binaryContent: issueDetection.binaryContent,
+        emptyChunks: issueDetection.emptyChunks,
+        suspiciousPatterns: issueDetection.suspiciousPatterns
+      },
+      statistics,
       recommendations,
-      contentSample: this.getContentSample(document.content || '', chunks || []),
-      stats
+      sampleContent: samples
     };
   }
-
-  private static analyzeTextQuality(text: string): number {
-    if (!text || text.length < 10) return 0;
-
-    const totalChars = text.length;
-    
-    // Count readable characters
-    const readableChars = text.match(/[a-zA-ZÀ-ÿ0-9\s.,;:!?()-]/g)?.length || 0;
-    const readabilityScore = readableChars / totalChars;
-
-    // Count PDF artifacts
-    const artifactPatterns = [
-      /%PDF/g, /obj\s*$/g, /endobj/g, /stream/g, /endstream/g,
-      /xref/g, /trailer/g, /<<\s*\/[A-Z]/g
-    ];
-    
-    const artifactCount = artifactPatterns.reduce((count, pattern) => {
-      return count + (text.match(pattern)?.length || 0);
-    }, 0);
-
-    const artifactPenalty = Math.min(artifactCount / 10, 0.8);
-    
-    return Math.max(0, readabilityScore - artifactPenalty);
-  }
-
-  private static analyzeChunkQuality(chunks: any[]): number {
+  
+  private static analyzeTextQuality(chunks: any[]): number {
     if (chunks.length === 0) return 0;
-
-    let totalQuality = 0;
+    
+    let totalScore = 0;
     let validChunks = 0;
-
+    
     for (const chunk of chunks) {
       const content = chunk.content || '';
-      if (content.length > 10) {
-        const quality = this.analyzeTextQuality(content);
-        totalQuality += quality;
-        validChunks++;
-      }
-    }
-
-    return validChunks > 0 ? totalQuality / validChunks : 0;
-  }
-
-  private static analyzeStructure(content: string): number {
-    if (!content) return 0;
-
-    let score = 0;
-
-    // Check for markdown headers
-    const headers = content.match(/^#+\s+.+$/gm);
-    if (headers && headers.length > 0) {
-      score += 0.4;
-    }
-
-    // Check for lists
-    const lists = content.match(/^\s*[-*+]\s+.+$/gm);
-    if (lists && lists.length > 0) {
-      score += 0.2;
-    }
-
-    // Check for paragraphs
-    const paragraphs = content.split('\n\n').filter(p => p.trim().length > 50);
-    if (paragraphs.length > 2) {
-      score += 0.3;
-    }
-
-    // Check for formatting
-    const formatting = content.match(/\*\*[^*]+\*\*|\*[^*]+\*/g);
-    if (formatting && formatting.length > 0) {
-      score += 0.1;
-    }
-
-    return Math.min(score, 1);
-  }
-
-  private static detectSpecificIssues(document: any, chunks: any[], issues: string[], recommendations: string[]) {
-    // Check for stuck processing
-    if (document.status === 'processing') {
-      const createdAt = new Date(document.created_at);
-      const hoursSinceCreated = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
+      if (content.length < 10) continue;
       
-      if (hoursSinceCreated > 1) {
-        issues.push(`Documento travado em processamento há ${hoursSinceCreated.toFixed(1)} horas`);
-        recommendations.push('Reprocessar documento com função de retry');
+      // Calcular score de legibilidade
+      const readableChars = content.match(/[a-zA-ZÀ-ÿ0-9\s.,;:!?()-]/g)?.length || 0;
+      const readabilityScore = readableChars / content.length;
+      
+      // Penalizar artefatos PDF
+      const pdfArtifacts = this.countPDFArtifacts(content);
+      const artifactPenalty = Math.min(pdfArtifacts * 0.1, 0.5);
+      
+      const chunkScore = Math.max(0, readabilityScore - artifactPenalty);
+      totalScore += chunkScore;
+      validChunks++;
+    }
+    
+    return validChunks > 0 ? totalScore / validChunks : 0;
+  }
+  
+  private static analyzeChunkQuality(chunks: any[]): number {
+    if (chunks.length === 0) return 0;
+    
+    let qualityScore = 1.0;
+    
+    // Verificar tamanhos dos chunks
+    const sizes = chunks.map(c => (c.content || '').length);
+    const avgSize = sizes.reduce((a, b) => a + b, 0) / sizes.length;
+    const tooSmall = sizes.filter(s => s < 50).length;
+    const tooLarge = sizes.filter(s => s > 2000).length;
+    
+    // Penalizar chunks muito pequenos ou grandes
+    qualityScore -= (tooSmall / chunks.length) * 0.3;
+    qualityScore -= (tooLarge / chunks.length) * 0.2;
+    
+    // Verificar continuidade (chunks devem formar texto coerente)
+    let continuityScore = 0;
+    for (let i = 1; i < chunks.length; i++) {
+      const prev = chunks[i-1].content || '';
+      const current = chunks[i].content || '';
+      
+      // Verificar se há sobreposição ou continuidade
+      if (this.hasTextContinuity(prev, current)) {
+        continuityScore += 1;
       }
     }
-
-    // Check for missing chunks
-    if (document.status === 'processed' && chunks.length === 0) {
-      issues.push('Documento marcado como processado mas sem chunks');
-      recommendations.push('Reprocessar documento completamente');
+    
+    const continuityRatio = chunks.length > 1 ? continuityScore / (chunks.length - 1) : 1;
+    qualityScore = (qualityScore * 0.7) + (continuityRatio * 0.3);
+    
+    return Math.max(0, Math.min(1, qualityScore));
+  }
+  
+  private static analyzeDocumentStructure(document: any, chunks: any[]): number {
+    let structureScore = 0.5; // Base score
+    
+    // Verificar se documento tem status processado
+    if (document.status === 'processed') structureScore += 0.2;
+    
+    // Verificar se há conteúdo markdown estruturado
+    if (document.markdown_content) {
+      const markdown = document.markdown_content;
+      if (markdown.includes('#')) structureScore += 0.1; // Headers
+      if (markdown.includes('*') || markdown.includes('-')) structureScore += 0.1; // Lists
+      if (markdown.length > document.content?.length * 0.8) structureScore += 0.1; // Comprehensive
     }
-
-    // Check for duplicate or corrupted chunks
-    const contentHashes = new Set();
-    let duplicateCount = 0;
+    
+    // Verificar metadata de processamento
+    if (document.extraction_method) structureScore += 0.1;
+    if (document.quality_score && document.quality_score > 0.7) structureScore += 0.1;
+    
+    return Math.min(1, structureScore);
+  }
+  
+  private static detectSpecificIssues(chunks: any[]): {
+    hasPDFArtifacts: boolean;
+    lowTextDensity: boolean;
+    binaryContent: boolean;
+    emptyChunks: boolean;
+    suspiciousPatterns: string[];
+    corruptedCount: number;
+    severityScore: number;
+  } {
+    let hasPDFArtifacts = false;
+    let lowTextDensity = false;
+    let binaryContent = false;
+    let emptyChunks = false;
+    let corruptedCount = 0;
+    let severityScore = 0;
+    const suspiciousPatterns: string[] = [];
     
     for (const chunk of chunks) {
-      const hash = this.simpleHash(chunk.content || '');
-      if (contentHashes.has(hash)) {
-        duplicateCount++;
+      const content = chunk.content || '';
+      
+      // Verificar chunks vazios
+      if (content.length < 10) {
+        emptyChunks = true;
+        corruptedCount++;
+        severityScore += 1;
+        continue;
       }
-      contentHashes.add(hash);
+      
+      // Verificar artefatos PDF
+      const pdfPatterns = [
+        /%PDF-/,
+        /endobj/,
+        /startxref/,
+        /stream\s*\n/,
+        /<<\s*\/Type/
+      ];
+      
+      for (const pattern of pdfPatterns) {
+        if (pattern.test(content)) {
+          hasPDFArtifacts = true;
+          corruptedCount++;
+          severityScore += 3;
+          suspiciousPatterns.push(`PDF artifact: ${pattern.source}`);
+          break;
+        }
+      }
+      
+      // Verificar densidade textual
+      const words = content.split(/\s+/).filter(w => /^[a-zA-ZÀ-ÿ]/.test(w));
+      const density = words.length / content.length;
+      if (density < 0.03) {
+        lowTextDensity = true;
+        severityScore += 2;
+      }
+      
+      // Verificar conteúdo binário
+      const binaryChars = content.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\xFF]/g)?.length || 0;
+      if (binaryChars / content.length > 0.1) {
+        binaryContent = true;
+        severityScore += 2;
+      }
     }
-
-    if (duplicateCount > 0) {
-      issues.push(`${duplicateCount} chunks duplicados encontrados`);
-      recommendations.push('Limpar chunks duplicados e reprocessar');
-    }
-
-    // Check for empty or very small chunks
-    const smallChunks = chunks.filter(c => (c.content || '').length < 50);
-    if (smallChunks.length > chunks.length * 0.3) {
-      issues.push(`${smallChunks.length} chunks muito pequenos (< 50 chars)`);
-      recommendations.push('Ajustar parâmetros de chunking');
-    }
-  }
-
-  private static calculateStats(chunks: any[], content: string) {
-    const totalChunks = chunks.length;
-    const avgChunkSize = totalChunks > 0 
-      ? chunks.reduce((sum, c) => sum + (c.content || '').length, 0) / totalChunks 
-      : 0;
-
-    const readableChars = content.match(/[a-zA-ZÀ-ÿ0-9\s.,;:!?()-]/g)?.length || 0;
-    const readablePercentage = content.length > 0 ? (readableChars / content.length) * 100 : 0;
-
-    const artifactPatterns = [/%PDF/g, /obj\s*$/g, /endobj/g, /stream/g, /endstream/g];
-    const artifactCount = artifactPatterns.reduce((count, pattern) => {
-      return count + (content.match(pattern)?.length || 0);
-    }, 0);
-
+    
     return {
-      totalChunks,
-      avgChunkSize,
-      readablePercentage,
-      artifactCount
+      hasPDFArtifacts,
+      lowTextDensity,
+      binaryContent,
+      emptyChunks,
+      suspiciousPatterns,
+      corruptedCount,
+      severityScore
     };
   }
-
-  private static getContentSample(content: string, chunks: any[]): string {
-    // Get first 500 chars of content or first chunk
-    if (content && content.length > 100) {
-      return content.substring(0, 500) + '...';
-    } else if (chunks.length > 0 && chunks[0].content) {
-      return chunks[0].content.substring(0, 500) + '...';
+  
+  private static calculateStatistics(chunks: any[]): {
+    averageChunkSize: number;
+    totalCharacters: number;
+    readableCharacters: number;
+    readabilityRatio: number;
+  } {
+    const sizes = chunks.map(c => (c.content || '').length);
+    const totalCharacters = sizes.reduce((a, b) => a + b, 0);
+    const averageChunkSize = chunks.length > 0 ? Math.round(totalCharacters / chunks.length) : 0;
+    
+    let readableCharacters = 0;
+    for (const chunk of chunks) {
+      const content = chunk.content || '';
+      readableCharacters += content.match(/[a-zA-ZÀ-ÿ0-9\s.,;:!?()-]/g)?.length || 0;
     }
-    return 'Nenhum conteúdo disponível';
+    
+    const readabilityRatio = totalCharacters > 0 ? readableCharacters / totalCharacters : 0;
+    
+    return {
+      averageChunkSize,
+      totalCharacters,
+      readableCharacters,
+      readabilityRatio: Math.round(readabilityRatio * 100) / 100
+    };
   }
-
-  private static simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+  
+  private static generateContentSamples(chunks: any[]): {
+    firstChunk: string;
+    randomChunk: string;
+  } {
+    const firstChunk = chunks.length > 0 ? 
+      (chunks[0].content || '').substring(0, 200) + '...' : 
+      'No content';
+    
+    const randomIndex = Math.floor(Math.random() * chunks.length);
+    const randomChunk = chunks.length > 0 ? 
+      (chunks[randomIndex]?.content || '').substring(0, 200) + '...' : 
+      'No content';
+    
+    return { firstChunk, randomChunk };
+  }
+  
+  private static generateRecommendations(
+    quality: number, 
+    issues: any, 
+    stats: any
+  ): string[] {
+    const recommendations: string[] = [];
+    
+    if (quality < 0.3) {
+      recommendations.push('🚨 URGENT: Document needs complete reprocessing');
+    } else if (quality < 0.7) {
+      recommendations.push('⚠️ Document quality is below standards');
     }
-    return hash.toString();
+    
+    if (issues.hasPDFArtifacts) {
+      recommendations.push('🔧 Remove PDF artifacts and reprocess with better extraction');
+    }
+    
+    if (issues.lowTextDensity) {
+      recommendations.push('📝 Text density is low - verify source document quality');
+    }
+    
+    if (issues.binaryContent) {
+      recommendations.push('🔨 Binary content detected - needs proper text extraction');
+    }
+    
+    if (issues.emptyChunks) {
+      recommendations.push('🗑️ Remove empty chunks');
+    }
+    
+    if (stats.averageChunkSize < 100) {
+      recommendations.push('📏 Chunks are too small - consider different chunking strategy');
+    }
+    
+    if (stats.readabilityRatio < 0.8) {
+      recommendations.push('📖 Low readability - check for encoding issues');
+    }
+    
+    if (recommendations.length === 0) {
+      recommendations.push('✅ Document quality is acceptable');
+    }
+    
+    return recommendations;
+  }
+  
+  private static countPDFArtifacts(text: string): number {
+    const patterns = [/%PDF/, /endobj/, /stream/, /xref/, /trailer/];
+    return patterns.reduce((count, pattern) => {
+      return count + (text.match(pattern)?.length || 0);
+    }, 0);
+  }
+  
+  private static hasTextContinuity(prevText: string, currentText: string): boolean {
+    if (!prevText || !currentText) return false;
+    
+    // Verificar se último palavra do chunk anterior aparece no início do atual
+    const lastWords = prevText.trim().split(/\s+/).slice(-3);
+    const firstWords = currentText.trim().split(/\s+/).slice(0, 10);
+    
+    return lastWords.some(word => 
+      word.length > 3 && firstWords.some(fw => fw.includes(word))
+    );
   }
 }
 
@@ -265,145 +375,127 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Variáveis de ambiente necessárias não encontradas');
+      throw new Error('Missing required environment variables');
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { action, documentId, batchSize = 10 } = await req.json();
 
-    console.log(`[quality-validator] Ação solicitada: ${action}`);
+    console.log(`[quality-validator] Action: ${action}`);
 
-    if (action === 'validate_document') {
-      if (!documentId) {
-        throw new Error('documentId é obrigatório');
-      }
-
-      const report = await DocumentQualityValidator.validateDocument(supabase, documentId);
-      
-      return new Response(JSON.stringify({
-        success: true,
-        report
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (action === 'validate_batch') {
-      // Validar múltiplos documentos
-      const { data: documents, error } = await supabase
-        .from('knowledge_base')
-        .select('id, original_name, status')
-        .limit(batchSize);
-
-      if (error) {
-        throw new Error(`Erro ao buscar documentos: ${error.message}`);
-      }
-
-      const reports = [];
-      for (const doc of documents || []) {
-        try {
-          const report = await DocumentQualityValidator.validateDocument(supabase, doc.id);
-          reports.push(report);
-        } catch (error) {
-          console.error(`[quality-validator] Erro ao validar ${doc.id}:`, error);
-          reports.push({
-            documentId: doc.id,
-            overallQuality: 0,
-            textQuality: 0,
-            structureQuality: 0,
-            chunkQuality: 0,
-            issues: [`Erro na validação: ${error.message}`],
-            recommendations: ['Verificar documento manualmente'],
-            contentSample: 'Erro na análise',
-            stats: { totalChunks: 0, avgChunkSize: 0, readablePercentage: 0, artifactCount: 0 }
-          });
+    switch (action) {
+      case 'validate_document': {
+        if (!documentId) {
+          throw new Error('documentId is required for validate_document action');
         }
+        
+        const report = await DocumentQualityValidator.validateDocument(supabase, documentId);
+        
+        return new Response(JSON.stringify({ 
+          success: true, 
+          report 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
-      // Estatísticas gerais
-      const totalDocs = reports.length;
-      const lowQualityDocs = reports.filter(r => r.overallQuality < 0.5).length;
-      const avgQuality = reports.reduce((sum, r) => sum + r.overallQuality, 0) / totalDocs;
-
-      return new Response(JSON.stringify({
-        success: true,
-        summary: {
-          totalDocuments: totalDocs,
-          lowQualityDocuments: lowQualityDocs,
-          averageQuality: avgQuality,
-          qualityDistribution: {
-            excellent: reports.filter(r => r.overallQuality >= 0.8).length,
-            good: reports.filter(r => r.overallQuality >= 0.6 && r.overallQuality < 0.8).length,
-            fair: reports.filter(r => r.overallQuality >= 0.4 && r.overallQuality < 0.6).length,
-            poor: reports.filter(r => r.overallQuality < 0.4).length
+      case 'validate_batch': {
+        console.log(`[quality-validator] Validating batch of ${batchSize} documents`);
+        
+        // Buscar documentos para validar
+        const { data: documents, error: docError } = await supabase
+          .from('knowledge_base')
+          .select('id, original_name, status')
+          .eq('status', 'processed')
+          .limit(batchSize);
+        
+        if (docError) {
+          throw new Error(`Failed to fetch documents: ${docError.message}`);
+        }
+        
+        const reports = [];
+        let totalQuality = 0;
+        
+        for (const doc of documents || []) {
+          try {
+            const report = await DocumentQualityValidator.validateDocument(supabase, doc.id);
+            reports.push(report);
+            totalQuality += report.overallQuality;
+          } catch (error) {
+            console.error(`[quality-validator] Error validating ${doc.id}:`, error);
+            reports.push({
+              documentId: doc.id,
+              documentName: doc.original_name,
+              overallQuality: 0,
+              error: error.message
+            });
           }
-        },
-        reports
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (action === 'cleanup_corrupted') {
-      // Identificar e limpar documentos corrompidos
-      const { data: badDocs, error } = await supabase
-        .from('knowledge_base')
-        .select('id, original_name')
-        .or('status.eq.error,and(status.eq.processing,created_at.lt.2024-01-01)'); // Very old processing docs
-
-      if (error) {
-        throw new Error(`Erro ao buscar documentos corrompidos: ${error.message}`);
-      }
-
-      const cleanupResults = [];
-      for (const doc of badDocs || []) {
-        try {
-          // Delete chunks first
-          await supabase
-            .from('document_chunks')
-            .delete()
-            .eq('knowledge_base_id', doc.id);
-
-          // Reset document status
-          await supabase
-            .from('knowledge_base')
-            .update({ 
-              status: 'pending',
-              processed_at: null,
-              content: null
-            })
-            .eq('id', doc.id);
-
-          cleanupResults.push({ id: doc.id, name: doc.original_name, success: true });
-        } catch (error) {
-          cleanupResults.push({ 
-            id: doc.id, 
-            name: doc.original_name, 
-            success: false, 
-            error: error.message 
-          });
         }
+        
+        const summary = {
+          totalDocuments: reports.length,
+          averageQuality: reports.length > 0 ? totalQuality / reports.length : 0,
+          poorQuality: reports.filter(r => r.overallQuality < 0.3).length,
+          goodQuality: reports.filter(r => r.overallQuality >= 0.7).length
+        };
+        
+        return new Response(JSON.stringify({ 
+          success: true, 
+          summary,
+          reports 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
-      return new Response(JSON.stringify({
-        success: true,
-        message: `Limpeza concluída: ${cleanupResults.filter(r => r.success).length} documentos resetados`,
-        results: cleanupResults
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+      case 'cleanup_corrupted': {
+        console.log('[quality-validator] Cleaning up corrupted documents');
+        
+        // Resetar documentos em processing há muito tempo
+        const { data: stuckDocs, error: stuckError } = await supabase
+          .from('knowledge_base')
+          .update({ 
+            status: 'error',
+            validation_errors: ['Document stuck in processing for > 1 hour']
+          })
+          .eq('status', 'processing')
+          .lt('updated_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
+          .select();
+        
+        if (stuckError) {
+          console.error('Error resetting stuck documents:', stuckError);
+        }
+        
+        // Deletar chunks corrompidos
+        const { data: deletedChunks, error: deleteError } = await supabase
+          .from('document_chunks')
+          .delete()
+          .or('content.ilike.%PDF-%,content.ilike.%stream%,content.ilike.%endobj%')
+          .select('knowledge_base_id');
+        
+        if (deleteError) {
+          console.error('Error deleting corrupted chunks:', deleteError);
+        }
+        
+        return new Response(JSON.stringify({ 
+          success: true,
+          message: `Cleanup completed. Reset ${stuckDocs?.length || 0} stuck documents, deleted ${deletedChunks?.length || 0} corrupted chunks.`
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
 
-    throw new Error('Ação não reconhecida');
+      default:
+        throw new Error(`Unknown action: ${action}`);
+    }
 
   } catch (error) {
-    console.error('[quality-validator] Erro:', error);
-    
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message
+    console.error('[quality-validator] Error:', error);
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: error.message 
     }), {
-      status: 500,
+      status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }

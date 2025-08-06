@@ -323,40 +323,55 @@ export type Database = {
           content: string | null
           created_at: string
           created_by: string | null
+          extraction_method: string | null
           file_name: string
           file_size: number
           file_type: string
           id: string
+          markdown_content: string | null
           original_name: string
           processed_at: string | null
+          processing_logs: Json | null
+          quality_score: number | null
           status: string
           updated_at: string
+          validation_errors: string[] | null
         }
         Insert: {
           content?: string | null
           created_at?: string
           created_by?: string | null
+          extraction_method?: string | null
           file_name: string
           file_size: number
           file_type: string
           id?: string
+          markdown_content?: string | null
           original_name: string
           processed_at?: string | null
+          processing_logs?: Json | null
+          quality_score?: number | null
           status?: string
           updated_at?: string
+          validation_errors?: string[] | null
         }
         Update: {
           content?: string | null
           created_at?: string
           created_by?: string | null
+          extraction_method?: string | null
           file_name?: string
           file_size?: number
           file_type?: string
           id?: string
+          markdown_content?: string | null
           original_name?: string
           processed_at?: string | null
+          processing_logs?: Json | null
+          quality_score?: number | null
           status?: string
           updated_at?: string
+          validation_errors?: string[] | null
         }
         Relationships: []
       }

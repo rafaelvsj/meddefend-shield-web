@@ -2,7 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Enhanced PDF parsing with multiple fallback strategies
+// FASE 2: Sistema de extração completamente reconstruído
 class EnhancedPDFExtractor {
   static async extractText(buffer: ArrayBuffer, fileName: string): Promise<{
     text: string;
@@ -13,124 +13,285 @@ class EnhancedPDFExtractor {
     const warnings: string[] = [];
     
     try {
-      // Method 1: Try pdf-parse (most reliable)
+      // Method 1: PDF-Parse robusto (biblioteca especializada)
+      console.log(`[PDFExtractor] Iniciando extração robusta para ${fileName}`);
+      
+      // Importar pdf-parse com configuração otimizada
       const pdfParse = await import('https://esm.sh/pdf-parse@1.1.1');
-      console.log(`[PDFExtractor] Tentando pdf-parse para ${fileName}`);
       
-      const data = await pdfParse.default(new Uint8Array(buffer));
-      const text = data.text || '';
+      const options = {
+        pagerender: (pageData: any) => {
+          // Renderizar página preservando formatação
+          return pageData.getTextContent().then((textContent: any) => {
+            let lastY: number, text = '';
+            
+            for (let item of textContent.items) {
+              if (lastY == item.transform[5] || !lastY) {
+                text += item.str;
+              } else {
+                text += '\n' + item.str;
+              }
+              lastY = item.transform[5];
+            }
+            return text;
+          });
+        }
+      };
       
-      if (this.isValidText(text)) {
-        const quality = this.calculateTextQuality(text);
-        console.log(`[PDFExtractor] pdf-parse sucesso - Qualidade: ${quality}`);
+      const data = await pdfParse.default(new Uint8Array(buffer), options);
+      let extractedText = data.text || '';
+      
+      // Validação rigorosa do texto extraído
+      const validationResult = this.validateExtractedText(extractedText, fileName);
+      
+      if (validationResult.isValid) {
+        console.log(`[PDFExtractor] ✅ PDF-Parse SUCCESS - Score: ${validationResult.quality}`);
         return {
-          text: this.cleanText(text),
-          quality,
-          method: 'pdf-parse',
-          warnings
+          text: this.cleanAndStructureText(extractedText),
+          quality: validationResult.quality,
+          method: 'pdf-parse-optimized',
+          warnings: validationResult.warnings
         };
       } else {
-        warnings.push('pdf-parse retornou texto de baixa qualidade');
+        warnings.push(...validationResult.warnings);
+        console.warn(`[PDFExtractor] ⚠️ PDF-Parse text failed validation: ${validationResult.warnings.join(', ')}`);
       }
+      
     } catch (error) {
-      console.warn(`[PDFExtractor] pdf-parse falhou:`, error);
-      warnings.push(`pdf-parse falhou: ${error.message}`);
+      console.error(`[PDFExtractor] ❌ PDF-Parse critical error:`, error);
+      warnings.push(`PDF-Parse error: ${error.message}`);
     }
 
     try {
-      // Method 2: Try basic text extraction
-      console.log(`[PDFExtractor] Tentando extração básica para ${fileName}`);
-      const text = await this.basicTextExtraction(buffer);
+      // Method 2: Fallback avançado com análise de estrutura
+      console.log(`[PDFExtractor] Tentando fallback avançado para ${fileName}`);
       
-      if (this.isValidText(text)) {
-        const quality = this.calculateTextQuality(text);
-        console.log(`[PDFExtractor] Extração básica sucesso - Qualidade: ${quality}`);
+      const fallbackText = await this.advancedFallbackExtraction(buffer);
+      const validationResult = this.validateExtractedText(fallbackText, fileName);
+      
+      if (validationResult.isValid) {
+        console.log(`[PDFExtractor] ✅ Fallback SUCCESS - Score: ${validationResult.quality}`);
         return {
-          text: this.cleanText(text),
-          quality,
-          method: 'basic',
-          warnings
+          text: this.cleanAndStructureText(fallbackText),
+          quality: validationResult.quality,
+          method: 'advanced-fallback',
+          warnings: validationResult.warnings
         };
       } else {
-        warnings.push('Extração básica retornou texto de baixa qualidade');
+        warnings.push(...validationResult.warnings);
       }
+      
     } catch (error) {
-      console.warn(`[PDFExtractor] Extração básica falhou:`, error);
-      warnings.push(`Extração básica falhou: ${error.message}`);
+      console.error(`[PDFExtractor] ❌ Fallback error:`, error);
+      warnings.push(`Fallback error: ${error.message}`);
     }
 
-    // If all methods fail, return structured error
-    throw new Error(`Falha em todos os métodos de extração. Warnings: ${warnings.join('; ')}`);
+    // Se todos os métodos falharam, retornar erro estruturado
+    const errorMessage = `EXTRACTION COMPLETELY FAILED for ${fileName}. All methods exhausted.`;
+    console.error(`[PDFExtractor] ❌ ${errorMessage}`);
+    console.error(`[PDFExtractor] ❌ Warnings: ${warnings.join(' | ')}`);
+    
+    throw new Error(`${errorMessage} Warnings: ${warnings.join('; ')}`);
   }
 
-  private static async basicTextExtraction(buffer: ArrayBuffer): Promise<string> {
-    const text = new TextDecoder().decode(buffer);
+  // FASE 2: Sistema de validação rigoroso
+  private static validateExtractedText(text: string, fileName: string): {
+    isValid: boolean;
+    quality: number;
+    warnings: string[];
+  } {
+    const warnings: string[] = [];
     
-    // Extract text between stream/endstream markers
-    const streamRegex = /stream\s*([\s\S]*?)\s*endstream/g;
-    const textParts: string[] = [];
-    let match;
-    
-    while ((match = streamRegex.exec(text)) !== null) {
-      const streamContent = match[1];
-      if (streamContent && !this.isBinaryContent(streamContent)) {
-        textParts.push(streamContent);
-      }
+    if (!text || text.length < 50) {
+      return {
+        isValid: false,
+        quality: 0,
+        warnings: ['Texto muito curto ou vazio']
+      };
     }
     
-    return textParts.join(' ').trim();
-  }
-
-  private static isValidText(text: string): boolean {
-    if (!text || text.length < 10) return false;
-    
-    // Check for PDF garbage patterns
-    const garbagePatterns = [
-      /%PDF-/,
-      /endobj/,
+    // 1. Detectar padrões de código PDF (CRÍTICO)
+    const pdfPatterns = [
+      /%PDF-\d\.\d/,
+      /\/Type\s*\/Page/,
+      /endobj\s*$/m,
       /startxref/,
-      /xref/,
-      /trailer/,
-      /^\s*\d+\s+\d+\s+obj/m,
-      /<<\s*\/[A-Z]/
+      /xref\s*\n\d+/,
+      /trailer\s*<</,
+      /stream\s*\n[\x00-\x08\x0B\x0C\x0E-\x1F]/,
+      /<<\s*\/Filter/
     ];
     
-    const garbageCount = garbagePatterns.reduce((count, pattern) => {
-      return count + (pattern.test(text) ? 1 : 0);
+    const pdfArtifactCount = pdfPatterns.reduce((count, pattern) => {
+      const matches = text.match(pattern);
+      return count + (matches ? matches.length : 0);
     }, 0);
     
-    // If more than 2 garbage patterns found, consider invalid
-    if (garbageCount > 2) {
-      console.warn(`[PDFExtractor] Texto contém ${garbageCount} padrões de lixo PDF`);
-      return false;
+    if (pdfArtifactCount > 3) {
+      warnings.push(`DETECTED ${pdfArtifactCount} PDF artifacts - TEXT IS CORRUPTED`);
+      return {
+        isValid: false,
+        quality: 0,
+        warnings
+      };
     }
     
-    // Check text quality - should have reasonable word/char ratio
-    const wordCount = text.split(/\s+/).filter(word => word.length > 1).length;
-    const charCount = text.length;
-    const ratio = wordCount / charCount;
+    // 2. Análise de densidade textual
+    const words = text.split(/\s+/).filter(word => 
+      word.length > 1 && 
+      /^[a-zA-ZÀ-ÿ0-9]/.test(word) &&
+      !/%[A-F0-9]{2}/.test(word) // Excluir escape sequences
+    );
     
-    return ratio > 0.05; // At least 5% should be words
+    const textDensity = words.length / text.length;
+    
+    if (textDensity < 0.03) {
+      warnings.push(`Low text density: ${(textDensity * 100).toFixed(2)}%`);
+      return {
+        isValid: false,
+        quality: 0.1,
+        warnings
+      };
+    }
+    
+    // 3. Score de qualidade aprimorado
+    const quality = this.calculateAdvancedQuality(text, words, pdfArtifactCount);
+    
+    if (quality < 0.7) {
+      warnings.push(`Quality below threshold: ${quality.toFixed(2)}`);
+      return {
+        isValid: false,
+        quality,
+        warnings
+      };
+    }
+    
+    console.log(`[Validation] ✅ Text validation PASSED for ${fileName} - Quality: ${quality.toFixed(2)}`);
+    return {
+      isValid: true,
+      quality,
+      warnings
+    };
   }
 
-  private static calculateTextQuality(text: string): number {
+  private static calculateAdvancedQuality(text: string, words: string[], pdfArtifactCount: number): number {
     const totalChars = text.length;
-    if (totalChars === 0) return 0;
     
-    // Count readable characters
-    const readableChars = text.match(/[a-zA-ZÀ-ÿ0-9\s.,;:!?()-]/g)?.length || 0;
+    // 1. Readability score (caracteres legíveis)
+    const readableChars = text.match(/[a-zA-ZÀ-ÿ0-9\s.,;:!?()%-]/g)?.length || 0;
     const readabilityScore = readableChars / totalChars;
     
-    // Count words vs total characters
-    const words = text.split(/\s+/).filter(word => /^[a-zA-ZÀ-ÿ]/.test(word));
-    const wordScore = Math.min(words.length / 100, 1); // Normalize to max 1
+    // 2. Word density score
+    const wordDensity = words.length / totalChars;
+    const wordScore = Math.min(wordDensity * 40, 1); // Normalizar
     
-    // Penalty for PDF artifacts
-    const artifactPenalty = this.countPDFArtifacts(text) * 0.1;
+    // 3. Structure score (presença de estrutura textual)
+    const hasStructure = /[.!?]\s+[A-Z]/.test(text) || // Sentences
+                        /\n\n/.test(text) ||         // Paragraphs
+                        /\d+\./.test(text);          // Lists
+    const structureScore = hasStructure ? 0.1 : 0;
     
-    const finalScore = Math.max(0, Math.min(1, (readabilityScore * 0.7 + wordScore * 0.3 - artifactPenalty)));
+    // 4. Penalty for artifacts
+    const artifactPenalty = Math.min(pdfArtifactCount * 0.15, 0.5);
+    
+    // 5. Binary content penalty
+    const binaryContent = text.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\xFF]/g)?.length || 0;
+    const binaryPenalty = Math.min((binaryContent / totalChars) * 2, 0.3);
+    
+    const finalScore = Math.max(0, Math.min(1, 
+      readabilityScore * 0.4 + 
+      wordScore * 0.4 + 
+      structureScore - 
+      artifactPenalty - 
+      binaryPenalty
+    ));
     
     return Math.round(finalScore * 100) / 100;
+  }
+
+  private static async advancedFallbackExtraction(buffer: ArrayBuffer): Promise<string> {
+    console.log('[PDFExtractor] Executing advanced fallback extraction...');
+    
+    // Decodificar como UTF-8 com limpeza
+    const decoder = new TextDecoder('utf-8', { fatal: false });
+    let rawText = decoder.decode(buffer);
+    
+    // Estratégia: extrair texto entre marcadores específicos
+    const extractionStrategies = [
+      // 1. Extrair de streams decodificados
+      () => {
+        const streamPattern = /stream\s*\n([\s\S]*?)\nendstream/g;
+        const textParts: string[] = [];
+        let match;
+        
+        while ((match = streamPattern.exec(rawText)) !== null) {
+          const streamContent = match[1];
+          // Filtrar apenas streams que parecem conter texto
+          if (this.looksLikeText(streamContent)) {
+            textParts.push(this.decodeStreamContent(streamContent));
+          }
+        }
+        return textParts.join('\n');
+      },
+      
+      // 2. Extrair usando padrões de texto comum
+      () => {
+        const textPattern = /\(([\s\S]*?)\)/g;
+        const textParts: string[] = [];
+        let match;
+        
+        while ((match = textPattern.exec(rawText)) !== null) {
+          const content = match[1];
+          if (content.length > 10 && this.looksLikeText(content)) {
+            textParts.push(content);
+          }
+        }
+        return textParts.join(' ');
+      }
+    ];
+    
+    // Tentar cada estratégia
+    for (let i = 0; i < extractionStrategies.length; i++) {
+      try {
+        const extracted = extractionStrategies[i]();
+        if (extracted && extracted.length > 100) {
+          console.log(`[PDFExtractor] Strategy ${i + 1} extracted ${extracted.length} chars`);
+          return extracted;
+        }
+      } catch (error) {
+        console.warn(`[PDFExtractor] Strategy ${i + 1} failed:`, error);
+      }
+    }
+    
+    throw new Error('All fallback strategies failed');
+  }
+
+  private static looksLikeText(content: string): boolean {
+    if (!content || content.length < 10) return false;
+    
+    // Verificar se tem caracteres de texto
+    const textChars = content.match(/[a-zA-ZÀ-ÿ0-9\s]/g)?.length || 0;
+    const ratio = textChars / content.length;
+    
+    return ratio > 0.7;
+  }
+
+  private static decodeStreamContent(streamContent: string): string {
+    // Remover caracteres de controle e decodificar escape sequences básicas
+    return streamContent
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t')
+      .replace(/\\(.)/g, '$1')
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, ' ');
+  }
+
+  private static cleanAndStructureText(text: string): string {
+    return text
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\xFF]/g, ' ') // Remove control chars
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .replace(/\n\s*\n/g, '\n\n') // Preserve paragraph breaks
+      .trim();
   }
 
   private static countPDFArtifacts(text: string): number {
@@ -449,25 +610,28 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('[process-document-optimized] 🚀 PIPELINE REESTRUTURADO INICIADO');
+  const startTime = Date.now();
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 
     if (!supabaseUrl || !supabaseServiceKey || !geminiApiKey) {
-      throw new Error('Variáveis de ambiente necessárias não encontradas');
+      throw new Error('❌ Missing required environment variables');
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { fileId } = await req.json();
 
     if (!fileId) {
-      throw new Error('fileId é obrigatório');
+      throw new Error('❌ fileId é obrigatório');
     }
 
-    console.log(`[process-document-optimized] Processando arquivo: ${fileId}`);
+    console.log(`[process-document-optimized] 📄 Processing file: ${fileId}`);
 
-    // Buscar arquivo na base de conhecimento
+    // FASE 1: Buscar e validar arquivo
     const { data: kbFile, error: kbError } = await supabase
       .from('knowledge_base')
       .select('*')
@@ -475,28 +639,74 @@ serve(async (req) => {
       .single();
 
     if (kbError || !kbFile) {
-      throw new Error(`Arquivo não encontrado: ${kbError?.message}`);
+      throw new Error(`❌ File not found: ${kbError?.message}`);
     }
 
-    // Atualizar status para processing
+    console.log(`[process-document-optimized] 📋 File info:`, {
+      name: kbFile.original_name,
+      size: kbFile.file_size,
+      type: kbFile.file_type,
+      status: kbFile.status
+    });
+
+    // Atualizar status para processing com logs
     await supabase
       .from('knowledge_base')
-      .update({ status: 'processing' })
+      .update({ 
+        status: 'processing',
+        processing_logs: {
+          stage: 'started',
+          timestamp: new Date().toISOString(),
+          pipeline_version: 'v2-restructured'
+        }
+      })
       .eq('id', fileId);
 
-    // Baixar arquivo do storage
+    // FASE 2: Download do arquivo
+    console.log(`[process-document-optimized] ⬇️ Downloading from storage...`);
     const { data: fileData, error: storageError } = await supabase.storage
       .from('knowledge-base')
       .download(kbFile.file_name);
 
     if (storageError || !fileData) {
-      throw new Error(`Falha ao baixar arquivo: ${storageError?.message}`);
+      throw new Error(`❌ Storage download failed: ${storageError?.message}`);
     }
 
-    // Converter para texto (implementação básica)
+    // FASE 2: Extração robusta com validação
+    console.log(`[process-document-optimized] Iniciando extração para ${kbFile.original_name}`);
+    
     const fileBuffer = await fileData.arrayBuffer();
-    const decoder = new TextDecoder('utf-8');
-    const originalText = decoder.decode(fileBuffer);
+    const extractionResult = await EnhancedPDFExtractor.extractText(fileBuffer, kbFile.original_name);
+    
+    console.log(`[process-document-optimized] Extração concluída:`, {
+      method: extractionResult.method,
+      quality: extractionResult.quality,
+      textLength: extractionResult.text.length,
+      warnings: extractionResult.warnings
+    });
+    
+    // Validação crítica: rejeitar se qualidade muito baixa
+    if (extractionResult.quality < 0.5) {
+      const errorMsg = `Text quality too low: ${extractionResult.quality}. Warnings: ${extractionResult.warnings.join(', ')}`;
+      
+      await supabase
+        .from('knowledge_base')
+        .update({
+          status: 'error',
+          processing_logs: {
+            error: errorMsg,
+            extraction_method: extractionResult.method,
+            quality_score: extractionResult.quality,
+            warnings: extractionResult.warnings,
+            timestamp: new Date().toISOString()
+          }
+        })
+        .eq('id', fileId);
+      
+      throw new Error(errorMsg);
+    }
+    
+    const originalText = extractionResult.text;
 
     if (!originalText || originalText.length < 10) {
       throw new Error('Arquivo vazio ou muito pequeno');

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Upload, FileText, Trash2, Eye, Clock, CheckCircle, AlertCircle, Settings } from "lucide-react";
+import { Upload, FileText, Trash2, Eye, Clock, CheckCircle, AlertCircle, Settings, RefreshCw, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -31,6 +31,7 @@ const AdminKnowledgeBase = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [viewContent, setViewContent] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -260,10 +261,14 @@ const AdminKnowledgeBase = () => {
 
           console.log(`[AdminKnowledgeBase] Registro criado:`, insertData);
 
+          // Escolher função de processamento baseada na configuração
+          const useOptimized = true; // Sempre usar versão otimizada
+          const functionName = useOptimized ? 'process-document-optimized' : 'process-document';
+          
           // Chamar processamento automático
-          console.log(`[AdminKnowledgeBase] Chamando função process-document...`);
+          console.log(`[AdminKnowledgeBase] Chamando função ${functionName}...`);
           const { data: processData, error: processError } = await supabase.functions
-            .invoke('process-document', {
+            .invoke(functionName, {
               body: { fileId: insertData.id }
             });
 
@@ -387,6 +392,42 @@ const AdminKnowledgeBase = () => {
     }
   };
 
+  const handleRetryFailed = async () => {
+    setRetrying(true);
+    try {
+      console.log('[AdminKnowledgeBase] Iniciando retry de documentos falhados...');
+      
+      const { data, error } = await supabase.functions
+        .invoke('retry-failed-documents', {
+          body: { action: 'retry_failed' }
+        });
+
+      if (error) {
+        throw new Error(`Erro no retry: ${error.message}`);
+      }
+
+      console.log('[AdminKnowledgeBase] Resultado do retry:', data);
+      
+      toast({
+        title: "Retry concluído",
+        description: data.message,
+      });
+
+      // Recarregar lista
+      await loadFiles();
+      
+    } catch (error) {
+      console.error('[AdminKnowledgeBase] Erro no retry:', error);
+      toast({
+        title: "Erro no retry",
+        description: error instanceof Error ? error.message : "Falha ao reprocessar documentos",
+        variant: "destructive",
+      });
+    } finally {
+      setRetrying(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'processed':
@@ -426,6 +467,15 @@ const AdminKnowledgeBase = () => {
           >
             <Settings className="w-4 h-4 mr-2" />
             {testing ? 'Testando...' : 'Testar Config'}
+          </Button>
+
+          <Button 
+            variant="outline" 
+            onClick={handleRetryFailed}
+            disabled={retrying}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            {retrying ? 'Reprocessando...' : 'Retry Falhas'}
           </Button>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -545,7 +595,15 @@ const AdminKnowledgeBase = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Arquivos</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            Arquivos
+            {files.filter(f => f.status === 'error').length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {files.filter(f => f.status === 'error').length} com erro
+              </Badge>
+            )}
+          </CardTitle>
           <CardDescription>
             Lista de todos os documentos na base de conhecimento
           </CardDescription>

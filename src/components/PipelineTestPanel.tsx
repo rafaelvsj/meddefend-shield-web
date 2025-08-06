@@ -16,6 +16,7 @@ interface TestResult {
 const PipelineTestPanel = () => {
   const [tests, setTests] = useState<Record<string, TestResult>>({
     'process-document-optimized': { status: 'idle' },
+    'document-processor-v2': { status: 'idle' },
     'quality-validator': { status: 'idle' },
   });
 
@@ -89,6 +90,77 @@ const PipelineTestPanel = () => {
       }));
 
       toast.error(`❌ Erro: ${error.message}`);
+    }
+  };
+
+  const testProcessDocumentV2 = async () => {
+    console.log('[PipelineTest] 🧪 Testando document-processor-v2 (UNIVERSAL)...');
+    
+    setTests(prev => ({ ...prev, 'document-processor-v2': { status: 'testing' } }));
+    const startTime = Date.now();
+
+    try {
+      // Usar documento específico que falhou
+      const testFileId = 'f055de65-c4ba-472e-964f-6ff784b332c3';
+      
+      console.log(`[PipelineTest] Testando V2 com documento específico: ${testFileId}`);
+
+      // Verificar se documento existe
+      const { data: kbDoc, error: fetchError } = await supabase
+        .from('knowledge_base')
+        .select('id, file_name, status, original_name')
+        .eq('id', testFileId)
+        .single();
+
+      if (fetchError) {
+        throw new Error(`Erro ao buscar documento: ${fetchError.message}`);
+      }
+
+      console.log(`[PipelineTest] Documento encontrado para V2:`, kbDoc);
+
+      // Chamar a função document-processor-v2
+      console.log('[PipelineTest] Invocando function V2...');
+      const { data, error } = await supabase.functions.invoke('document-processor-v2', {
+        body: { fileId: testFileId }
+      });
+
+      const duration = Date.now() - startTime;
+
+      if (error) {
+        console.error(`[PipelineTest] Erro na função V2:`, error);
+        throw new Error(`Function error: ${error.message}`);
+      }
+
+      console.log(`[PipelineTest] Resposta da função V2:`, data);
+
+      setTests(prev => ({
+        ...prev,
+        'document-processor-v2': {
+          status: 'success',
+          result: data,
+          duration
+        }
+      }));
+
+      toast.success(`🎉 document-processor-v2 funcionou! Similaridade: ${Math.round(data.similarityScore * 100)}% (${duration}ms)`);
+      
+      // Recarregar status dos documentos
+      await loadDocumentStatus();
+      
+    } catch (error: any) {
+      console.error(`[PipelineTest] Erro V2:`, error);
+      const duration = Date.now() - startTime;
+      
+      setTests(prev => ({
+        ...prev,
+        'document-processor-v2': {
+          status: 'error',
+          error: error.message,
+          duration
+        }
+      }));
+
+      toast.error(`❌ Erro V2: ${error.message}`);
     }
   };
 
@@ -177,14 +249,17 @@ const PipelineTestPanel = () => {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            <div className="flex gap-2">
-              <Button onClick={testProcessDocumentOptimized} variant="default">
-                🚀 Testar process-document-optimized
+            <div className="flex gap-2 flex-wrap">
+              <Button onClick={testProcessDocumentOptimized} variant="outline" size="sm">
+                📄 Testar process-document-optimized (Legacy)
               </Button>
-              <Button onClick={testQualityValidator} variant="outline">
+              <Button onClick={testProcessDocumentV2} variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700">
+                🚀 Testar document-processor-v2 (UNIVERSAL)
+              </Button>
+              <Button onClick={testQualityValidator} variant="outline" size="sm">
                 🔍 Testar quality-validator
               </Button>
-              <Button onClick={loadDocumentStatus} variant="outline">
+              <Button onClick={loadDocumentStatus} variant="outline" size="sm">
                 🔄 Atualizar Status
               </Button>
             </div>
@@ -217,9 +292,20 @@ const PipelineTestPanel = () => {
               result.result && (
                 <div key={`${functionName}-result`} className="mt-2 p-3 bg-muted rounded-lg">
                   <h4 className="font-medium mb-2">✅ Resultado de {functionName}:</h4>
-                  <pre className="text-xs overflow-auto max-h-32 bg-background p-2 rounded border">
-                    {JSON.stringify(result.result, null, 2)}
-                  </pre>
+                  {functionName === 'document-processor-v2' && result.result ? (
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div><strong>Formato:</strong> {result.result.mimeType}</div>
+                      <div><strong>Método:</strong> {result.result.extractionMethod}</div>
+                      <div><strong>OCR:</strong> {result.result.ocrUsed ? 'Sim' : 'Não'}</div>
+                      <div><strong>Similaridade:</strong> {Math.round(result.result.similarityScore * 100)}%</div>
+                      <div><strong>Chunks:</strong> {result.result.chunksCreated}</div>
+                      <div><strong>Caracteres:</strong> {result.result.textLength}</div>
+                    </div>
+                  ) : (
+                    <pre className="text-xs overflow-auto max-h-32 bg-background p-2 rounded border">
+                      {JSON.stringify(result.result, null, 2)}
+                    </pre>
+                  )}
                 </div>
               )
             ))}

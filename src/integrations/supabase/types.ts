@@ -318,6 +318,44 @@ export type Database = {
         }
         Relationships: []
       }
+      kb_processing_logs: {
+        Row: {
+          created_at: string
+          file_id: string
+          id: string
+          message: string | null
+          metadata: Json | null
+          score: number | null
+          stage: string
+        }
+        Insert: {
+          created_at?: string
+          file_id: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          score?: number | null
+          stage: string
+        }
+        Update: {
+          created_at?: string
+          file_id?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          score?: number | null
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_processing_logs_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_base"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_base: {
         Row: {
           content: string | null
@@ -329,10 +367,13 @@ export type Database = {
           file_type: string
           id: string
           markdown_content: string | null
+          mime_type: string | null
+          ocr_used: boolean | null
           original_name: string
           processed_at: string | null
           processing_logs: Json | null
           quality_score: number | null
+          similarity_score: number | null
           status: string
           updated_at: string
           validation_errors: string[] | null
@@ -347,10 +388,13 @@ export type Database = {
           file_type: string
           id?: string
           markdown_content?: string | null
+          mime_type?: string | null
+          ocr_used?: boolean | null
           original_name: string
           processed_at?: string | null
           processing_logs?: Json | null
           quality_score?: number | null
+          similarity_score?: number | null
           status?: string
           updated_at?: string
           validation_errors?: string[] | null
@@ -365,10 +409,13 @@ export type Database = {
           file_type?: string
           id?: string
           markdown_content?: string | null
+          mime_type?: string | null
+          ocr_used?: boolean | null
           original_name?: string
           processed_at?: string | null
           processing_logs?: Json | null
           quality_score?: number | null
+          similarity_score?: number | null
           status?: string
           updated_at?: string
           validation_errors?: string[] | null

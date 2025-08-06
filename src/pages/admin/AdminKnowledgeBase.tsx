@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import PipelineTestPanel from "@/components/PipelineTestPanel";
+import ComprehensiveTestRunner from "@/components/ComprehensiveTestRunner";
 
 interface KnowledgeBaseFile {
   id: string;
@@ -779,7 +780,19 @@ const AdminKnowledgeBase = () => {
         </CardContent>
       </Card>
 
-      {/* Nova seção de teste do pipeline */}
+      {/* Testes do Pipeline Universal */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            🧪 Testes do Pipeline Universal
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ComprehensiveTestRunner />
+        </CardContent>
+      </Card>
+
+      {/* Pipeline Test Panel */}
       <PipelineTestPanel />
     </div>
   );

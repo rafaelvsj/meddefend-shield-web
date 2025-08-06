@@ -18,7 +18,7 @@ class UniversalDocumentProcessor {
     this.supabase = supabaseClient;
     this.geminiApiKey = geminiKey;
     this.extractorServiceUrl = Deno.env.get('EXTRACTOR_SERVICE_URL') || `${Deno.env.get('SUPABASE_URL')}/functions/v1/document-extract`;
-    this.useUniversalPipeline = Deno.env.get('USE_UNIVERSAL_PIPELINE') !== 'false';
+    this.useUniversalPipeline = Deno.env.get('USE_UNIVERSAL_PIPELINE') === 'true';
   }
 
   async logProcessingStep(fileId: string, stage: string, message: string, score?: number, metadata?: any) {
@@ -370,11 +370,11 @@ serve(async (req) => {
           method: extractionResult.method,
           ocr_used: extractionResult.ocr_used,
           char_count: extractionResult.text.length,
-          service_used: 'external'
+          service_used: 'universal'
         });
       } catch (error) {
-        console.warn("[PROCESSOR-V2] External service failed, using fallback:", error.message);
-        await processor.logProcessingStep(fileId, 'SERVICE_FAILED', `External service error: ${error.message}`);
+        console.warn("[PROCESSOR-V2] Universal service failed, using fallback:", error.message);
+        await processor.logProcessingStep(fileId, 'SERVICE_FAILED', `Universal service error: ${error.message}`);
         
         // Use fallback extraction
         extractionResult = await processor.extractTextFallback(buffer, fileData.original_name, mimeType);

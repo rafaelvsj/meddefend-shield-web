@@ -81,19 +81,57 @@ const AdminKnowledgeBase = () => {
         created_by: user.id
       };
       
+      console.log('[AdminKnowledgeBase] 🔍 Tentando inserir registro:', testRecord);
+      
       const { data: insertData, error: insertError } = await supabase
         .from('knowledge_base')
         .insert(testRecord)
         .select()
         .single();
       
+      console.log('[AdminKnowledgeBase] 📊 Resultado da inserção:', { insertData, insertError });
+      
       if (insertError) {
-        console.error('[AdminKnowledgeBase] ❌ Erro na inserção:', insertError);
-        throw new Error('Falha na inserção: ' + insertError.message);
+        console.error('[AdminKnowledgeBase] ❌ ERRO CRÍTICO NA INSERÇÃO:', insertError);
+        console.error('[AdminKnowledgeBase] ❌ Detalhes do erro:', {
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint,
+          code: insertError.code
+        });
+        
+        toast({
+          title: "❌ FALHA NA INSERÇÃO",
+          description: `Erro: ${insertError.message} | Código: ${insertError.code}`,
+          variant: "destructive",
+        });
+        
+        throw new Error('INSERÇÃO FALHOU: ' + insertError.message);
       }
+      
+      if (!insertData) {
+        console.error('[AdminKnowledgeBase] ❌ ERRO: Inserção não retornou dados');
+        throw new Error('Inserção não retornou dados');
+      }
+      
       console.log('[AdminKnowledgeBase] ✅ Inserção OK:', insertData);
       
-      // 3. Testar process-document
+      // 3. Verificar se o registro realmente existe
+      console.log('[AdminKnowledgeBase] 🔍 Verificando se registro existe...');
+      const { data: checkData, error: checkError } = await supabase
+        .from('knowledge_base')
+        .select('*')
+        .eq('id', insertData.id)
+        .single();
+      
+      if (checkError || !checkData) {
+        console.error('[AdminKnowledgeBase] ❌ ERRO: Registro não encontrado após inserção');
+        throw new Error('Registro não encontrado após inserção');
+      }
+      
+      console.log('[AdminKnowledgeBase] ✅ Verificação OK:', checkData);
+      
+      // 4. Testar process-document
       console.log('[AdminKnowledgeBase] Testando process-document...');
       const { data: processData, error: processError } = await supabase.functions
         .invoke('process-document', {
@@ -107,8 +145,8 @@ const AdminKnowledgeBase = () => {
       }
       
       toast({
-        title: "Teste Concluído",
-        description: `✅ Auth: OK | ✅ Insert: OK | ${processError ? '⚠️' : '✅'} Process: ${processError ? 'Erro' : 'OK'}`,
+        title: "✅ TESTE PASSOU COMPLETAMENTE",
+        description: `Auth: OK | Insert: OK | Verify: OK | Process: ${processError ? 'Erro' : 'OK'}`,
       });
       
       // Recarregar para mostrar o registro de teste

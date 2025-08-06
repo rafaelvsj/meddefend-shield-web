@@ -1,8 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-// @deno-types="https://esm.sh/pdf-parse@1.1.1"
-import pdfParse from "https://esm.sh/pdf-parse@1.1.1";
 
 // FASE 2: Sistema de extração completamente reconstruído
 class EnhancedPDFExtractor {
@@ -14,61 +12,7 @@ class EnhancedPDFExtractor {
   }> {
     const warnings: string[] = [];
     
-    try {
-      // Method 1: PDF-Parse robusto (biblioteca especializada)
-      console.log(`[PDFExtractor] Iniciando extração robusta para ${fileName}`);
-      console.log(`[PDFExtractor] Buffer size: ${buffer.byteLength} bytes`);
-      
-      // Usar pdf-parse importado estaticamente
-      
-      const options = {
-        pagerender: (pageData: any) => {
-          // Renderizar página preservando formatação
-          return pageData.getTextContent().then((textContent: any) => {
-            let lastY: number, text = '';
-            
-            for (let item of textContent.items) {
-              if (lastY == item.transform[5] || !lastY) {
-                text += item.str;
-              } else {
-                text += '\n' + item.str;
-              }
-              lastY = item.transform[5];
-            }
-            return text;
-          });
-        }
-      };
-      
-      console.log(`[PDFExtractor] Chamando pdf-parse...`);
-      const data = await pdfParse(new Uint8Array(buffer), options);
-      console.log(`[PDFExtractor] PDF-Parse result:`, {
-        numPages: data.numpages,
-        infoTitle: data.info?.Title,
-        textLength: data.text?.length
-      });
-      let extractedText = data.text || '';
-      
-      // Validação rigorosa do texto extraído
-      const validationResult = this.validateExtractedText(extractedText, fileName);
-      
-      if (validationResult.isValid) {
-        console.log(`[PDFExtractor] ✅ PDF-Parse SUCCESS - Score: ${validationResult.quality}`);
-        return {
-          text: this.cleanAndStructureText(extractedText),
-          quality: validationResult.quality,
-          method: 'pdf-parse-optimized',
-          warnings: validationResult.warnings
-        };
-      } else {
-        warnings.push(...validationResult.warnings);
-        console.warn(`[PDFExtractor] ⚠️ PDF-Parse text failed validation: ${validationResult.warnings.join(', ')}`);
-      }
-      
-    } catch (error) {
-      console.error(`[PDFExtractor] ❌ PDF-Parse critical error:`, error);
-      warnings.push(`PDF-Parse error: ${error.message}`);
-    }
+    console.log(`[PDFExtractor] Iniciando extração para ${fileName} - Buffer size: ${buffer.byteLength} bytes`);
 
     try {
       // Method 2: Fallback avançado com análise de estrutura

@@ -14,181 +14,722 @@ interface DocumentChunk {
     source: string;
     chunk_index: number;
     chunk_size: number;
+    file_type: string;
+    page?: number;
+    section?: string;
   };
 }
 
-class DocumentProcessor {
-  private async extractTextFromFile(fileBuffer: ArrayBuffer, fileType: string): Promise<string> {
-    console.log(`[process-document] Iniciando extração de texto. Tipo: ${fileType}, Tamanho: ${fileBuffer.byteLength} bytes`);
+interface ProcessingResult {
+  success: boolean;
+  text?: string;
+  metadata?: Record<string, any>;
+  error?: string;
+  warnings?: string[];
+}
+
+class FileValidator {
+  private static readonly MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+  private static readonly SUPPORTED_TYPES = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
+    'application/msword', // DOC
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // XLSX
+    'application/vnd.ms-excel', // XLS
+    'text/csv',
+    'text/plain',
+    'text/html',
+    'application/rtf',
+    'text/rtf',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // PPTX
+    'application/vnd.ms-powerpoint', // PPT
+    'application/vnd.oasis.opendocument.text', // ODT
+    'application/vnd.oasis.opendocument.spreadsheet', // ODS
+    'application/vnd.oasis.opendocument.presentation', // ODP
+    'application/json',
+    'application/xml',
+    'text/xml'
+  ];
+
+  static validate(fileBuffer: ArrayBuffer, fileType: string, fileName: string): { valid: boolean; error?: string } {
+    // Verificar tamanho
+    if (fileBuffer.byteLength > this.MAX_FILE_SIZE) {
+      return { valid: false, error: `Arquivo muito grande. Máximo permitido: ${this.MAX_FILE_SIZE / 1024 / 1024}MB` };
+    }
+
+    // Verificar tipo
+    if (!this.SUPPORTED_TYPES.includes(fileType.toLowerCase())) {
+      return { valid: false, error: `Tipo de arquivo não suportado: ${fileType}` };
+    }
+
+    // Verificar se o arquivo não está vazio
+    if (fileBuffer.byteLength === 0) {
+      return { valid: false, error: 'Arquivo vazio' };
+    }
+
+    // Verificar assinatura do arquivo (magic numbers)
+    const signature = this.getFileSignature(fileBuffer);
+    if (!this.validateSignature(signature, fileType)) {
+      console.warn(`[process-document] Aviso: Assinatura do arquivo não corresponde ao tipo declarado`);
+    }
+
+    return { valid: true };
+  }
+
+  private static getFileSignature(buffer: ArrayBuffer): string {
+    const uint8Array = new Uint8Array(buffer);
+    return Array.from(uint8Array.slice(0, 8))
+      .map(byte => byte.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  private static validateSignature(signature: string, fileType: string): boolean {
+    const signatures: Record<string, string[]> = {
+      'application/pdf': ['25504446'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['504b0304'],
+      'application/msword': ['d0cf11e0'],
+      'application/vnd.ms-excel': ['d0cf11e0'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['504b0304'],
+    };
+
+    const expectedSignatures = signatures[fileType.toLowerCase()];
+    if (!expectedSignatures) return true; // Não validamos se não conhecemos
+
+    return expectedSignatures.some(expected => signature.startsWith(expected));
+  }
+}
+
+class UniversalDocumentParser {
+  async parse(fileBuffer: ArrayBuffer, fileType: string, fileName: string): Promise<ProcessingResult> {
+    console.log(`[process-document] Iniciando parsing de ${fileName} (${fileType})`);
     
     try {
-      let text: string;
-      
-      switch (fileType.toLowerCase()) {
-        case 'application/pdf':
-        case 'pdf':
-          text = await this.extractFromPDF(fileBuffer);
-          break;
-          
-        case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-        case 'docx':
-          text = await this.extractFromDOCX(fileBuffer);
-          break;
-          
-        case 'text/plain':
-        case 'txt':
-          text = new TextDecoder().decode(fileBuffer);
-          break;
-          
-        case 'text/html':
-        case 'html':
-          text = this.stripHTML(new TextDecoder().decode(fileBuffer));
-          break;
-          
-        default:
-          console.log(`[process-document] Tipo não suportado, tentando extrair como texto plano: ${fileType}`);
-          text = new TextDecoder().decode(fileBuffer);
-          if (text.length === 0) {
-            throw new Error(`Tipo de arquivo não suportado: ${fileType}`);
-          }
+      const validation = FileValidator.validate(fileBuffer, fileType, fileName);
+      if (!validation.valid) {
+        return { success: false, error: validation.error };
       }
 
-      console.log(`[process-document] Texto extraído com sucesso. Caracteres: ${text.length}`);
-      return text;
+      const result = await this.parseByType(fileBuffer, fileType, fileName);
+      
+      if (!result.success) {
+        console.warn(`[process-document] Parser específico falhou, tentando parser genérico`);
+        return await this.parseGeneric(fileBuffer, fileName);
+      }
+
+      return result;
     } catch (error) {
-      console.error(`[process-document] Erro na extração de texto:`, error);
-      throw new Error(`Falha na extração de texto: ${(error as Error).message}`);
+      console.error(`[process-document] Erro no parsing:`, error);
+      return await this.parseGeneric(fileBuffer, fileName);
     }
   }
 
-  private async extractFromPDF(buffer: ArrayBuffer): Promise<string> {
-    console.log(`[process-document] Processando PDF de ${buffer.byteLength} bytes`);
+  private async parseByType(fileBuffer: ArrayBuffer, fileType: string, fileName: string): Promise<ProcessingResult> {
+    const type = fileType.toLowerCase();
+    
+    switch (type) {
+      case 'application/pdf':
+        return await this.parsePDF(fileBuffer);
+      
+      case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        return await this.parseDOCX(fileBuffer);
+      
+      case 'application/msword':
+        return await this.parseDOC(fileBuffer);
+      
+      case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+      case 'application/vnd.ms-excel':
+        return await this.parseSpreadsheet(fileBuffer, type);
+      
+      case 'text/csv':
+        return await this.parseCSV(fileBuffer);
+      
+      case 'text/plain':
+        return await this.parsePlainText(fileBuffer);
+      
+      case 'text/html':
+        return await this.parseHTML(fileBuffer);
+      
+      case 'application/rtf':
+      case 'text/rtf':
+        return await this.parseRTF(fileBuffer);
+      
+      case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+      case 'application/vnd.ms-powerpoint':
+        return await this.parsePresentation(fileBuffer, type);
+      
+      case 'application/vnd.oasis.opendocument.text':
+      case 'application/vnd.oasis.opendocument.spreadsheet':
+      case 'application/vnd.oasis.opendocument.presentation':
+        return await this.parseOpenDocument(fileBuffer, type);
+      
+      case 'application/json':
+        return await this.parseJSON(fileBuffer);
+      
+      case 'application/xml':
+      case 'text/xml':
+        return await this.parseXML(fileBuffer);
+      
+      default:
+        return await this.parseGeneric(fileBuffer, fileName);
+    }
+  }
+
+  private async parsePDF(buffer: ArrayBuffer): Promise<ProcessingResult> {
+    console.log(`[process-document] Processando PDF avançado`);
     
     try {
       const uint8Array = new Uint8Array(buffer);
-      
-      // Converter para string com encoding latin1 para preservar bytes
       let text = '';
+      
+      // Converter para string preservando bytes
       for (let i = 0; i < uint8Array.length; i++) {
         text += String.fromCharCode(uint8Array[i]);
       }
+
+      const extractedTexts: string[] = [];
       
-      // Procurar por objetos de stream de texto no PDF
+      // Método 1: Buscar streams de texto comprimidos e não comprimidos
       const streamPattern = /stream\s*([\s\S]*?)\s*endstream/g;
-      const textObjects: string[] = [];
       let match;
       
       while ((match = streamPattern.exec(text)) !== null) {
         const streamContent = match[1];
-        
-        // Procurar por texto legível no stream
-        const readableText = this.extractReadableText(streamContent);
+        const readableText = this.extractReadableTextAdvanced(streamContent);
         if (readableText.length > 10) {
-          textObjects.push(readableText);
+          extractedTexts.push(readableText);
         }
       }
-      
-      // Buscar também por comandos de texto diretos
-      const textCommandPattern = /\(([^)]+)\)\s*Tj/g;
-      while ((match = textCommandPattern.exec(text)) !== null) {
-        const textContent = match[1];
-        if (textContent && textContent.length > 1) {
-          textObjects.push(textContent);
+
+      // Método 2: Comandos de texto PDF
+      const textCommands = [
+        /\(([^)]+)\)\s*Tj/g,
+        /\(([^)]+)\)\s*TJ/g,
+        /\[([^\]]+)\]\s*TJ/g,
+        /<([^>]+)>\s*Tj/g
+      ];
+
+      textCommands.forEach(pattern => {
+        while ((match = pattern.exec(text)) !== null) {
+          const textContent = match[1];
+          if (textContent && textContent.length > 1) {
+            const cleaned = this.cleanPDFText(textContent);
+            if (cleaned.length > 2) {
+              extractedTexts.push(cleaned);
+            }
+          }
         }
-      }
-      
-      // Método alternativo: buscar padrões de texto entre parênteses
-      const textInParensPattern = /\(([^)]{3,})\)/g;
+      });
+
+      // Método 3: Texto entre parênteses
+      const textInParensPattern = /\(([^)]{2,})\)/g;
       while ((match = textInParensPattern.exec(text)) !== null) {
         const textContent = match[1];
-        if (textContent && /[a-zA-ZÀ-ÿ]/.test(textContent)) {
-          textObjects.push(textContent);
+        if (textContent && /[a-zA-ZÀ-ÿ0-9]/.test(textContent)) {
+          const cleaned = this.cleanPDFText(textContent);
+          if (cleaned.length > 2) {
+            extractedTexts.push(cleaned);
+          }
         }
       }
+
+      // Método 4: Buscar objetos de fonte e texto associado
+      const fontObjectPattern = /\/Font\s+<<[^>]*>>/g;
+      const textObjectPattern = /BT\s+([\s\S]*?)\s+ET/g;
       
-      if (textObjects.length > 0) {
-        const result = textObjects
+      while ((match = textObjectPattern.exec(text)) !== null) {
+        const textObject = match[1];
+        const textLines = textObject.split(/\s+/).filter(line => 
+          line.includes('(') && line.includes(')') && line.length > 3
+        );
+        
+        textLines.forEach(line => {
+          const extracted = this.extractTextFromPDFLine(line);
+          if (extracted.length > 2) {
+            extractedTexts.push(extracted);
+          }
+        });
+      }
+
+      if (extractedTexts.length > 0) {
+        const result = extractedTexts
           .join(' ')
-          .replace(/\\[nr]/g, ' ')
           .replace(/\s+/g, ' ')
           .trim();
         
         if (result.length > 50) {
-          console.log(`[process-document] PDF processado: ${result.length} caracteres extraídos`);
-          return result;
+          console.log(`[process-document] PDF processado com sucesso: ${result.length} caracteres`);
+          return {
+            success: true,
+            text: result,
+            metadata: {
+              extraction_method: 'advanced_pdf_parser',
+              text_objects_found: extractedTexts.length
+            }
+          };
         }
       }
-      
-      // Último recurso: extrair texto legível de qualquer lugar
-      const fallbackText = this.extractReadableText(text);
+
+      // Fallback para extração básica
+      const fallbackText = this.extractReadableTextAdvanced(text);
       if (fallbackText.length > 100) {
-        console.log(`[process-document] PDF processado (fallback): ${fallbackText.length} caracteres`);
-        return fallbackText;
+        return {
+          success: true,
+          text: fallbackText,
+          metadata: {
+            extraction_method: 'fallback_text_extraction'
+          }
+        };
       }
-      
-      throw new Error('Não foi possível extrair texto legível do PDF');
+
+      return { success: false, error: 'Não foi possível extrair texto significativo do PDF' };
     } catch (error) {
-      console.error(`[process-document] Erro no processamento de PDF:`, error);
-      throw new Error(`Falha ao processar PDF: ${(error as Error).message}`);
+      console.error(`[process-document] Erro no parsing de PDF:`, error);
+      return { success: false, error: `Erro no parsing de PDF: ${(error as Error).message}` };
     }
   }
 
-  private extractReadableText(content: string): string {
-    // Remove caracteres de controle e mantém apenas texto legível
-    const readable = content
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ')
-      .replace(/[^\x20-\x7E\u00C0-\u017F\u0100-\u024F\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    
-    // Filtrar apenas linhas que parecem ter conteúdo textual significativo
-    const lines = readable.split(/\s+/).filter(word => {
-      return word.length > 2 && /[a-zA-ZÀ-ÿ]/.test(word);
+  private extractTextFromPDFLine(line: string): string {
+    const patterns = [
+      /\(([^)]+)\)/g,
+      /<([^>]+)>/g,
+      /\[([^\]]+)\]/g
+    ];
+
+    let extracted = '';
+    patterns.forEach(pattern => {
+      let match;
+      while ((match = pattern.exec(line)) !== null) {
+        extracted += ' ' + this.cleanPDFText(match[1]);
+      }
     });
-    
-    return lines.join(' ');
+
+    return extracted.trim();
   }
 
-  private async extractFromDOCX(buffer: ArrayBuffer): Promise<string> {
-    console.log(`[process-document] Processando DOCX de ${buffer.byteLength} bytes`);
+  private cleanPDFText(text: string): string {
+    return text
+      .replace(/\\[nr]/g, ' ')
+      .replace(/\\[()]/g, '')
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private async parseDOCX(buffer: ArrayBuffer): Promise<ProcessingResult> {
+    console.log(`[process-document] Processando DOCX avançado`);
     
     try {
       const uint8Array = new Uint8Array(buffer);
       const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
       
-      // Buscar padrões XML típicos de DOCX
-      const xmlTextPattern = /<w:t[^>]*>([^<]+)<\/w:t>/g;
-      const matches = [...text.matchAll(xmlTextPattern)];
+      // DOCX é um arquivo ZIP com XML dentro
+      const extractedTexts: string[] = [];
       
-      if (matches.length > 0) {
-        const extractedText = matches
-          .map(match => match[1])
+      // Buscar padrões XML do Word
+      const xmlPatterns = [
+        /<w:t[^>]*>([^<]+)<\/w:t>/g,
+        /<w:r[^>]*><w:t[^>]*>([^<]+)<\/w:t><\/w:r>/g,
+        /<text[^>]*>([^<]+)<\/text>/g
+      ];
+
+      xmlPatterns.forEach(pattern => {
+        let match;
+        while ((match = pattern.exec(text)) !== null) {
+          const textContent = match[1];
+          if (textContent && textContent.trim().length > 1) {
+            extractedTexts.push(this.cleanXMLText(textContent));
+          }
+        }
+      });
+
+      // Buscar cabeçalhos e parágrafos
+      const paragraphPattern = /<w:p[^>]*>([\s\S]*?)<\/w:p>/g;
+      let match;
+      while ((match = paragraphPattern.exec(text)) !== null) {
+        const paragraph = match[1];
+        const textInParagraph = paragraph.replace(/<[^>]*>/g, ' ').trim();
+        if (textInParagraph.length > 2) {
+          extractedTexts.push(textInParagraph);
+        }
+      }
+
+      if (extractedTexts.length > 0) {
+        const result = extractedTexts
           .join(' ')
           .replace(/\s+/g, ' ')
           .trim();
-          
-        if (extractedText.length > 10) {
-          console.log(`[process-document] DOCX processado: ${extractedText.length} caracteres extraídos`);
-          return extractedText;
+        
+        if (result.length > 10) {
+          console.log(`[process-document] DOCX processado: ${result.length} caracteres`);
+          return {
+            success: true,
+            text: result,
+            metadata: {
+              extraction_method: 'advanced_docx_parser',
+              paragraphs_found: extractedTexts.length
+            }
+          };
         }
       }
+
+      return { success: false, error: 'Não foi possível extrair texto do DOCX' };
+    } catch (error) {
+      console.error(`[process-document] Erro no parsing de DOCX:`, error);
+      return { success: false, error: `Erro no parsing de DOCX: ${(error as Error).message}` };
+    }
+  }
+
+  private async parseDOC(buffer: ArrayBuffer): Promise<ProcessingResult> {
+    console.log(`[process-document] Processando DOC legado`);
+    
+    try {
+      const uint8Array = new Uint8Array(buffer);
+      const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
       
-      // Método alternativo: buscar texto legível
-      const readableText = text
-        .replace(/[^\x20-\x7E\n\r]/g, ' ')
+      // DOC usa formato binário mais complexo
+      const readableText = this.extractReadableTextAdvanced(text);
+      
+      if (readableText.length > 50) {
+        return {
+          success: true,
+          text: readableText,
+          metadata: {
+            extraction_method: 'doc_binary_parser'
+          }
+        };
+      }
+
+      return { success: false, error: 'Não foi possível extrair texto do DOC' };
+    } catch (error) {
+      return { success: false, error: `Erro no parsing de DOC: ${(error as Error).message}` };
+    }
+  }
+
+  private async parseSpreadsheet(buffer: ArrayBuffer, fileType: string): Promise<ProcessingResult> {
+    console.log(`[process-document] Processando planilha: ${fileType}`);
+    
+    try {
+      const uint8Array = new Uint8Array(buffer);
+      const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
+      
+      const extractedData: string[] = [];
+      
+      if (fileType.includes('openxml')) {
+        // XLSX - buscar por strings compartilhadas e células
+        const sharedStringPattern = /<t[^>]*>([^<]+)<\/t>/g;
+        const cellValuePattern = /<v[^>]*>([^<]+)<\/v>/g;
+        
+        let match;
+        while ((match = sharedStringPattern.exec(text)) !== null) {
+          const cellText = this.cleanXMLText(match[1]);
+          if (cellText.length > 0 && !this.isNumericOnly(cellText)) {
+            extractedData.push(cellText);
+          }
+        }
+        
+        while ((match = cellValuePattern.exec(text)) !== null) {
+          const cellValue = match[1];
+          if (cellValue && !this.isNumericOnly(cellValue)) {
+            extractedData.push(cellValue);
+          }
+        }
+      } else {
+        // XLS - formato binário
+        const readableText = this.extractReadableTextAdvanced(text);
+        const words = readableText.split(/\s+/).filter(word => 
+          word.length > 2 && !this.isNumericOnly(word)
+        );
+        extractedData.push(...words);
+      }
+
+      if (extractedData.length > 0) {
+        const result = extractedData.join(' ').replace(/\s+/g, ' ').trim();
+        return {
+          success: true,
+          text: result,
+          metadata: {
+            extraction_method: 'spreadsheet_parser',
+            cells_found: extractedData.length
+          }
+        };
+      }
+
+      return { success: false, error: 'Não foi possível extrair texto da planilha' };
+    } catch (error) {
+      return { success: false, error: `Erro no parsing de planilha: ${(error as Error).message}` };
+    }
+  }
+
+  private async parseCSV(buffer: ArrayBuffer): Promise<ProcessingResult> {
+    try {
+      const text = new TextDecoder('utf-8').decode(buffer);
+      const lines = text.split('\n').filter(line => line.trim().length > 0);
+      
+      // Extrair texto de todas as células, ignorando números puros
+      const extractedText = lines
+        .map(line => {
+          const cells = line.split(/[,;|\t]/).map(cell => 
+            cell.replace(/['"]/g, '').trim()
+          );
+          return cells.filter(cell => 
+            cell.length > 1 && !this.isNumericOnly(cell)
+          ).join(' ');
+        })
+        .filter(line => line.length > 0)
+        .join(' ');
+
+      return {
+        success: true,
+        text: extractedText,
+        metadata: {
+          extraction_method: 'csv_parser',
+          rows_processed: lines.length
+        }
+      };
+    } catch (error) {
+      return { success: false, error: `Erro no parsing de CSV: ${(error as Error).message}` };
+    }
+  }
+
+  private async parsePlainText(buffer: ArrayBuffer): Promise<ProcessingResult> {
+    try {
+      const text = new TextDecoder('utf-8').decode(buffer);
+      return {
+        success: true,
+        text: text.trim(),
+        metadata: {
+          extraction_method: 'plain_text',
+          length: text.length
+        }
+      };
+    } catch (error) {
+      return { success: false, error: `Erro no parsing de texto: ${(error as Error).message}` };
+    }
+  }
+
+  private async parseHTML(buffer: ArrayBuffer): Promise<ProcessingResult> {
+    try {
+      const html = new TextDecoder('utf-8').decode(buffer);
+      const text = this.stripHTML(html);
+      
+      return {
+        success: true,
+        text: text,
+        metadata: {
+          extraction_method: 'html_parser',
+          original_length: html.length,
+          extracted_length: text.length
+        }
+      };
+    } catch (error) {
+      return { success: false, error: `Erro no parsing de HTML: ${(error as Error).message}` };
+    }
+  }
+
+  private async parseRTF(buffer: ArrayBuffer): Promise<ProcessingResult> {
+    try {
+      const rtf = new TextDecoder('utf-8').decode(buffer);
+      
+      // Remover comandos RTF e extrair texto
+      const text = rtf
+        .replace(/\{\\[^}]*\}/g, '') // Remove comandos RTF
+        .replace(/\\[a-z]+\d*/g, '') // Remove comandos simples
+        .replace(/[{}]/g, '') // Remove chaves
         .replace(/\s+/g, ' ')
         .trim();
-        
-      if (readableText.length > 50) {
-        console.log(`[process-document] DOCX processado (método alternativo): ${readableText.length} caracteres`);
-        return readableText;
-      }
-      
-      throw new Error('Não foi possível extrair texto do DOCX');
+
+      return {
+        success: true,
+        text: text,
+        metadata: {
+          extraction_method: 'rtf_parser'
+        }
+      };
     } catch (error) {
-      console.error(`[process-document] Erro no processamento de DOCX:`, error);
-      throw new Error(`Falha ao processar DOCX: ${(error as Error).message}`);
+      return { success: false, error: `Erro no parsing de RTF: ${(error as Error).message}` };
     }
+  }
+
+  private async parsePresentation(buffer: ArrayBuffer, fileType: string): Promise<ProcessingResult> {
+    try {
+      const uint8Array = new Uint8Array(buffer);
+      const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
+      
+      const extractedTexts: string[] = [];
+      
+      if (fileType.includes('openxml')) {
+        // PPTX
+        const slideTextPatterns = [
+          /<a:t[^>]*>([^<]+)<\/a:t>/g,
+          /<p:txBody[^>]*>([\s\S]*?)<\/p:txBody>/g
+        ];
+
+        slideTextPatterns.forEach(pattern => {
+          let match;
+          while ((match = pattern.exec(text)) !== null) {
+            const slideText = match[1].replace(/<[^>]*>/g, ' ');
+            if (slideText.trim().length > 1) {
+              extractedTexts.push(this.cleanXMLText(slideText));
+            }
+          }
+        });
+      } else {
+        // PPT
+        const readableText = this.extractReadableTextAdvanced(text);
+        if (readableText.length > 10) {
+          extractedTexts.push(readableText);
+        }
+      }
+
+      if (extractedTexts.length > 0) {
+        const result = extractedTexts.join(' ').replace(/\s+/g, ' ').trim();
+        return {
+          success: true,
+          text: result,
+          metadata: {
+            extraction_method: 'presentation_parser',
+            slides_found: extractedTexts.length
+          }
+        };
+      }
+
+      return { success: false, error: 'Não foi possível extrair texto da apresentação' };
+    } catch (error) {
+      return { success: false, error: `Erro no parsing de apresentação: ${(error as Error).message}` };
+    }
+  }
+
+  private async parseOpenDocument(buffer: ArrayBuffer, fileType: string): Promise<ProcessingResult> {
+    try {
+      const uint8Array = new Uint8Array(buffer);
+      const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
+      
+      // OpenDocument usa XML similar ao DOCX
+      const textPattern = /<text:p[^>]*>([^<]+)<\/text:p>/g;
+      const extractedTexts: string[] = [];
+      
+      let match;
+      while ((match = textPattern.exec(text)) !== null) {
+        const textContent = this.cleanXMLText(match[1]);
+        if (textContent.length > 1) {
+          extractedTexts.push(textContent);
+        }
+      }
+
+      if (extractedTexts.length > 0) {
+        const result = extractedTexts.join(' ').replace(/\s+/g, ' ').trim();
+        return {
+          success: true,
+          text: result,
+          metadata: {
+            extraction_method: 'opendocument_parser',
+            paragraphs_found: extractedTexts.length
+          }
+        };
+      }
+
+      return { success: false, error: 'Não foi possível extrair texto do OpenDocument' };
+    } catch (error) {
+      return { success: false, error: `Erro no parsing de OpenDocument: ${(error as Error).message}` };
+    }
+  }
+
+  private async parseJSON(buffer: ArrayBuffer): Promise<ProcessingResult> {
+    try {
+      const jsonText = new TextDecoder('utf-8').decode(buffer);
+      const data = JSON.parse(jsonText);
+      
+      // Extrair todos os valores de string do JSON
+      const extractedText = this.extractTextFromObject(data);
+      
+      return {
+        success: true,
+        text: extractedText,
+        metadata: {
+          extraction_method: 'json_parser',
+          structure: typeof data
+        }
+      };
+    } catch (error) {
+      return { success: false, error: `Erro no parsing de JSON: ${(error as Error).message}` };
+    }
+  }
+
+  private async parseXML(buffer: ArrayBuffer): Promise<ProcessingResult> {
+    try {
+      const xml = new TextDecoder('utf-8').decode(buffer);
+      const text = xml
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      return {
+        success: true,
+        text: text,
+        metadata: {
+          extraction_method: 'xml_parser'
+        }
+      };
+    } catch (error) {
+      return { success: false, error: `Erro no parsing de XML: ${(error as Error).message}` };
+    }
+  }
+
+  private async parseGeneric(buffer: ArrayBuffer, fileName: string): Promise<ProcessingResult> {
+    console.log(`[process-document] Usando parser genérico para ${fileName}`);
+    
+    try {
+      const uint8Array = new Uint8Array(buffer);
+      const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
+      
+      const readableText = this.extractReadableTextAdvanced(text);
+      
+      if (readableText.length > 20) {
+        return {
+          success: true,
+          text: readableText,
+          metadata: {
+            extraction_method: 'generic_text_extraction'
+          },
+          warnings: ['Arquivo processado com parser genérico - qualidade pode ser limitada']
+        };
+      }
+
+      return { success: false, error: 'Não foi possível extrair texto significativo do arquivo' };
+    } catch (error) {
+      return { success: false, error: `Erro no parser genérico: ${(error as Error).message}` };
+    }
+  }
+
+  // Métodos auxiliares
+  private extractReadableTextAdvanced(content: string): string {
+    // Remove caracteres de controle e mantém apenas texto legível
+    const readable = content
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ')
+      .replace(/[^\x20-\x7E\u00C0-\u017F\u0100-\u024F\u1E00-\u1EFF\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    // Filtrar apenas palavras que parecem ter conteúdo textual significativo
+    const words = readable.split(/\s+/).filter(word => {
+      return word.length > 1 && 
+             /[a-zA-ZÀ-ÿ]/.test(word) && 
+             !this.isGibberish(word);
+    });
+    
+    return words.join(' ');
+  }
+
+  private cleanXMLText(text: string): string {
+    return text
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#\d+;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private stripHTML(html: string): string {
@@ -205,33 +746,95 @@ class DocumentProcessor {
       .trim();
   }
 
-  private chunkText(text: string, chunkSize: number = 1000): string[] {
-    console.log(`[process-document] Dividindo texto em chunks. Tamanho: ${text.length} chars, chunk size: ${chunkSize}`);
+  private extractTextFromObject(obj: any): string {
+    const texts: string[] = [];
     
-    const chunks: string[] = [];
-    const sentences = text.split(/[.!?]+/);
-    let currentChunk = '';
-
-    for (const sentence of sentences) {
-      const sentenceWithPeriod = sentence.trim() + '.';
-      
-      if ((currentChunk + sentenceWithPeriod).length > chunkSize && currentChunk.length > 0) {
-        chunks.push(currentChunk.trim());
-        currentChunk = sentenceWithPeriod;
-      } else {
-        currentChunk += (currentChunk.length > 0 ? ' ' : '') + sentenceWithPeriod;
+    const extract = (value: any) => {
+      if (typeof value === 'string' && value.length > 1) {
+        texts.push(value);
+      } else if (Array.isArray(value)) {
+        value.forEach(extract);
+      } else if (typeof value === 'object' && value !== null) {
+        Object.values(value).forEach(extract);
       }
+    };
+    
+    extract(obj);
+    return texts.join(' ');
+  }
+
+  private isNumericOnly(text: string): boolean {
+    return /^\d+(\.\d+)?$/.test(text.trim());
+  }
+
+  private isGibberish(word: string): boolean {
+    // Detectar sequências que parecem ser lixo
+    const consonantPattern = /[bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ]{4,}/;
+    const randomPattern = /[^a-zA-ZÀ-ÿ\s]{3,}/;
+    
+    return consonantPattern.test(word) || randomPattern.test(word) || word.length > 50;
+  }
+}
+
+class TextChunker {
+  static chunk(text: string, chunkSize: number = 1000, overlap: number = 100): string[] {
+    console.log(`[process-document] Dividindo texto em chunks inteligentes. Tamanho: ${text.length} chars`);
+    
+    if (text.length <= chunkSize) {
+      return [text];
+    }
+
+    const chunks: string[] = [];
+    const sentences = this.splitIntoSentences(text);
+    
+    let currentChunk = '';
+    let sentenceIndex = 0;
+    
+    while (sentenceIndex < sentences.length) {
+      const sentence = sentences[sentenceIndex];
+      
+      if ((currentChunk + sentence).length > chunkSize && currentChunk.length > 0) {
+        chunks.push(currentChunk.trim());
+        
+        // Adicionar overlap
+        const overlapText = this.getOverlapText(currentChunk, overlap);
+        currentChunk = overlapText + sentence;
+      } else {
+        currentChunk += (currentChunk.length > 0 ? ' ' : '') + sentence;
+      }
+      
+      sentenceIndex++;
     }
 
     if (currentChunk.trim()) {
       chunks.push(currentChunk.trim());
     }
 
-    console.log(`[process-document] Texto dividido em ${chunks.length} chunks`);
+    console.log(`[process-document] Texto dividido em ${chunks.length} chunks com overlap`);
     return chunks;
   }
 
-  private async generateEmbedding(text: string): Promise<number[]> {
+  private static splitIntoSentences(text: string): string[] {
+    // Divisão mais inteligente considerando abreviações comuns
+    const sentences = text
+      .replace(/([.!?])\s+/g, '$1|SPLIT|')
+      .split('|SPLIT|')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+    
+    return sentences;
+  }
+
+  private static getOverlapText(text: string, overlapSize: number): string {
+    const words = text.split(/\s+/);
+    const overlapWords = Math.min(overlapSize / 5, words.length); // Aproximadamente 5 chars por palavra
+    
+    return words.slice(-overlapWords).join(' ') + ' ';
+  }
+}
+
+class EmbeddingGenerator {
+  private static async generateEmbedding(text: string): Promise<number[]> {
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     
     if (!apiKey) {
@@ -273,24 +876,7 @@ class DocumentProcessor {
     }
   }
 
-  async processDocument(fileBuffer: ArrayBuffer, fileName: string, fileType: string): Promise<DocumentChunk[]> {
-    console.log(`[process-document] Iniciando processamento do documento: ${fileName}`);
-    
-    // Extrair texto do documento
-    const text = await this.extractTextFromFile(fileBuffer, fileType);
-    
-    if (!text || text.length < 10) {
-      throw new Error('Texto extraído muito pequeno ou vazio');
-    }
-    
-    // Dividir em chunks
-    const chunks = this.chunkText(text);
-    
-    if (chunks.length === 0) {
-      throw new Error('Não foi possível dividir o texto em chunks');
-    }
-    
-    // Gerar embeddings para cada chunk
+  static async generateForChunks(chunks: string[], fileName: string, fileType: string): Promise<DocumentChunk[]> {
     const documentChunks: DocumentChunk[] = [];
     
     for (let i = 0; i < chunks.length; i++) {
@@ -305,20 +891,68 @@ class DocumentProcessor {
           metadata: {
             source: fileName,
             chunk_index: i,
-            chunk_size: chunks[i].length
+            chunk_size: chunks[i].length,
+            file_type: fileType
           }
         });
+        
+        // Pequena pausa para evitar rate limiting
+        if (i < chunks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       } catch (error) {
         console.error(`[process-document] Erro ao processar chunk ${i}:`, error);
         // Continua com os outros chunks em caso de erro
       }
     }
 
+    return documentChunks;
+  }
+}
+
+class DocumentProcessor {
+  private parser: UniversalDocumentParser;
+
+  constructor() {
+    this.parser = new UniversalDocumentParser();
+  }
+
+  async processDocument(fileBuffer: ArrayBuffer, fileName: string, fileType: string): Promise<DocumentChunk[]> {
+    console.log(`[process-document] Iniciando processamento robusto do documento: ${fileName}`);
+    
+    // Parse do documento
+    const parseResult = await this.parser.parse(fileBuffer, fileType, fileName);
+    
+    if (!parseResult.success) {
+      throw new Error(parseResult.error || 'Falha no parsing do documento');
+    }
+
+    const text = parseResult.text!;
+    
+    if (!text || text.length < 10) {
+      throw new Error('Texto extraído muito pequeno ou vazio');
+    }
+    
+    console.log(`[process-document] Texto extraído com sucesso: ${text.length} caracteres`);
+    if (parseResult.warnings) {
+      parseResult.warnings.forEach(warning => console.warn(`[process-document] ${warning}`));
+    }
+    
+    // Dividir em chunks inteligentes
+    const chunks = TextChunker.chunk(text, 1000, 100);
+    
+    if (chunks.length === 0) {
+      throw new Error('Não foi possível dividir o texto em chunks');
+    }
+    
+    // Gerar embeddings
+    const documentChunks = await EmbeddingGenerator.generateForChunks(chunks, fileName, fileType);
+
     if (documentChunks.length === 0) {
       throw new Error('Nenhum chunk foi processado com sucesso');
     }
 
-    console.log(`[process-document] Documento processado: ${documentChunks.length}/${chunks.length} chunks com embeddings`);
+    console.log(`[process-document] Documento processado com sucesso: ${documentChunks.length}/${chunks.length} chunks com embeddings`);
     return documentChunks;
   }
 }
@@ -397,7 +1031,7 @@ serve(async (req) => {
     // Converter para ArrayBuffer
     const fileBuffer = await fileData.arrayBuffer();
 
-    // Processar documento
+    // Processar documento com sistema robusto
     const processor = new DocumentProcessor();
     const chunks = await processor.processDocument(
       fileBuffer,
@@ -413,7 +1047,7 @@ serve(async (req) => {
     const chunkInserts = chunks.map(chunk => ({
       knowledge_base_id: fileId,
       content: chunk.content,
-      embedding: `[${chunk.embedding.join(',')}]`, // Converter array para string no formato PostgreSQL
+      embedding: `[${chunk.embedding.join(',')}]`,
       chunk_index: chunk.metadata.chunk_index,
       chunk_size: chunk.metadata.chunk_size
     }));
@@ -451,7 +1085,7 @@ serve(async (req) => {
       success: true,
       chunks_generated: chunks.length,
       content_length: processedContent.length,
-      message: 'Documento processado com sucesso'
+      message: 'Documento processado com sucesso com sistema robusto'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

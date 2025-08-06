@@ -17,8 +17,8 @@ class UniversalDocumentProcessor {
   constructor(supabaseClient: any, geminiKey: string) {
     this.supabase = supabaseClient;
     this.geminiApiKey = geminiKey;
-    this.extractorServiceUrl = Deno.env.get('EXTRACTOR_SERVICE_URL') || 'http://localhost:8000';
-    this.useUniversalPipeline = Deno.env.get('USE_UNIVERSAL_PIPELINE') === 'true';
+    this.extractorServiceUrl = Deno.env.get('EXTRACTOR_SERVICE_URL') || `${Deno.env.get('SUPABASE_URL')}/functions/v1/document-extract`;
+    this.useUniversalPipeline = Deno.env.get('USE_UNIVERSAL_PIPELINE') !== 'false';
   }
 
   async logProcessingStep(fileId: string, stage: string, message: string, score?: number, metadata?: any) {
@@ -47,10 +47,13 @@ class UniversalDocumentProcessor {
       const blob = new Blob([buffer]);
       formData.append('file', blob, fileName);
 
-      // Call extraction service
-      const response = await fetch(`${this.extractorServiceUrl}/extract`, {
+      // Call extraction service (fallback to built-in edge function)
+      const response = await fetch(this.extractorServiceUrl, {
         method: 'POST',
         body: formData,
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+        }
       });
 
       if (!response.ok) {

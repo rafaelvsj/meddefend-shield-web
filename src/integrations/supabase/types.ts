@@ -199,6 +199,7 @@ export type Database = {
           embedding: string | null
           id: string
           knowledge_base_id: string
+          metadata: Json | null
         }
         Insert: {
           chunk_index: number
@@ -208,6 +209,7 @@ export type Database = {
           embedding?: string | null
           id?: string
           knowledge_base_id: string
+          metadata?: Json | null
         }
         Update: {
           chunk_index?: number
@@ -217,6 +219,7 @@ export type Database = {
           embedding?: string | null
           id?: string
           knowledge_base_id?: string
+          metadata?: Json | null
         }
         Relationships: [
           {
@@ -512,6 +515,36 @@ export type Database = {
           title?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      pipeline_settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }

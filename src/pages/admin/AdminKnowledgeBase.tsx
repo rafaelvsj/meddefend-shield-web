@@ -24,6 +24,22 @@ interface KnowledgeBaseFile {
   content: string | null;
   created_at: string;
   processed_at: string | null;
+  // New fields for universal pipeline
+  mime_type?: string;
+  extraction_method?: string;
+  similarity_score?: number;
+  ocr_used?: boolean;
+  markdown_content?: string;
+  processing_logs?: any;
+}
+
+interface PipelineSettings {
+  USE_UNIVERSAL_PIPELINE: boolean;
+  SIMILARITY_THRESHOLD: number;
+  EXTRACTOR_SERVICE_URL: string;
+  ENABLE_OCR_FALLBACK: boolean;
+  MAX_CHUNK_SIZE: number;
+  CHUNK_OVERLAP: number;
 }
 
 const AdminKnowledgeBase = () => {
@@ -38,10 +54,14 @@ const AdminKnowledgeBase = () => {
   const [validating, setValidating] = useState(false);
   const [qualityReport, setQualityReport] = useState<any>(null);
   const [selectedFileForQuality, setSelectedFileForQuality] = useState<string | null>(null);
+  const [pipelineSettings, setPipelineSettings] = useState<PipelineSettings | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [loadingSettings, setLoadingSettings] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     loadFiles();
+    loadPipelineSettings();
   }, []);
 
   const loadFiles = async () => {
@@ -62,6 +82,68 @@ const AdminKnowledgeBase = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPipelineSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pipeline_settings')
+        .select('setting_key, setting_value');
+
+      if (error) throw error;
+
+      if (data) {
+        const settings = data.reduce((acc: any, setting: any) => {
+          acc[setting.setting_key] = setting.setting_key === 'USE_UNIVERSAL_PIPELINE' 
+            ? setting.setting_value === 'true'
+            : setting.setting_key.includes('THRESHOLD') || setting.setting_key.includes('SIZE') || setting.setting_key.includes('OVERLAP')
+            ? parseFloat(setting.setting_value)
+            : setting.setting_key === 'ENABLE_OCR_FALLBACK'
+            ? setting.setting_value === 'true'
+            : setting.setting_value;
+          return acc;
+        }, {});
+
+        setPipelineSettings(settings);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error);
+    }
+  };
+
+  const updatePipelineSettings = async (newSettings: Partial<PipelineSettings>) => {
+    setLoadingSettings(true);
+    try {
+      const updates = Object.entries(newSettings).map(([key, value]) => ({
+        setting_key: key,
+        setting_value: String(value)
+      }));
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('pipeline_settings')
+          .update({ setting_value: update.setting_value })
+          .eq('setting_key', update.setting_key);
+
+        if (error) throw error;
+      }
+
+      await loadPipelineSettings();
+      
+      toast({
+        title: "Configurações atualizadas",
+        description: "Pipeline reconfigurada com sucesso",
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar configurações:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao atualizar configurações",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingSettings(false);
     }
   };
 
@@ -266,9 +348,9 @@ const AdminKnowledgeBase = () => {
 
           console.log(`[AdminKnowledgeBase] Registro criado:`, insertData);
 
-          // Escolher função de processamento baseada na configuração
-          const useOptimized = true; // Sempre usar versão otimizada
-          const functionName = useOptimized ? 'process-document-optimized' : 'process-document';
+          // Escolher função de processamento baseada na configuração da pipeline
+          const useUniversalPipeline = pipelineSettings?.USE_UNIVERSAL_PIPELINE || false;
+          const functionName = useUniversalPipeline ? 'document-processor-v2' : 'process-document-optimized';
           
           // Chamar processamento automático
           console.log(`[AdminKnowledgeBase] Chamando função ${functionName}...`);
@@ -548,6 +630,14 @@ const AdminKnowledgeBase = () => {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Configurações Pipeline
+          </Button>
+
+          <Button 
+            variant="outline" 
             onClick={testConfiguration}
             disabled={testing}
           >
@@ -602,11 +692,11 @@ const AdminKnowledgeBase = () => {
                     id="file"
                     type="file"
                     multiple
-                    accept=".pdf,.doc,.docx,.txt,.md"
+                    accept=".pdf,.doc,.docx,.txt,.md,.html,.rtf,.epub,.png,.jpg,.jpeg,.tiff,.bmp"
                     onChange={(e) => setSelectedFiles(Array.from(e.target.files || []))}
                   />
                   <p className="text-sm text-muted-foreground">
-                    Formatos suportados: PDF, DOC, DOCX, TXT, MD. Você pode selecionar múltiplos arquivos.
+                    Formatos suportados: PDF, DOCX, PPTX, TXT, HTML, RTF, EPUB, PNG, JPG, TIFF, BMP. Você pode selecionar múltiplos arquivos.
                   </p>
                   {selectedFiles.length > 0 && (
                     <div className="space-y-1">
@@ -647,6 +737,106 @@ const AdminKnowledgeBase = () => {
           </Dialog>
         </div>
       </div>
+
+      {/* Pipeline Settings Panel */}
+      {showSettings && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              ⚙️ Configurações da Pipeline Universal
+            </CardTitle>
+            <CardDescription>
+              Configure o comportamento da pipeline de processamento de documentos
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {pipelineSettings ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Pipeline Universal</Label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={pipelineSettings.USE_UNIVERSAL_PIPELINE}
+                      onChange={(e) => updatePipelineSettings({ USE_UNIVERSAL_PIPELINE: e.target.checked })}
+                      disabled={loadingSettings}
+                    />
+                    <span className="text-sm">
+                      {pipelineSettings.USE_UNIVERSAL_PIPELINE ? 'Ativada (Nova Pipeline)' : 'Desativada (Pipeline Legada)'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Limite de Similaridade</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="1"
+                    value={pipelineSettings.SIMILARITY_THRESHOLD}
+                    onChange={(e) => updatePipelineSettings({ SIMILARITY_THRESHOLD: parseFloat(e.target.value) })}
+                    disabled={loadingSettings}
+                  />
+                  <p className="text-xs text-muted-foreground">Similaridade mínima entre texto original e markdown (0.0-1.0)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>URL do Serviço de Extração</Label>
+                  <Input
+                    type="url"
+                    value={pipelineSettings.EXTRACTOR_SERVICE_URL}
+                    onChange={(e) => updatePipelineSettings({ EXTRACTOR_SERVICE_URL: e.target.value })}
+                    disabled={loadingSettings}
+                    placeholder="http://localhost:8000"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Fallback OCR</Label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={pipelineSettings.ENABLE_OCR_FALLBACK}
+                      onChange={(e) => updatePipelineSettings({ ENABLE_OCR_FALLBACK: e.target.checked })}
+                      disabled={loadingSettings}
+                    />
+                    <span className="text-sm">Habilitar OCR como fallback</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Tamanho do Chunk</Label>
+                  <Input
+                    type="number"
+                    min="100"
+                    max="5000"
+                    value={pipelineSettings.MAX_CHUNK_SIZE}
+                    onChange={(e) => updatePipelineSettings({ MAX_CHUNK_SIZE: parseInt(e.target.value) })}
+                    disabled={loadingSettings}
+                  />
+                  <p className="text-xs text-muted-foreground">Tamanho máximo dos chunks de texto</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Sobreposição</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="500"
+                    value={pipelineSettings.CHUNK_OVERLAP}
+                    onChange={(e) => updatePipelineSettings({ CHUNK_OVERLAP: parseInt(e.target.value) })}
+                    disabled={loadingSettings}
+                  />
+                  <p className="text-xs text-muted-foreground">Sobreposição entre chunks (caracteres)</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">Carregando configurações...</div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -719,9 +909,11 @@ const AdminKnowledgeBase = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome do Arquivo</TableHead>
-                  <TableHead>Tipo</TableHead>
+                  <TableHead>Tipo/MIME</TableHead>
                   <TableHead>Tamanho</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Similaridade</TableHead>
+                  <TableHead>Método</TableHead>
                   <TableHead>Criado em</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
@@ -730,9 +922,37 @@ const AdminKnowledgeBase = () => {
                 {files.map((file) => (
                   <TableRow key={file.id}>
                     <TableCell className="font-medium">{file.original_name}</TableCell>
-                    <TableCell>{file.file_type}</TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="text-sm">{file.file_type}</div>
+                        {file.mime_type && file.mime_type !== file.file_type && (
+                          <div className="text-xs text-muted-foreground">{file.mime_type}</div>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{formatFileSize(file.file_size)}</TableCell>
                     <TableCell>{getStatusBadge(file.status)}</TableCell>
+                    <TableCell>
+                      {file.similarity_score ? (
+                        <div className="flex items-center gap-1">
+                          <span className={`text-sm ${file.similarity_score >= 0.99 ? 'text-green-600' : file.similarity_score >= 0.5 ? 'text-yellow-600' : 'text-red-600'}`}>
+                            {(file.similarity_score * 100).toFixed(1)}%
+                          </span>
+                          {file.ocr_used && <Badge variant="outline" className="text-xs">OCR</Badge>}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">N/A</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {file.extraction_method ? (
+                        <Badge variant="outline" className="text-xs">
+                          {file.extraction_method}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">N/A</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {formatDistanceToNow(new Date(file.created_at), { 
                         addSuffix: true, 
@@ -755,10 +975,38 @@ const AdminKnowledgeBase = () => {
                             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                               <DialogHeader>
                                 <DialogTitle>{file.original_name}</DialogTitle>
-                                <DialogDescription>Conteúdo do arquivo</DialogDescription>
+                                <DialogDescription>Conteúdo extraído do arquivo</DialogDescription>
                               </DialogHeader>
-                              <div className="whitespace-pre-wrap text-sm">
-                                {viewContent}
+                              <div className="space-y-4">
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant={viewContent === file.content ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setViewContent(file.content)}
+                                  >
+                                    Texto Original
+                                  </Button>
+                                  {file.markdown_content && (
+                                    <Button
+                                      variant={viewContent === file.markdown_content ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => setViewContent(file.markdown_content)}
+                                    >
+                                      Markdown
+                                    </Button>
+                                  )}
+                                </div>
+                                <div className="whitespace-pre-wrap text-sm border rounded p-4 max-h-96 overflow-y-auto">
+                                  {viewContent}
+                                </div>
+                                {file.processing_logs && (
+                                  <details className="mt-4">
+                                    <summary className="cursor-pointer text-sm font-medium">Logs de Processamento</summary>
+                                    <pre className="text-xs mt-2 p-2 bg-muted rounded overflow-x-auto">
+                                      {JSON.stringify(file.processing_logs, null, 2)}
+                                    </pre>
+                                  </details>
+                                )}
                               </div>
                             </DialogContent>
                           </Dialog>

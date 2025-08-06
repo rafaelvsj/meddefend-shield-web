@@ -642,6 +642,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          user_id_ref: string | null
         }
         Insert: {
           analysis_result?: Json | null
@@ -655,6 +656,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          user_id_ref?: string | null
         }
         Update: {
           analysis_result?: Json | null
@@ -668,6 +670,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          user_id_ref?: string | null
         }
         Relationships: []
       }

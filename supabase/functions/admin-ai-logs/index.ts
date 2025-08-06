@@ -98,9 +98,7 @@ serve(async (req) => {
         created_at,
         status,
         title,
-        profiles (
-          full_name
-        )
+        user_id
       `)
       .order("created_at", { ascending: false })
       .limit(50);
@@ -156,7 +154,7 @@ serve(async (req) => {
     const formattedLogs = analyses?.map(analysis => ({
       id: analysis.id,
       timestamp: new Date(analysis.created_at).toLocaleString("pt-BR"),
-      user: analysis.profiles?.full_name || "Unknown User",
+      user: analysis.user_id || "Unknown User",
       action: "AI Analysis",
       model: analysis.title || "Unknown Model",
       status: analysis.status === "completed" ? "Success" : "Error",

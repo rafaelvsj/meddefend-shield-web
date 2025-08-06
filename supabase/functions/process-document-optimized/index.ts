@@ -109,7 +109,7 @@ class EnhancedPDFExtractor {
     // 3. Score de qualidade aprimorado
     const quality = this.calculateAdvancedQuality(text, words, pdfArtifactCount);
     
-    if (quality < 0.7) {
+    if (quality < 0.3) {
       warnings.push(`Quality below threshold: ${quality.toFixed(2)}`);
       return {
         isValid: false,
@@ -651,9 +651,9 @@ serve(async (req) => {
       warnings: extractionResult.warnings
     });
     
-    // Validação crítica: rejeitar se qualidade muito baixa
-    if (extractionResult.quality < 0.5) {
-      const errorMsg = `Text quality too low: ${extractionResult.quality}. Warnings: ${extractionResult.warnings.join(', ')}`;
+    // Validação ajustada: aceitar qualidade mais baixa para PDFs complexos
+    if (extractionResult.quality < 0.1) {
+      const errorMsg = `Text quality extremely low: ${extractionResult.quality}. Warnings: ${extractionResult.warnings.join(', ')}`;
       
       await supabase
         .from('knowledge_base')
@@ -670,6 +670,8 @@ serve(async (req) => {
         .eq('id', fileId);
       
       throw new Error(errorMsg);
+    } else if (extractionResult.quality < 0.5) {
+      console.warn(`[process-document-optimized] ⚠️ Low quality but proceeding: ${extractionResult.quality}`);
     }
     
     const originalText = extractionResult.text;

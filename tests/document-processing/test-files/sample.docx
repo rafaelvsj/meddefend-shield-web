@@ -1,0 +1,35 @@
+PK      ! ﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:r>
+        <w:t>Documento de Teste DOCX</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:r>
+        <w:t>Este é um documento de teste para validar a extração de texto de arquivos DOCX. O sistema deve ser capaz de extrair este texto corretamente e converter para Markdown mantendo a fidelidade do conteúdo original.</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:r>
+        <w:t>Características importantes:</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:r>
+        <w:t>• Formatação básica</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:r>
+        <w:t>• Parágrafos múltiplos</w:t>
+      </w:r>
+    </w:p>
+    <w:p>
+      <w:r>
+        <w:t>• Lista de itens</w:t>
+      </w:r>
+    </w:p>
+  </w:body>
+</w:document>

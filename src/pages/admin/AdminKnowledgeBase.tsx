@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Upload, FileText, Trash2, Download, Eye, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, FileText, Trash2, Eye, Clock, CheckCircle, AlertCircle, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
@@ -30,6 +30,7 @@ const AdminKnowledgeBase = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [viewContent, setViewContent] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -57,101 +58,191 @@ const AdminKnowledgeBase = () => {
     }
   };
 
+  const testConfiguration = async () => {
+    setTesting(true);
+    try {
+      console.log('[AdminKnowledgeBase] Testando configuração do sistema...');
+      
+      const { data, error } = await supabase.functions.invoke('test-knowledge-config');
+      
+      if (error) {
+        console.error('[AdminKnowledgeBase] Erro no teste de configuração:', error);
+        toast({
+          title: "Erro de configuração",
+          description: `Falha no teste: ${error.message}`,
+          variant: "destructive",
+        });
+      } else {
+        console.log('[AdminKnowledgeBase] Teste de configuração bem-sucedido:', data);
+        toast({
+          title: "Configuração OK",
+          description: "Todas as configurações estão funcionando corretamente",
+        });
+      }
+    } catch (error) {
+      console.error('[AdminKnowledgeBase] Erro crítico no teste:', error);
+      toast({
+        title: "Erro crítico",
+        description: "Falha ao testar configuração do sistema",
+        variant: "destructive",
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
+
   const handleFileUpload = async () => {
     if (selectedFiles.length === 0) return;
 
+    console.log(`[AdminKnowledgeBase] Iniciando upload de ${selectedFiles.length} arquivo(s)`);
     setUploading(true);
     
     try {
-      const uploadPromises = selectedFiles.map(async (file) => {
+      // Verificar autenticação do usuário
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      console.log(`[AdminKnowledgeBase] Usuário autenticado: ${user.id}`);
+      
+      const uploadPromises = selectedFiles.map(async (file, index) => {
         try {
-          console.log(`Iniciando upload do arquivo: ${file.name}`);
+          console.log(`[AdminKnowledgeBase] [${index + 1}/${selectedFiles.length}] Processando: ${file.name}`);
+          console.log(`- Tipo: ${file.type || 'desconhecido'}`);
+          console.log(`- Tamanho: ${file.size} bytes`);
+          
+          // Gerar nome único para o arquivo
+          const fileExt = file.name.split('.').pop() || 'bin';
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}-${index}.${fileExt}`;
+          console.log(`[AdminKnowledgeBase] Nome no storage: ${fileName}`);
           
           // Upload para storage
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-          
-          const { error: uploadError } = await supabase.storage
+          console.log(`[AdminKnowledgeBase] Fazendo upload para storage...`);
+          const { data: uploadData, error: uploadError } = await supabase.storage
             .from('knowledge-base')
-            .upload(fileName, file);
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
 
           if (uploadError) {
-            console.error(`Erro no upload para storage do arquivo ${file.name}:`, uploadError);
-            throw uploadError;
+            console.error(`[AdminKnowledgeBase] Erro no upload para storage:`, uploadError);
+            throw new Error(`Storage: ${uploadError.message}`);
           }
 
-          console.log(`Arquivo ${file.name} enviado para storage com sucesso`);
+          console.log(`[AdminKnowledgeBase] Upload para storage bem-sucedido:`, uploadData);
 
-          // Criar registro na tabela
+          // Criar registro na tabela knowledge_base
+          console.log(`[AdminKnowledgeBase] Criando registro na tabela...`);
+          const knowledgeBaseRecord = {
+            file_name: fileName,
+            original_name: file.name,
+            file_type: file.type || 'application/octet-stream',
+            file_size: file.size,
+            status: 'pending',
+            created_by: user.id
+          };
+
           const { data: insertData, error: insertError } = await supabase
             .from('knowledge_base')
-            .insert({
-              file_name: fileName,
-              original_name: file.name,
-              file_type: file.type,
-              file_size: file.size,
-              status: 'pending'
-            })
+            .insert(knowledgeBaseRecord)
             .select()
             .single();
 
           if (insertError) {
-            console.error(`Erro ao inserir registro do arquivo ${file.name}:`, insertError);
-            throw insertError;
+            console.error(`[AdminKnowledgeBase] Erro ao inserir no banco:`, insertError);
+            
+            // Tentar limpar arquivo do storage
+            try {
+              await supabase.storage.from('knowledge-base').remove([fileName]);
+              console.log(`[AdminKnowledgeBase] Arquivo removido do storage devido ao erro no banco`);
+            } catch (cleanupError) {
+              console.error(`[AdminKnowledgeBase] Erro ao limpar storage:`, cleanupError);
+            }
+            
+            throw new Error(`Database: ${insertError.message}`);
           }
 
-          console.log(`Registro criado para arquivo ${file.name}:`, insertData);
+          console.log(`[AdminKnowledgeBase] Registro criado:`, insertData);
 
           // Chamar processamento automático
-          const { error: processError } = await supabase.functions.invoke('process-document', {
-            body: { fileId: insertData.id }
-          });
+          console.log(`[AdminKnowledgeBase] Chamando função process-document...`);
+          const { data: processData, error: processError } = await supabase.functions
+            .invoke('process-document', {
+              body: { fileId: insertData.id }
+            });
 
           if (processError) {
-            console.error(`Erro no processamento do arquivo ${file.name}:`, processError);
-            // Não fazer throw aqui - o arquivo foi salvo, apenas o processamento falhou
+            console.error(`[AdminKnowledgeBase] Erro no processamento:`, processError);
+            
+            // Atualizar status para erro
+            await supabase
+              .from('knowledge_base')
+              .update({ status: 'error' })
+              .eq('id', insertData.id);
+              
+            return { 
+              success: false, 
+              fileName: file.name, 
+              error: `Processing: ${processError.message}` 
+            };
           } else {
-            console.log(`Processamento iniciado para arquivo ${file.name}`);
+            console.log(`[AdminKnowledgeBase] Processamento iniciado:`, processData);
+            return { success: true, fileName: file.name };
           }
 
-          return { success: true, fileName: file.name };
         } catch (error) {
-          console.error(`Erro geral no upload do arquivo ${file.name}:`, error);
-          return { success: false, fileName: file.name, error };
+          console.error(`[AdminKnowledgeBase] Erro geral no arquivo ${file.name}:`, error);
+          return { 
+            success: false, 
+            fileName: file.name, 
+            error: error instanceof Error ? error.message : 'Erro desconhecido'
+          };
         }
       });
 
+      console.log(`[AdminKnowledgeBase] Executando ${uploadPromises.length} uploads em paralelo...`);
       const results = await Promise.all(uploadPromises);
+      
       const successful = results.filter(r => r.success);
       const failed = results.filter(r => !r.success);
 
+      console.log(`[AdminKnowledgeBase] Resultados - Sucessos: ${successful.length}, Falhas: ${failed.length}`);
+      
+      if (failed.length > 0) {
+        console.error('[AdminKnowledgeBase] Detalhes das falhas:', failed);
+      }
+
       if (successful.length > 0) {
         toast({
-          title: "Sucesso",
-          description: `${successful.length} arquivo(s) enviado(s) com sucesso`,
+          title: "Upload concluído",
+          description: `${successful.length} arquivo(s) enviado(s) para processamento${failed.length > 0 ? `. ${failed.length} falharam.` : '.'}`,
         });
       }
 
       if (failed.length > 0) {
-        console.error('Arquivos com falha:', failed);
         toast({
-          title: "Erro parcial",
-          description: `${failed.length} arquivo(s) falharam no upload`,
+          title: failed.length === results.length ? "Falha completa" : "Falha parcial",
+          description: `${failed.length} arquivo(s) falharam no upload. Verifique o console para detalhes.`,
           variant: "destructive",
         });
       }
 
       setSelectedFiles([]);
-      loadFiles();
+      console.log(`[AdminKnowledgeBase] Recarregando lista de arquivos...`);
+      await loadFiles();
+      
     } catch (error) {
-      console.error('Erro geral no processo de upload:', error);
+      console.error('[AdminKnowledgeBase] Erro crítico no upload:', error);
       toast({
-        title: "Erro",
-        description: "Falha ao enviar arquivos",
+        title: "Erro crítico",
+        description: error instanceof Error ? error.message : "Falha crítica durante o upload",
         variant: "destructive",
       });
     } finally {
       setUploading(false);
+      console.log('[AdminKnowledgeBase] Processo de upload finalizado');
     }
   };
 
@@ -219,63 +310,74 @@ const AdminKnowledgeBase = () => {
           </p>
         </div>
         
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Upload className="w-4 h-4 mr-2" />
-              Enviar Arquivos
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Enviar Arquivos</DialogTitle>
-              <DialogDescription>
-                Adicione novos documentos à base de conhecimento. Você pode selecionar múltiplos arquivos.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="file">Selecionar Arquivos</Label>
-                <Input
-                  id="file"
-                  type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.txt,.md"
-                  onChange={(e) => setSelectedFiles(Array.from(e.target.files || []))}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Formatos suportados: PDF, DOC, DOCX, TXT, MD. Você pode selecionar múltiplos arquivos.
-                </p>
-                {selectedFiles.length > 0 && (
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Arquivos selecionados:</p>
-                    {selectedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between text-sm text-muted-foreground bg-muted p-2 rounded">
-                        <span>{file.name} ({formatFileSize(file.size)})</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedFiles(files => files.filter((_, i) => i !== index))}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={testConfiguration}
+            disabled={testing}
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            {testing ? 'Testando...' : 'Testar Config'}
+          </Button>
+          
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <Upload className="w-4 h-4 mr-2" />
+                Enviar Arquivos
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Enviar Arquivos</DialogTitle>
+                <DialogDescription>
+                  Adicione novos documentos à base de conhecimento. Você pode selecionar múltiplos arquivos.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="file">Selecionar Arquivos</Label>
+                  <Input
+                    id="file"
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.txt,.md"
+                    onChange={(e) => setSelectedFiles(Array.from(e.target.files || []))}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Formatos suportados: PDF, DOC, DOCX, TXT, MD. Você pode selecionar múltiplos arquivos.
+                  </p>
+                  {selectedFiles.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Arquivos selecionados:</p>
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between text-sm text-muted-foreground bg-muted p-2 rounded">
+                          <span>{file.name} ({formatFileSize(file.size)})</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedFiles(files => files.filter((_, i) => i !== index))}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-end gap-2">
+                  <Button
+                    onClick={handleFileUpload}
+                    disabled={selectedFiles.length === 0 || uploading}
+                  >
+                    {uploading ? `Enviando ${selectedFiles.length} arquivo(s)...` : `Enviar ${selectedFiles.length} arquivo(s)`}
+                  </Button>
+                </div>
               </div>
-              
-              <div className="flex justify-end gap-2">
-                <Button
-                  onClick={handleFileUpload}
-                  disabled={selectedFiles.length === 0 || uploading}
-                >
-                  {uploading ? `Enviando ${selectedFiles.length} arquivo(s)...` : `Enviar ${selectedFiles.length} arquivo(s)`}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">

@@ -297,36 +297,49 @@ const AdminKnowledgeBase = () => {
       });
 
       console.log(`[AdminKnowledgeBase] Executando ${uploadPromises.length} uploads em paralelo...`);
-      const results = await Promise.all(uploadPromises);
       
-      const successful = results.filter(r => r.success);
-      const failed = results.filter(r => !r.success);
-
-      console.log(`[AdminKnowledgeBase] Resultados - Sucessos: ${successful.length}, Falhas: ${failed.length}`);
+      // Fechar modal imediatamente após upload concluído
+      setSelectedFiles([]);
+      setIsDialogOpen(false);
       
-      if (failed.length > 0) {
-        console.error('[AdminKnowledgeBase] Detalhes das falhas:', failed);
-      }
+      // Continuar processamento em background
+      try {
+        const results = await Promise.all(uploadPromises);
+        
+        const successful = results.filter(r => r.success);
+        const failed = results.filter(r => !r.success);
 
-      if (successful.length > 0) {
-        toast({
-          title: "Upload concluído",
-          description: `${successful.length} arquivo(s) enviado(s) para processamento${failed.length > 0 ? `. ${failed.length} falharam.` : '.'}`,
-        });
-      }
+        console.log(`[AdminKnowledgeBase] Resultados - Sucessos: ${successful.length}, Falhas: ${failed.length}`);
+        
+        if (failed.length > 0) {
+          console.error('[AdminKnowledgeBase] Detalhes das falhas:', failed);
+        }
 
-      if (failed.length > 0) {
+        if (successful.length > 0) {
+          toast({
+            title: "Upload concluído",
+            description: `${successful.length} arquivo(s) enviado(s) para processamento${failed.length > 0 ? `. ${failed.length} falharam.` : '.'}`,
+          });
+        }
+
+        if (failed.length > 0) {
+          toast({
+            title: failed.length === results.length ? "Falha completa" : "Falha parcial",
+            description: `${failed.length} arquivo(s) falharam no upload. Verifique o console para detalhes.`,
+            variant: "destructive",
+          });
+        }
+
+        console.log(`[AdminKnowledgeBase] Recarregando lista de arquivos...`);
+        await loadFiles();
+      } catch (bgError) {
+        console.error('[AdminKnowledgeBase] Erro no processamento em background:', bgError);
         toast({
-          title: failed.length === results.length ? "Falha completa" : "Falha parcial",
-          description: `${failed.length} arquivo(s) falharam no upload. Verifique o console para detalhes.`,
+          title: "Erro no processamento",
+          description: "Alguns arquivos podem não ter sido processados corretamente",
           variant: "destructive",
         });
       }
-
-      setSelectedFiles([]);
-      setIsDialogOpen(false);
-      console.log(`[AdminKnowledgeBase] Recarregando lista de arquivos...`);
-      await loadFiles();
       
     } catch (error) {
       console.error('[AdminKnowledgeBase] Erro crítico no upload:', error);

@@ -29,10 +29,19 @@ const PipelineTestPanel = () => {
     const startTime = Date.now();
 
     try {
-      // Usar documento específico que falhou
-      const testFileId = 'f055de65-c4ba-472e-964f-6ff784b332c3';
-      
-      console.log(`[PipelineTest] Testando com documento específico: ${testFileId}`);
+      // Buscar primeiro documento disponível
+      const { data: allDocs, error: listError } = await supabase
+        .from('knowledge_base')
+        .select('id, file_name, status, original_name')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (listError || !allDocs || allDocs.length === 0) {
+        throw new Error('Nenhum documento encontrado na base de conhecimento');
+      }
+
+      const testFileId = allDocs[0].id;
+      console.log(`[PipelineTest] Testando com documento: ${testFileId} (${allDocs[0].original_name})`);
 
       // Verificar se documento existe
       const { data: kbDoc, error: fetchError } = await supabase
@@ -100,10 +109,19 @@ const PipelineTestPanel = () => {
     const startTime = Date.now();
 
     try {
-      // Usar documento específico que falhou
-      const testFileId = 'f055de65-c4ba-472e-964f-6ff784b332c3';
-      
-      console.log(`[PipelineTest] Testando V2 com documento específico: ${testFileId}`);
+      // Buscar primeiro documento disponível
+      const { data: allDocs, error: listError } = await supabase
+        .from('knowledge_base')
+        .select('id, file_name, status, original_name')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (listError || !allDocs || allDocs.length === 0) {
+        throw new Error('Nenhum documento encontrado na base de conhecimento');
+      }
+
+      const testFileId = allDocs[0].id;
+      console.log(`[PipelineTest] Testando V2 com documento: ${testFileId} (${allDocs[0].original_name})`);
 
       // Verificar se documento existe
       const { data: kbDoc, error: fetchError } = await supabase

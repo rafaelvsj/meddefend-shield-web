@@ -602,7 +602,7 @@ serve(async (req) => {
       .from('knowledge_base')
       .select('*')
       .eq('id', fileId)
-      .single();
+      .maybeSingle();
 
     if (kbError || !kbFile) {
       throw new Error(`❌ File not found: ${kbError?.message}`);

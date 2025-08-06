@@ -316,7 +316,7 @@ serve(async (req) => {
       .from('knowledge_base')
       .select('*')
       .eq('id', fileId)
-      .single();
+      .maybeSingle();
 
     if (fileError || !fileData) {
       throw new Error(`File not found: ${fileError?.message}`);

@@ -605,11 +605,7 @@ class TextChunker {
   }
 }
 
-// CORS headers para permitir requisições do frontend
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Headers CORS já definidos anteriormente
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {

@@ -605,12 +605,20 @@ class TextChunker {
   }
 }
 
+// CORS headers para permitir requisições do frontend
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   console.log('[process-document-optimized] 🚀 PIPELINE REESTRUTURADO INICIADO');
+  console.log('[process-document-optimized] Method:', req.method);
+  console.log('[process-document-optimized] Headers:', Object.fromEntries(req.headers.entries()));
   const startTime = Date.now();
 
   try {
@@ -618,12 +626,22 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 
+    console.log('[process-document-optimized] 🔑 Environment check:');
+    console.log('- SUPABASE_URL:', supabaseUrl ? '✅ OK' : '❌ MISSING');
+    console.log('- SUPABASE_KEY:', supabaseServiceKey ? '✅ OK' : '❌ MISSING');
+    console.log('- GEMINI_API_KEY:', geminiApiKey ? '✅ OK' : '❌ MISSING');
+
     if (!supabaseUrl || !supabaseServiceKey || !geminiApiKey) {
       throw new Error('❌ Missing required environment variables');
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { fileId } = await req.json();
+    
+    const body = await req.json();
+    console.log('[process-document-optimized] 📨 Body received:', JSON.stringify(body, null, 2));
+    
+    // Aceitar tanto fileId quanto knowledgeBaseId
+    const fileId = body.fileId || body.knowledgeBaseId;
 
     if (!fileId) {
       throw new Error('❌ fileId é obrigatório');
@@ -779,23 +797,39 @@ serve(async (req) => {
       throw new Error(`Erro ao inserir chunks: ${insertError.message}`);
     }
 
-    // Atualizar arquivo com conteúdo otimizado
-    await supabase
+    // Atualizar arquivo com conteúdo otimizado E CAMPOS NECESSÁRIOS
+    console.log(`[process-document-optimized] 💾 Atualizando registro final...`);
+    const updateResult = await supabase
       .from('knowledge_base')
       .update({
         status: 'processed',
-        content: optimizedContent.optimized_markdown,
+        content: originalText, // Texto original
+        markdown_content: optimizedContent.optimized_markdown, // NOVO CAMPO
+        quality_score: extractionResult.quality, // NOVO CAMPO
+        extraction_method: extractionResult.method, // NOVO CAMPO
         processed_at: new Date().toISOString(),
-        metadata: {
+        processing_logs: {
+          stage: 'completed',
           original_size: originalText.length,
           optimized_size: optimizedContent.optimized_markdown.length,
           completeness_score: optimizedContent.completeness_score,
           chunks_generated: documentChunks.length,
           optimization_notes: optimizedContent.optimization_notes,
-          structure_summary: optimizedContent.structure_summary
+          structure_summary: optimizedContent.structure_summary,
+          extraction_method: extractionResult.method,
+          quality_score: extractionResult.quality,
+          warnings: extractionResult.warnings,
+          processing_time_ms: Date.now() - startTime,
+          timestamp: new Date().toISOString()
         }
       })
       .eq('id', fileId);
+    
+    if (updateResult.error) {
+      console.error('[process-document-optimized] ❌ Erro ao atualizar registro:', updateResult.error);
+    } else {
+      console.log('[process-document-optimized] ✅ Registro atualizado com sucesso');
+    }
 
     console.log(`[process-document-optimized] Processamento concluído: ${documentChunks.length} chunks salvos`);
 
@@ -809,11 +843,42 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('[process-document-optimized] Erro:', error);
+    console.error('[process-document-optimized] ❌ ERRO CRÍTICO:', error);
+    console.error('[process-document-optimized] Stack trace:', error.stack);
+    
+    // Tentar atualizar status do documento para erro
+    try {
+      const body = await req.clone().json();
+      const fileId = body.fileId || body.knowledgeBaseId;
+      
+      if (fileId) {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        
+        if (supabaseUrl && supabaseServiceKey) {
+          const supabase = createClient(supabaseUrl, supabaseServiceKey);
+          await supabase
+            .from('knowledge_base')
+            .update({
+              status: 'error',
+              processing_logs: {
+                error: error.message,
+                stack: error.stack,
+                timestamp: new Date().toISOString(),
+                stage: 'failed'
+              }
+            })
+            .eq('id', fileId);
+        }
+      }
+    } catch (updateError) {
+      console.error('[process-document-optimized] Erro ao atualizar status:', updateError);
+    }
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: error.message,
+      timestamp: new Date().toISOString()
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

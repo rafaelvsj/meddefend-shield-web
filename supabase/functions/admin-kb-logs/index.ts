@@ -52,8 +52,7 @@ class AdminKbLogsService {
         file_size,
         created_at,
         processed_at,
-        created_by,
-        profiles:created_by(full_name, email)
+        created_by
       `)
       .order('created_at', { ascending: false })
       .limit(limit);

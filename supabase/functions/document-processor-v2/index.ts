@@ -30,6 +30,14 @@ serve(async (req) => {
 
     console.log(`[document-processor-v2] Processing file: ${fileId}`);
 
+    // Log STARTED stage
+    await supabase.from('kb_processing_logs').insert({
+      file_id: fileId,
+      stage: 'STARTED',
+      message: 'Universal pipeline processing initiated',
+      metadata: { pipeline: 'universal-v2', timestamp: new Date().toISOString() }
+    });
+
     // Get pipeline settings
     const { data: settingsData } = await supabase
       .from('pipeline_settings')
@@ -70,6 +78,14 @@ serve(async (req) => {
       })
       .eq('id', fileId);
 
+    // Log EXTRACTED stage
+    await supabase.from('kb_processing_logs').insert({
+      file_id: fileId,
+      stage: 'DOWNLOADING',
+      message: 'Downloading file from storage',
+      metadata: { file_name: fileInfo.file_name, original_name: fileInfo.original_name }
+    });
+
     // Download file from storage
     const { data: fileData } = await supabase.storage
       .from('knowledge-base')
@@ -102,12 +118,43 @@ serve(async (req) => {
     const extractionResult = await response.json();
 
     if (!extractionResult.success) {
+      await supabase.from('kb_processing_logs').insert({
+        file_id: fileId,
+        stage: 'EXTRACTED',
+        message: 'Extraction service failed',
+        metadata: { error: 'extraction_service_failure', service_response: extractionResult }
+      });
       throw new Error('Extraction service returned failure');
     }
+
+    // Log EXTRACTED stage
+    await supabase.from('kb_processing_logs').insert({
+      file_id: fileId,
+      stage: 'EXTRACTED',
+      message: 'Text extraction completed',
+      metadata: { 
+        extraction_method: extractionResult.extraction_method,
+        mime_type: extractionResult.mime_type,
+        ocr_used: extractionResult.ocr_used,
+        text_length: extractionResult.original_text?.length || 0,
+        markdown_length: extractionResult.markdown?.length || 0
+      }
+    });
 
     // Validate similarity
     const similarityThreshold = parseFloat(settings.SIMILARITY_THRESHOLD) || 0.99;
     if (extractionResult.similarity < similarityThreshold) {
+      await supabase.from('kb_processing_logs').insert({
+        file_id: fileId,
+        stage: 'VALIDATED',
+        message: 'Document rejected - similarity below threshold',
+        metadata: { 
+          similarity_score: extractionResult.similarity,
+          threshold: similarityThreshold,
+          rejection_reason: 'low_similarity'
+        }
+      });
+
       await supabase
         .from('knowledge_base')
         .update({
@@ -126,6 +173,17 @@ serve(async (req) => {
       });
     }
 
+    // Log VALIDATED stage
+    await supabase.from('kb_processing_logs').insert({
+      file_id: fileId,
+      stage: 'VALIDATED',
+      message: 'Document approved - similarity above threshold',
+      metadata: { 
+        similarity_score: extractionResult.similarity,
+        threshold: similarityThreshold
+      }
+    });
+
     // Generate embeddings and chunks
     const chunkSize = parseInt(settings.MAX_CHUNK_SIZE) || 1000;
     const overlap = parseInt(settings.CHUNK_OVERLAP) || 200;
@@ -140,6 +198,19 @@ serve(async (req) => {
       start = end - overlap;
       if (start >= text.length) break;
     }
+
+    // Log CHUNKED stage
+    await supabase.from('kb_processing_logs').insert({
+      file_id: fileId,
+      stage: 'CHUNKED',
+      message: 'Text divided into chunks',
+      metadata: { 
+        total_chunks: chunks.length,
+        chunk_size: chunkSize,
+        overlap: overlap,
+        total_text_length: text.length
+      }
+    });
 
     // Generate embeddings for chunks
     const chunksWithEmbeddings = await Promise.all(chunks.map(async (chunk, index) => {
@@ -168,8 +239,32 @@ serve(async (req) => {
       };
     }));
 
+    // Log EMBEDDED stage
+    await supabase.from('kb_processing_logs').insert({
+      file_id: fileId,
+      stage: 'EMBEDDED',
+      message: 'Embeddings generated for all chunks',
+      metadata: { 
+        total_embeddings: chunksWithEmbeddings.length,
+        embedding_model: 'embedding-001'
+      }
+    });
+
     // Save chunks
     await supabase.from('document_chunks').insert(chunksWithEmbeddings);
+
+    // Log COMPLETED stage
+    await supabase.from('kb_processing_logs').insert({
+      file_id: fileId,
+      stage: 'COMPLETED',
+      message: 'Document processing completed successfully',
+      metadata: { 
+        total_processing_time: Date.now() - new Date(fileInfo.created_at).getTime(),
+        final_similarity: extractionResult.similarity,
+        chunks_created: chunks.length,
+        final_status: 'processed'
+      }
+    });
 
     // Update knowledge_base record
     await supabase

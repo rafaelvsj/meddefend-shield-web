@@ -185,7 +185,7 @@ serve(async (req) => {
     });
 
     // Generate embeddings and chunks
-    const chunkSize = parseInt(settings.MAX_CHUNK_SIZE) || 1000;
+    const chunkSize = parseInt(settings.CHUNK_SIZE) || 1000;
     const overlap = parseInt(settings.CHUNK_OVERLAP) || 200;
     
     const chunks: string[] = [];

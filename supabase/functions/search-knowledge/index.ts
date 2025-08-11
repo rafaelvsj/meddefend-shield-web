@@ -14,16 +14,20 @@ interface SearchResult {
 }
 
 class KnowledgeSearcher {
-  private async generateQueryEmbedding(query: string): Promise<number[]> {
-    const apiKey = Deno.env.get('GEMINI_API_KEY');
-    
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`, {
+  private async generateQueryEmbedding(query: string, model: string): Promise<number[]> {
+    const apiKey = Deno.env.get('OPENAI_API_KEY');
+
+    const response = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
-        model: 'models/text-embedding-004',
-        content: { parts: [{ text: query }] }
-      }),
+        model,
+        input: query,
+        encoding_format: 'float'
+      })
     });
 
     if (!response.ok) {
@@ -31,7 +35,7 @@ class KnowledgeSearcher {
     }
 
     const data = await response.json();
-    return data.embedding?.values || [];
+    return data.data?.[0]?.embedding || [];
   }
 
   private calculateCosineSimilarity(a: number[], b: number[]): number {
@@ -56,8 +60,18 @@ class KnowledgeSearcher {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Load embedding model from pipeline_settings
+    const { data: settings } = await supabaseClient
+      .from('pipeline_settings')
+      .select('setting_key, setting_value');
+    const settingsMap = (settings || []).reduce((acc: any, s: any) => {
+      acc[s.setting_key] = s.setting_value; return acc;
+    }, {});
+    const embedProviderRaw = settingsMap.EMBEDDING_PROVIDER || 'openai:text-embedding-3-large';
+    const embedModel = embedProviderRaw.includes(':') ? embedProviderRaw.split(':')[1] : embedProviderRaw;
+
     // Gerar embedding da query
-    const queryEmbedding = await this.generateQueryEmbedding(query);
+    const queryEmbedding = await this.generateQueryEmbedding(query, embedModel);
     
     // Buscar chunks similares usando pgvector
     const { data: similarChunks } = await supabaseClient.rpc('search_similar_chunks', {

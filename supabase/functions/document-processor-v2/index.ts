@@ -15,9 +15,9 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const geminiKey = Deno.env.get('GEMINI_API_KEY');
+    const openaiKey = Deno.env.get('OPENAI_API_KEY');
 
-    if (!supabaseUrl || !supabaseKey || !geminiKey) {
+    if (!supabaseUrl || !supabaseKey || !openaiKey) {
       throw new Error('Missing required environment variables');
     }
 
@@ -212,22 +212,27 @@ serve(async (req) => {
       }
     });
 
-    // Generate embeddings for chunks
+    // Generate embeddings for chunks using OpenAI
     const chunksWithEmbeddings = await Promise.all(chunks.map(async (chunk, index) => {
-      const embeddingResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent', {
+      const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-goog-api-key': geminiKey,
+          'Authorization': `Bearer ${openaiKey}`,
         },
         body: JSON.stringify({
-          model: 'models/embedding-001',
-          content: { parts: [{ text: chunk }] }
+          model: 'text-embedding-3-large',
+          input: chunk,
+          encoding_format: 'float'
         })
       });
 
+      if (!embeddingResponse.ok) {
+        throw new Error(`OpenAI embedding error: ${embeddingResponse.status}`);
+      }
+
       const embeddingData = await embeddingResponse.json();
-      const embedding = embeddingData.embedding?.values || [];
+      const embedding = embeddingData.data?.[0]?.embedding || [];
 
       return {
         knowledge_base_id: fileId,
@@ -246,7 +251,8 @@ serve(async (req) => {
       message: 'Embeddings generated for all chunks',
       metadata: { 
         total_embeddings: chunksWithEmbeddings.length,
-        embedding_model: 'embedding-001'
+        embedding_model: 'text-embedding-3-large',
+        provider: 'openai'
       }
     });
 

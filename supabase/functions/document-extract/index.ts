@@ -13,6 +13,10 @@ serve(async (req) => {
   }
 
   try {
+    const url = new URL(req.url);
+    if (req.method === 'GET' && url.pathname.endsWith('/health')) {
+      return new Response(JSON.stringify({ status: 'ok' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     console.log('[EXTRACT-SERVICE] 🚀 Universal extraction started');
     
     const formData = await req.formData();

@@ -106,7 +106,7 @@ serve(async (req) => {
     const blob = new Blob([buffer]);
     formData.append('file', blob, fileInfo.original_name);
 
-    const response = await fetch(`${settings.EXTRACTOR_SERVICE_URL}/extract`, {
+    const response = await fetch(`${settings.EXTRACTOR_SERVICE_URL}`, {
       method: 'POST',
       body: formData,
     });
@@ -144,8 +144,8 @@ serve(async (req) => {
     // LLM pre-process: restructure into clean Markdown using GPT-5 (or configured model)
     const similarityThreshold = parseFloat(settings.SIMILARITY_THRESHOLD) || 0.99;
     const llmModelRaw = settings.LLM_PROVIDER || 'openai:gpt-5';
-    const llmModel = llmModelRaw.includes(':') ? llmModelRaw.split(':')[1] : llmModelRaw;
-
+    const llmModelBase = llmModelRaw.includes(':') ? llmModelRaw.split(':')[1] : llmModelRaw;
+    const llmModel = /^gpt-5/i.test(llmModelBase) ? 'gpt-4.1-2025-04-14' : llmModelBase;
     await supabase.from('kb_processing_logs').insert({
       file_id: fileId,
       stage: 'LLM_PREPROCESS',
@@ -357,7 +357,7 @@ serve(async (req) => {
       return {
         knowledge_base_id: fileId,
         content: chunk,
-        embedding: `[${embedding.join(',')}]`,
+        embedding: embedding,
         chunk_index: index,
         chunk_size: chunk.length,
         metadata: { generation_timestamp: new Date().toISOString() }

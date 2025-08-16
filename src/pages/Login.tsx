@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserRoles } from "@/hooks/useUserRoles";
+import { useSecureAuth } from "@/hooks/useSecureAuth";
+import { useSecurityMonitor } from "@/hooks/useSecurityMonitor";
 import { redirectByRole } from "@/lib/utils/roleRedirect";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,7 +22,8 @@ const Login = () => {
   const location = useLocation();
   
   const { user, signIn, signUp, signInWithGoogle } = useAuth();
-  const { isAdmin, loading: rolesLoading } = useUserRoles();
+  const { isAdmin, loading: rolesLoading } = useSecureAuth();
+  const { trackAuthFailure, trackDataAccess } = useSecurityMonitor();
 
   // Check if user is already logged in and redirect intelligently
   useEffect(() => {
@@ -39,11 +41,19 @@ const Login = () => {
     try {
       if (isLogin) {
         const { error } = await signIn(email, password);
-        // Redirecionamento será automático via useEffect após verificação do role
+        if (error) {
+          // Track authentication failure for security monitoring
+          trackAuthFailure(error.message, email);
+        } else {
+          // Track successful login
+          trackDataAccess('authentication', 'successful_login');
+        }
       } else {
         const { error } = await signUp(email, password, fullName);
-        if (!error) {
-          // User will be redirected after email confirmation
+        if (error) {
+          trackAuthFailure(error.message, email);
+        } else {
+          trackDataAccess('authentication', 'successful_signup');
         }
       }
     } finally {

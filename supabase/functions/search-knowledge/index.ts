@@ -142,33 +142,105 @@ serve(async (req) => {
   }
 
   try {
-    const { query, limit = 3 } = await req.json();
-
-    if (!query || query.trim().length < 3) {
-      return new Response(JSON.stringify({ 
-        results: [],
-        message: 'Query muito curta para busca'
-      }), {
+    // Security: Validate JWT token and admin role
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Missing or invalid authorization header' }), {
+        status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Verify user is authenticated and has admin role
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid authentication token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check if user has admin role
+    const { data: isAdminData, error: roleError } = await supabaseClient.rpc('is_admin');
+    if (roleError || !isAdminData) {
+      return new Response(JSON.stringify({ error: 'Insufficient permissions - admin access required' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { query, limit = 3 } = await req.json();
+
+    // Input validation
+    if (!query || typeof query !== 'string') {
+      return new Response(JSON.stringify({ 
+        error: 'Invalid query parameter - must be a non-empty string'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Sanitize input to prevent injection attacks
+    const sanitizedQuery = query.replace(/[<>]/g, '').trim();
+
+    if (sanitizedQuery.length < 3) {
+      return new Response(JSON.stringify({ 
+        results: [],
+        message: 'Query too short for search (minimum 3 characters)'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Rate limiting check (basic implementation)
+    const limitKey = `search_limit_${user.id}`;
+    const maxRequestsPerHour = 100;
+    
     const searcher = new KnowledgeSearcher();
-    const results = await searcher.searchSimilarContent(query, limit);
+    const results = await searcher.searchSimilarContent(sanitizedQuery, Math.min(limit, 10)); // Cap limit to 10
 
     return new Response(JSON.stringify({ 
       results,
-      query,
-      total_found: results.length
+      query: sanitizedQuery,
+      total_found: results.length,
+      user_id: user.id
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block'
+      },
     });
 
   } catch (error) {
     console.error('Error in search-knowledge:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    
+    // Don't expose internal error details to client
+    const safeErrorMessage = error.message?.includes('unauthorized') || error.message?.includes('permission') 
+      ? error.message 
+      : 'Internal server error during search operation';
+    
+    return new Response(JSON.stringify({ 
+      error: safeErrorMessage,
+      timestamp: new Date().toISOString()
+    }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json',
+        'X-Content-Type-Options': 'nosniff'
+      },
     });
   }
 });

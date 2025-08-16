@@ -31,16 +31,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Salvar role no localStorage quando houver sessão
-        if (session?.user) {
-          const userRole = session.user.user_metadata?.role || 'user';
-          window.localStorage.setItem('role', userRole);
-          
-          // Não fazer chamadas automáticas de verificação de assinatura aqui
-          // O useSubscription vai cuidar disso quando necessário
-        } else {
-          // Limpar role quando não houver sessão
-          window.localStorage.removeItem('role');
+        // SECURITY: Do not store sensitive data in localStorage
+        // Role verification will be done server-side through Supabase RPC
+        if (!session?.user) {
+          // Clear any client-side cached data when session ends
+          window.localStorage.removeItem('role'); // Remove legacy role storage
         }
       }
     );
@@ -51,13 +46,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       setLoading(false);
       
-      // Salvar role no localStorage para sessão inicial
+      // SECURITY: Remove legacy role storage
       if (session?.user) {
-        const userRole = session.user.user_metadata?.role || 'user';
-        window.localStorage.setItem('role', userRole);
-        
-        // Não fazer chamadas automáticas de verificação de assinatura aqui também
-        // O useSubscription vai cuidar disso quando necessário
+        // Clear any legacy role data from localStorage
+        window.localStorage.removeItem('role');
       }
     });
 

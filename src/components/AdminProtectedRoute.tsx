@@ -1,5 +1,4 @@
-import { useAuth } from '@/hooks/useAuth';
-import { useUserRoles } from '@/hooks/useUserRoles';
+import { useSecureAuth } from '@/hooks/useSecureAuth';
 import { Navigate } from 'react-router-dom';
 import { ReactNode } from 'react';
 
@@ -8,10 +7,9 @@ interface AdminProtectedRouteProps {
 }
 
 const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
-  const { user, loading: authLoading } = useAuth();
-  const { isAdmin, loading: rolesLoading } = useUserRoles();
+  const { user, isAdmin, loading } = useSecureAuth();
 
-  if (authLoading || rolesLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>

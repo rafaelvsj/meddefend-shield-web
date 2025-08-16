@@ -12,9 +12,30 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Users, Settings, Loader2 } from "lucide-react";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminUsers = () => {
-  const { users, loading, error } = useAdminUsers();
+  const { users, loading, error, updating, updateUserPlan } = useAdminUsers();
+  const { toast } = useToast();
+
+  const handlePlanChange = async (userId: string, currentPlan: string, newPlan: string) => {
+    if (currentPlan === newPlan) return;
+    
+    try {
+      const result = await updateUserPlan(userId, newPlan);
+      toast({
+        title: "Plano atualizado",
+        description: `Plano alterado de ${result.oldPlan} para ${result.newPlan}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao atualizar plano do usuário",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -65,6 +86,7 @@ const AdminUsers = () => {
                 <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Last Login</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -73,7 +95,7 @@ const AdminUsers = () => {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge variant={user.plan === 'premium' ? 'default' : 'secondary'}>
+                    <Badge variant={user.plan === 'pro' ? 'default' : 'secondary'}>
                       {user.plan}
                     </Badge>
                   </TableCell>
@@ -84,6 +106,22 @@ const AdminUsers = () => {
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString("pt-BR") : "Never"}
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={user.plan}
+                      onValueChange={(newPlan) => handlePlanChange(user.id, user.plan, newPlan)}
+                      disabled={updating}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="free">Free</SelectItem>
+                        <SelectItem value="starter">Starter</SelectItem>
+                        <SelectItem value="pro">Pro</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                 </TableRow>
               ))}

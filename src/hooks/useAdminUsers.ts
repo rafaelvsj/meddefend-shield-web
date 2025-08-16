@@ -16,6 +16,7 @@ export const useAdminUsers = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   const fetchUsers = async (retryCount = 0) => {
     try {
@@ -62,5 +63,37 @@ export const useAdminUsers = () => {
     fetchUsers();
   }, []);
 
-  return { users, loading, error, refetch: fetchUsers };
+  const updateUserPlan = async (userId: string, newPlan: string) => {
+    setUpdating(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        throw new Error('No active session');
+      }
+
+      const { data, error } = await supabase.functions.invoke('admin-update-user-plan', {
+        body: { userId, newPlan },
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to update plan');
+      }
+
+      // Refresh users list
+      await fetchUsers();
+      
+      return { success: true, oldPlan: data.oldPlan, newPlan: data.newPlan };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update plan';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  return { users, loading, error, updating, refetch: fetchUsers, updateUserPlan };
 };

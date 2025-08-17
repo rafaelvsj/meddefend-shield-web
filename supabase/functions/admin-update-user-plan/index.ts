@@ -137,13 +137,17 @@ serve(async (req: Request) => {
       });
     }
 
-    // 5) Resposta clara
+    // 5) Verificar se admin mudou próprio plano (FASE 4)
+    const selfUpdated = actorId === userId;
+    
+    // 6) Resposta clara
     return json(200, {
       success: true,
       userId,
       oldPlan,
       newPlan,
       subscribed,
+      selfUpdated,
       requestId,
     });
   } catch (e) {

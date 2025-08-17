@@ -9,16 +9,23 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { useTheme } from 'next-themes';
+import { usePlan } from '@/hooks/usePlan';
 
 const AccountSettings = () => {
   const navigate = useNavigate();
   const { settings, updateSettings, loading } = useUserSettings();
   const { setTheme } = useTheme();
+  const { plan, subscribed, forceRefreshPlan } = usePlan();
   const [localSettings, setLocalSettings] = useState(settings);
 
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
+
+  // Force refresh plan on page mount (FASE 4)
+  useEffect(() => {
+    forceRefreshPlan();
+  }, [forceRefreshPlan]);
 
   const handleSave = async () => {
     await updateSettings(localSettings);
@@ -54,6 +61,12 @@ const AccountSettings = () => {
           <div>
             <h1 className="text-2xl font-bold">Configurações da Conta</h1>
             <p className="text-muted-foreground">Gerencie suas preferências e configurações da conta</p>
+            {/* Display current plan (using unified source) */}
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Plano atual:</span>
+              <span className="text-sm font-medium capitalize">{plan}</span>
+              {subscribed && <span className="text-xs text-green-600">(Ativo)</span>}
+            </div>
           </div>
 
           {/* Preferências Gerais */}

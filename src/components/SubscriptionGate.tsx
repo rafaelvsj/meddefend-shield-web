@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useSubscription } from '@/hooks/useSubscription';
+import { usePlan } from '@/hooks/usePlan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,16 +37,14 @@ export const SubscriptionGate = ({
   featureName,
   description 
 }: SubscriptionGateProps) => {
-  const { subscription } = useSubscription();
+  const { plan, plan_level } = usePlan();
   const navigate = useNavigate();
   const Icon = tierIcons[requiredTier];
 
-  const currentTierLevel = subscription.subscription_tier 
-    ? tierLevels[subscription.subscription_tier as keyof typeof tierLevels] || 0
-    : 0;
+  const currentTierLevel = plan_level;
   
   const requiredTierLevel = tierLevels[requiredTier];
-  const hasAccess = subscription.subscribed && currentTierLevel >= requiredTierLevel;
+  const hasAccess = plan_level >= requiredTierLevel;
 
   if (hasAccess) {
     return <>{children}</>;
@@ -70,7 +68,7 @@ export const SubscriptionGate = ({
           {description || `Esta funcionalidade requer um plano ${requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)} ou superior.`}
         </p>
         
-        {!subscription.subscribed ? (
+        {plan_level === 1 ? (
           <div className="space-y-3">
             <p className="text-sm text-gray-400">
               Faça o upgrade para acessar este recurso e muito mais.
@@ -85,7 +83,7 @@ export const SubscriptionGate = ({
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-gray-400">
-              Seu plano atual: <span className="text-white font-medium">{subscription.subscription_tier}</span>
+              Seu plano atual: <span className="text-white font-medium">{plan}</span>
             </p>
             <Button 
               onClick={() => navigate('/checkout')}

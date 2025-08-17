@@ -861,6 +861,18 @@ export type Database = {
         Args: { event: Json }
         Returns: Json
       }
+      get_user_plan: {
+        Args: { target_user_id?: string }
+        Returns: {
+          email: string
+          is_comp: boolean
+          plan: string
+          plan_level: number
+          subscribed: boolean
+          updated_at: string
+          user_id: string
+        }[]
+      }
       halfvec_avg: {
         Args: { "": number[] }
         Returns: unknown

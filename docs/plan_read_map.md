@@ -67,10 +67,39 @@
 - 🔄 `src/pages/Dashboard.tsx` (usar novo hook)
 - 🔄 Todos os componentes listados acima
 
+## Implementação Completa (FASES 1-4)
+
+### FASE 1 ✅ - Fonte Canônica
+- Função `public.get_user_plan()` com RLS integrado
+- Suporte a admin (role='admin') e usuário próprio
+
+### FASE 2 ✅ - Edge Function
+- `supabase/functions/get-my-plan/index.ts` criada
+- Autenticação via token JWT
+- Fallback para plano 'free' em caso de erro
+
+### FASE 3 ✅ - Hook Unificado
+- `src/hooks/usePlan.ts` substitui `useSubscription` para leitura
+- `forceRefreshPlan()` para atualização manual
+- Helpers `hasMinimumPlan()` e `getPlanLevel()`
+
+### FASE 4 ✅ - Integração Admin
+- `admin-update-user-plan` retorna `selfUpdated: true`
+- `AccountSettings` chama `forceRefreshPlan()` no mount
+
+### Componentes Refatorados ✅
+- `src/pages/Dashboard.tsx` - Plano atual no header
+- `src/pages/AccountSettings.tsx` - Display do plano + refresh
+- `src/components/SubscriptionGate.tsx` - Controle de acesso
+- `src/components/dashboard/tabs/AnaliseTab.tsx` - Limites por plano
+- `src/components/dashboard/tabs/ModelosTab.tsx` - Templates por plano
+
 ## Critério de Aceite
 
-- [ ] Não restam leituras de `profiles.plan` ou `app_metadata.plan`
-- [ ] Único ponto de entrada: `get-my-plan` edge function
-- [ ] Admin muda próprio plano → UI atualiza imediatamente
-- [ ] Outro usuário → reload mostra novo plano
-- [ ] Teste negativo: sem token = 401
+- [x] Não restam leituras de `profiles.plan` ou `app_metadata.plan`
+- [x] Único ponto de entrada: `get-my-plan` edge function
+- [x] Hook `usePlan` com `forceRefreshPlan()` implementado
+- [x] Componentes refatorados para usar fonte unificada
+- [ ] **TESTE PRÁTICO**: Admin muda próprio plano → UI atualiza imediatamente
+- [ ] **TESTE PRÁTICO**: Outro usuário → reload mostra novo plano
+- [ ] **TESTE PRÁTICO**: Sem token = 401

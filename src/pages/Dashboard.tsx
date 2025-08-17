@@ -5,6 +5,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { AnaliseTab } from '@/components/dashboard/tabs/AnaliseTab';
 import { ModelosTab } from '@/components/dashboard/tabs/ModelosTab';
 import { HistoricoTab } from '@/components/dashboard/tabs/HistoricoTab';
+import { usePlan } from '@/hooks/usePlan';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('analise');
-  const { subscription, openCustomerPortal } = useSubscription();
+  const { plan, subscribed, forceRefreshPlan } = usePlan();
+  
+  // Import useSubscription only for portal function
+  const { openCustomerPortal } = useSubscription();
   const navigate = useNavigate();
 
   // Verificação de redirecionamento automático
@@ -51,7 +55,7 @@ const Dashboard = () => {
         
         <main className="flex-1 p-4 lg:p-8 bg-medical-slate-50 overflow-y-auto" role="main" aria-labelledby="main-heading">
           {/* Subscription Status Card */}
-          {subscription.subscribed ? (
+          {subscribed ? (
             <Card className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -59,10 +63,10 @@ const Dashboard = () => {
                     <Crown className="h-5 w-5 text-green-600" />
                     <div>
                       <p className="font-medium text-green-800">
-                        Plano {subscription.subscription_tier?.charAt(0).toUpperCase() + subscription.subscription_tier?.slice(1)} Ativo
+                        Plano {plan.charAt(0).toUpperCase() + plan.slice(1)} {subscribed ? 'Ativo' : 'Gratuito'}
                       </p>
                       <p className="text-sm text-green-600">
-                        {subscription.subscription_end && `Válido até ${new Date(subscription.subscription_end).toLocaleDateString()}`}
+                        Acesso completo a todos os recursos
                       </p>
                     </div>
                   </div>

@@ -3,11 +3,11 @@ import { FolderOpen, FileCheck, ClipboardList } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { useSubscription } from '@/hooks/useSubscription';
+import { usePlan } from '@/hooks/usePlan';
 import { SubscriptionGate } from '@/components/SubscriptionGate';
 
 export const ModelosTab = () => {
-  const { subscription } = useSubscription();
+  const { plan, subscribed } = usePlan();
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,9 +20,9 @@ export const ModelosTab = () => {
       // Filtrar templates baseado no plano
       let query = supabase.from('document_templates').select('*');
       
-      if (!subscription.subscribed) {
+      if (plan === 'free') {
         query = query.eq('is_public', true).limit(2); // Apenas 2 templates básicos
-      } else if (subscription.subscription_tier === 'starter') {
+      } else if (plan === 'starter') {
         query = query.limit(5); // Máximo 5 templates
       }
       
@@ -70,7 +70,7 @@ export const ModelosTab = () => {
         <CardTitle className="text-medical-slate-800 flex items-center space-x-2">
           <FolderOpen className="h-5 w-5" />
           <span>Modelos Disponíveis</span>
-          {subscription.subscription_tier === 'starter' && (
+          {plan === 'starter' && (
             <span className="text-sm text-gray-500 ml-2">(Máximo 5 modelos)</span>
           )}
         </CardTitle>
@@ -114,7 +114,7 @@ export const ModelosTab = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {!subscription.subscribed ? (
+      {plan === 'free' ? (
         <SubscriptionGate 
           featureName="Modelos de Documentos"
           description="Acesse modelos profissionais para documentação médica padronizada."

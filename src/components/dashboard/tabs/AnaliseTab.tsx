@@ -6,12 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { useSubscription } from '@/hooks/useSubscription';
+import { usePlan } from '@/hooks/usePlan';
 import { SubscriptionGate } from '@/components/SubscriptionGate';
 import { useToast } from '@/components/ui/use-toast';
 
 export const AnaliseTab = () => {
-  const { subscription } = useSubscription();
+  const { plan } = usePlan();
   const { toast } = useToast();
   const [text, setText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -159,8 +159,8 @@ export const AnaliseTab = () => {
 
   // Verificar se usuário pode analisar
   const canAnalyze = () => {
-    if (!subscription.subscribed) return false;
-    if (subscription.subscription_tier === 'starter' && monthlyAnalyses >= 50) return false;
+    if (plan === 'free') return false;
+    if (plan === 'starter' && monthlyAnalyses >= 50) return false;
     return true;
   };
 
@@ -171,7 +171,7 @@ export const AnaliseTab = () => {
           <FileText className="h-5 w-5" />
           <span>Insira aqui sua solicitação ou texto para análise</span>
         </CardTitle>
-        {subscription.subscription_tier === 'starter' && (
+        {plan === 'starter' && (
           <p className="text-sm text-gray-600">
             Análises este mês: {monthlyAnalyses}/50
           </p>
@@ -220,14 +220,14 @@ export const AnaliseTab = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {!subscription.subscribed ? (
+      {plan === 'free' ? (
         <SubscriptionGate 
           featureName="Análise de Documentos"
           description="Analise seus documentos médicos com IA para garantir linguagem adequada e profissional."
         >
           {renderAnalysisContent()}
         </SubscriptionGate>
-      ) : subscription.subscription_tier === 'starter' && monthlyAnalyses >= 50 ? (
+      ) : plan === 'starter' && monthlyAnalyses >= 50 ? (
         <SubscriptionGate 
           requiredTier="professional"
           featureName="Análises Ilimitadas"

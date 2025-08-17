@@ -8,126 +8,117 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { Users, Settings, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 const AdminUsers = () => {
-  const { users, loading, error, updating, updateUserPlan } = useAdminUsers();
+  const { users, loading, error, updatingIds, fetchUsers, updateUserPlan } = useAdminUsers();
   const { toast } = useToast();
 
-  const handlePlanChange = async (userId: string, currentPlan: string, newPlan: string) => {
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handlePlanChange = async (userId: string, currentPlan: string, newPlan: "free"|"starter"|"pro") => {
     if (currentPlan === newPlan) return;
     
-    try {
-      const result = await updateUserPlan(userId, newPlan);
+    const result = await updateUserPlan(userId, newPlan);
+    if (result.ok) {
       toast({
         title: "Plano atualizado",
-        description: `Plano alterado de ${result.oldPlan} para ${result.newPlan}`,
+        description: `Plano alterado para ${newPlan}.`,
       });
-    } catch (error) {
+    } else {
       toast({
-        title: "Erro",
-        description: "Falha ao atualizar plano do usuário",
+        title: "Erro ao atualizar plano",
+        description: String(result.error ?? "Tente novamente"),
         variant: "destructive",
       });
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center p-8">
-        <p className="text-destructive">Error loading users: {error}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Users</h2>
-          <p className="text-muted-foreground">
-            Manage user accounts and subscriptions
-          </p>
-        </div>
-        <Button asChild>
-          <Link to="/admin/users/roles" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Role Manager
-          </Link>
-        </Button>
+    <div className="p-6 space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold">Usuários</h2>
+        <p className="text-muted-foreground">Gerencie os planos dos usuários (free, starter, pro).</p>
       </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>User Management</CardTitle>
-          <CardDescription>
-            View and manage all registered users
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
+
+      <Card className="p-0 overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>E-mail</TableHead>
+              <TableHead>Plano</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Último acesso</TableHead>
+              <TableHead>Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading && (
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Plan</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Login</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableCell colSpan={6} className="text-center">
+                  <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                  <span className="ml-2">Carregando…</span>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.plan === 'pro' ? 'default' : 'secondary'}>
-                      {user.plan}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.status === 'Active' ? 'default' : 'destructive'}>
-                      {user.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString("pt-BR") : "Never"}
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={user.plan}
-                      onValueChange={(newPlan) => handlePlanChange(user.id, user.plan, newPlan)}
-                      disabled={updating}
-                    >
-                      <SelectTrigger className="w-24">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="free">Free</SelectItem>
-                        <SelectItem value="starter">Starter</SelectItem>
-                        <SelectItem value="pro">Pro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
+            )}
+            {!loading && !error && users.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  Nenhum usuário encontrado.
+                </TableCell>
+              </TableRow>
+            )}
+            {!loading && error && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-destructive">
+                  Erro ao carregar usuários: {error}
+                </TableCell>
+              </TableRow>
+            )}
+            {!loading && !error && users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell className="font-medium">{user.name ?? "-"}</TableCell>
+                <TableCell>{user.email ?? "-"}</TableCell>
+                <TableCell>
+                  <Badge variant={user.plan === 'pro' ? 'default' : 'secondary'}>
+                    {user.plan ?? "-"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={user.status === 'Active' ? 'default' : 'destructive'}>
+                    {user.status ?? "-"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString("pt-BR") : "-"}
+                </TableCell>
+                <TableCell>
+                  <Select
+                    defaultValue={user.plan ?? "free"}
+                    onValueChange={(newPlan) => handlePlanChange(user.id, user.plan, newPlan as any)}
+                    disabled={!!updatingIds[user.id]}
+                  >
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Selecionar plano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="starter">Starter</SelectItem>
+                      <SelectItem value="pro">Pro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </Card>
     </div>
   );

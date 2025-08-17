@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AdminUser {
@@ -16,9 +16,9 @@ export const useAdminUsers = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [updating, setUpdating] = useState(false);
+  const [updatingIds, setUpdatingIds] = useState<Record<string, boolean>>({});
 
-  const fetchUsers = async (retryCount = 0) => {
+  const fetchUsers = useCallback(async (retryCount = 0) => {
     try {
       setLoading(true);
       setError(null);
@@ -51,20 +51,20 @@ export const useAdminUsers = () => {
       
       setUsers(data.users || []);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch users';
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar usuários';
       setError(errorMessage);
       console.error('Admin users fetch error:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  const updateUserPlan = async (userId: string, newPlan: string) => {
-    setUpdating(true);
+  const updateUserPlan = useCallback(async (userId: string, newPlan: "free"|"starter"|"pro") => {
+    setUpdatingIds((s) => ({ ...s, [userId]: true }));
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) {
@@ -79,21 +79,26 @@ export const useAdminUsers = () => {
       });
 
       if (error) {
-        throw new Error(error.message || 'Failed to update plan');
+        throw new Error(error.message || 'Falha ao atualizar plano');
+      }
+      
+      if (!data?.success) {
+        throw new Error(data?.error ?? 'Falha ao atualizar plano');
       }
 
-      // Refresh users list
-      await fetchUsers();
+      // Atualiza estado local sem refetch completo
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, plan: data.newPlan } : u))
+      );
       
-      return { success: true, oldPlan: data.oldPlan, newPlan: data.newPlan };
+      return { ok: true, data };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update plan';
-      setError(errorMessage);
-      throw err;
+      const errorMessage = err instanceof Error ? err.message : 'Falha ao atualizar plano';
+      return { ok: false, error: errorMessage };
     } finally {
-      setUpdating(false);
+      setUpdatingIds((s) => ({ ...s, [userId]: false }));
     }
-  };
+  }, []);
 
-  return { users, loading, error, updating, refetch: fetchUsers, updateUserPlan };
+  return { users, loading, error, updatingIds, fetchUsers, updateUserPlan };
 };

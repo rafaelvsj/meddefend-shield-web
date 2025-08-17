@@ -1,0 +1,34 @@
+[
+  {
+    "user_id": "00c6aaea-b6d3-466b-8a2b-8007769e312f",
+    "email": "admin@meddefend.tech",
+    "subscription_tier": null,
+    "subscribed": false,
+    "created_at": "2025-07-27 21:28:16.487824+00",
+    "updated_at": "2025-08-16 21:35:26.564737+00"
+  },
+  {
+    "user_id": "522a155f-b974-4d77-a531-e661cce235ee",
+    "email": "rafaelwushu@hotmail.com",
+    "subscription_tier": "free",
+    "subscribed": false,
+    "created_at": "2025-07-27 21:28:43.56041+00",
+    "updated_at": "2025-08-05 23:34:42.282721+00"
+  },
+  {
+    "user_id": "66c01f3b-8598-465a-a81b-c3dd9149e731",
+    "email": "rafael.anestesio@outlook.com",
+    "subscription_tier": null,
+    "subscribed": false,
+    "created_at": "2025-08-05 23:45:12.296257+00",
+    "updated_at": "2025-08-05 23:45:12.734036+00"
+  },
+  {
+    "user_id": "d8a71824-e072-464e-9d9d-59fd752a38ac",
+    "email": "sancheszoi@gmail.com",
+    "subscription_tier": "free",
+    "subscribed": false,
+    "created_at": "2025-08-05 23:48:29.507882+00",
+    "updated_at": "2025-08-05 23:48:29.507882+00"
+  }
+]

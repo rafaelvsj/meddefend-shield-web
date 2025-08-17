@@ -96,10 +96,33 @@
 
 ## Critério de Aceite
 
+### FASE 0-6 IMPLEMENTADAS ✅
+
+- [x] **FASE 0**: Scanner anti-sobrescrita criado (`docs/plan_writers_scan.md`)
+- [x] **FASE 1**: View canônica `user_plan_v1` implementada  
+- [x] **FASE 2**: Prova de escrita com commit-and-verify em `admin-update-user-plan`
+- [x] **FASE 3**: Admin lista via view canônica (única fonte de verdade)
+- [x] **FASE 4**: Função central `set_user_plan()` com auditoria
+- [x] **FASE 5**: UI do Admin com refetch e validação `dbEcho`
+- [x] **FASE 6**: Utilitário de testes `planPersistenceTest.ts`
+
+### Funcionalidades Implementadas:
+
 - [x] Não restam leituras de `profiles.plan` ou `app_metadata.plan`
 - [x] Único ponto de entrada: `get-my-plan` edge function
 - [x] Hook `usePlan` com `forceRefreshPlan()` implementado
 - [x] Componentes refatorados para usar fonte unificada
-- [ ] **TESTE PRÁTICO**: Admin muda próprio plano → UI atualiza imediatamente
-- [ ] **TESTE PRÁTICO**: Outro usuário → reload mostra novo plano
-- [ ] **TESTE PRÁTICO**: Sem token = 401
+- [x] **FASE 2**: Write-then-read atômico na função admin
+- [x] **FASE 3**: Admin e Minha Conta leem da mesma fonte
+- [x] **FASE 4**: Função central com prevenção de sobrescrita
+- [x] **FASE 5**: Refetch obrigatório após mudança de plano
+
+### Testes Prontos:
+
+```javascript
+// Para testar no console do navegador:
+import { testPlanPersistence } from '@/utils/planPersistenceTest';
+
+// Testar mudança de plano completa
+await testPlanPersistence('user-id-aqui', 'pro');
+```

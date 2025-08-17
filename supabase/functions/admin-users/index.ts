@@ -124,39 +124,40 @@ serve(async (req) => {
       throw rolesError;
     }
 
-    // Get all subscribers
-    const { data: subscribers, error: subscribersError } = await serviceClient
-      .from("subscribers")
-      .select("user_id, subscription_tier, subscribed");
+    // FASE 3: Get plans via view canônica user_plan_v1 (única fonte de verdade)
+    const { data: plans, error: plansError } = await serviceClient
+      .from("user_plan_v1")
+      .select("user_id, plan, subscribed, plan_level, updated_at");
 
-    if (subscribersError) {
+    if (plansError) {
       console.log(JSON.stringify({
         timestamp: new Date().toISOString(),
         function: 'admin-users',
         admin_id: user.id,
-        action: 'fetch_subscribers',
+        action: 'fetch_plans',
         status: 'error',
-        error: subscribersError.message
+        error: plansError.message
       }));
-      throw subscribersError;
+      throw plansError;
     }
 
-    // Manual JOIN in JavaScript
+    // Manual JOIN in JavaScript usando view canônica
     const users = profiles?.map(profile => {
       // Find user role
       const userRole = userRoles?.find(role => role.user_id === profile.id);
-      // Find subscription
-      const subscription = subscribers?.find(sub => sub.user_id === profile.id);
+      // Find plan data via view canônica (única fonte de verdade)
+      const planData = plans?.find(plan => plan.user_id === profile.id);
 
       return {
         id: profile.id,
         name: profile.full_name || "Unknown",
         email: profile.email || "No email",
-        plan: subscription?.subscription_tier || "free",
-        role: userRole?.role || "user",
-        status: subscription?.subscribed ? "Active" : "Inactive",
+        plan: planData?.plan || "free",
+        role: userRole?.role || "user", 
+        status: planData?.subscribed ? "Active" : "Inactive",
         lastLogin: profile.updated_at,
-        createdAt: profile.created_at
+        createdAt: profile.created_at,
+        plan_level: planData?.plan_level || 1
       };
     }) || [];
 
@@ -170,7 +171,7 @@ serve(async (req) => {
       users_count: users.length,
       profiles_count: profiles?.length || 0,
       roles_count: userRoles?.length || 0,
-      subscribers_count: subscribers?.length || 0,
+      plans_count: plans?.length || 0,
       execution_time_ms: Date.now() - start
     }));
 

@@ -63,6 +63,7 @@ export const useAdminUsers = () => {
     fetchUsers();
   }, []);
 
+  // FASE 5: UI do Admin com "commit de verdade" (refetch e validação)
   const updateUserPlan = useCallback(async (userId: string, newPlan: "free"|"starter"|"pro") => {
     setUpdatingIds((s) => ({ ...s, [userId]: true }));
     try {
@@ -82,14 +83,17 @@ export const useAdminUsers = () => {
         throw new Error(error.message || 'Falha ao atualizar plano');
       }
       
-      if (!data?.success) {
-        throw new Error(data?.error ?? 'Falha ao atualizar plano');
+      // FASE 5: Verificação forte com dbEcho
+      if (!data?.success || !data?.dbEcho || data?.dbEcho?.subscription_tier !== newPlan) {
+        throw new Error(
+          data?.error ?? 
+          `Falha na confirmação do banco. Esperado: ${newPlan}, Atual: ${data?.dbEcho?.subscription_tier}`
+        );
       }
 
-      // Atualiza estado local sem refetch completo
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, plan: data.newPlan } : u))
-      );
+      // FASE 5: Refetch real após confirmação (não confiar no estado local)
+      console.log('✅ Plan update verified, refetching users...');
+      await fetchUsers();
       
       return { ok: true, data };
     } catch (err) {
@@ -98,7 +102,7 @@ export const useAdminUsers = () => {
     } finally {
       setUpdatingIds((s) => ({ ...s, [userId]: false }));
     }
-  }, []);
+  }, [fetchUsers]);
 
   return { users, loading, error, updatingIds, fetchUsers, updateUserPlan };
 };

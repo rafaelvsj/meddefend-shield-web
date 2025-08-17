@@ -834,7 +834,44 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_plan_v1: {
+        Row: {
+          email: string | null
+          is_comp: boolean | null
+          plan: string | null
+          plan_level: number | null
+          subscribed: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          email?: string | null
+          is_comp?: never
+          plan?: never
+          plan_level?: never
+          subscribed?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          email?: string | null
+          is_comp?: never
+          plan?: never
+          plan_level?: never
+          subscribed?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_subscribers_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       binary_quantize: {
@@ -998,6 +1035,10 @@ export type Database = {
           similarity: number
           source: string
         }[]
+      }
+      set_user_plan: {
+        Args: { p_new_plan: string; p_source: string; p_user_id: string }
+        Returns: Json
       }
       sparsevec_out: {
         Args: { "": unknown }

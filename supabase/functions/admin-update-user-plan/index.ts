@@ -29,6 +29,16 @@ serve(async (req: Request) => {
   const requestId = crypto.randomUUID();
 
   try {
+    // FASE 0: Diagnóstico imediato - logs dos secrets efetivos
+    const supabaseUrl = SUPABASE_URL;
+    const hostname = supabaseUrl ? new URL(supabaseUrl).hostname : 'unknown';
+    console.log(`[${requestId}] FASE 0 Diagnóstico:`, {
+      supabase_hostname: hostname,
+      expected_hostname: 'zwgjnynnbxiomtnnvztt.supabase.co',
+      hostname_match: hostname === 'zwgjnynnbxiomtnnvztt.supabase.co',
+      has_service_key: !!SUPABASE_SERVICE_ROLE_KEY,
+      timestamp: new Date().toISOString()
+    });
     // 1) Auth do ator (admin)
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -107,47 +117,60 @@ serve(async (req: Request) => {
       });
     }
 
-    // 4) Upsert em subscribers (fonte de verdade)
-    const subscribed = newPlan !== "free";
-
-    const { data: existing, error: selErr } = await service
+    // 4) FASE 2: Prova de escrita via função central set_user_plan
+    const { data: existingData, error: existingErr } = await service
       .from("subscribers")
-      .select("id, subscription_tier")
+      .select("subscription_tier")
       .eq("user_id", userId)
       .maybeSingle();
 
-    const oldPlan: Plan | null = existing?.subscription_tier ?? null;
+    const oldPlan: Plan | null = existingData?.subscription_tier ?? null;
 
-    const { error: upsertErr } = await service.from("subscribers").upsert(
-      {
-        user_id: userId,
-        email,
-        subscription_tier: newPlan,
-        subscribed,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" },
-    );
+    // Usar função central para escrita com auditoria
+    const { data: planResult, error: planError } = await service
+      .rpc('set_user_plan', {
+        p_source: 'admin',
+        p_user_id: userId,
+        p_new_plan: newPlan
+      });
 
-    if (upsertErr) {
+    if (planError || !planResult?.success) {
       return json(500, {
-        error: "Failed to upsert subscribers",
+        error: "Failed to update plan via central function",
         requestId,
-        debug: upsertErr.message,
+        debug: planError?.message || planResult?.error,
+      });
+    }
+
+    // FASE 2: Verificação forte - confirmar que o banco refletiu a mudança
+    const { data: verifyData, error: verifyErr } = await service
+      .from("subscribers")
+      .select("subscription_tier, subscribed, updated_at")
+      .eq("user_id", userId)
+      .single();
+
+    if (verifyErr || !verifyData || verifyData.subscription_tier !== newPlan) {
+      return json(500, {
+        error: "Commit verification failed: DB mismatch after upsert",
+        requestId,
+        dbEcho: verifyData,
+        expectedPlan: newPlan,
+        actualPlan: verifyData?.subscription_tier,
       });
     }
 
     // 5) Verificar se admin mudou próprio plano (FASE 4)
     const selfUpdated = actorId === userId;
     
-    // 6) Resposta clara
+    // 6) Resposta clara com dbEcho (FASE 2)
     return json(200, {
       success: true,
       userId,
       oldPlan,
       newPlan,
-      subscribed,
+      subscribed: verifyData.subscribed,
       selfUpdated,
+      dbEcho: verifyData,  // Prova de que o banco refletiu a mudança
       requestId,
     });
   } catch (e) {

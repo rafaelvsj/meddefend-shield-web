@@ -63,7 +63,6 @@ export const useAdminUsers = () => {
     fetchUsers();
   }, []);
 
-  // FASE 5: UI do Admin com "commit de verdade" (refetch e validação)
   const updateUserPlan = useCallback(async (userId: string, newPlan: "free"|"starter"|"pro") => {
     setUpdatingIds((s) => ({ ...s, [userId]: true }));
     try {
@@ -72,32 +71,30 @@ export const useAdminUsers = () => {
         throw new Error('No active session');
       }
 
-      const { data, error } = await supabase.functions.invoke('admin-update-user-plan', {
-        body: { userId, newPlan },
-        headers: {
-          Authorization: `Bearer ${session.session.access_token}`,
-        },
+      console.log('🔄 Calling RPC admin_update_user_plan...', { userId, newPlan });
+      const { data, error } = await supabase.rpc('admin_update_user_plan', {
+        p_user_id: userId,
+        p_new_plan: newPlan,
+        p_reason: 'admin panel'
       });
 
       if (error) {
+        console.error('❌ RPC error:', error);
         throw new Error(error.message || 'Falha ao atualizar plano');
       }
       
-      // FASE 5: Verificação forte com dbEcho
-      if (!data?.success || !data?.dbEcho || data?.dbEcho?.subscription_tier !== newPlan) {
-        throw new Error(
-          data?.error ?? 
-          `Falha na confirmação do banco. Esperado: ${newPlan}, Atual: ${data?.dbEcho?.subscription_tier}`
-        );
+      console.log('✅ RPC success:', data);
+      if (!(data as any)?.ok) {
+        throw new Error('RPC returned failure status');
       }
 
-      // FASE 5: Refetch real após confirmação (não confiar no estado local)
-      console.log('✅ Plan update verified, refetching users...');
+      // Refetch users to reflect changes
       await fetchUsers();
       
       return { ok: true, data };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Falha ao atualizar plano';
+      console.error('❌ Update error:', errorMessage);
       return { ok: false, error: errorMessage };
     } finally {
       setUpdatingIds((s) => ({ ...s, [userId]: false }));

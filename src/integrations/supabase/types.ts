@@ -937,6 +937,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_update_user_plan: {
+        Args: { p_new_plan: string; p_reason?: string; p_user_id: string }
+        Returns: Json
+      }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown

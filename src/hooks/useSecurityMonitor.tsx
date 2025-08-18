@@ -23,21 +23,14 @@ export const useSecurityMonitor = () => {
     severity: SecurityEvent['severity'] = 'medium'
   ) => {
     try {
-      const { data, error } = await supabase
-        .from('audit_logs')
-        .insert({
-          user_id: '00000000-0000-0000-0000-000000000000', // Default anonymous user for client-side events
-          action: eventType,
-          resource_type: 'security_event',
-          details: {
-            event_type: eventType,
-            severity,
-            ...details,
-            timestamp: new Date().toISOString(),
-            user_agent: navigator.userAgent,
-            ip_address: 'client_side' // Will be populated server-side
-          }
-        });
+      // Use the new secure logging endpoint
+      const { error } = await supabase.functions.invoke('security-logger', {
+        body: {
+          event_type: eventType,
+          details,
+          severity
+        }
+      });
 
       if (error) {
         console.error('Failed to log security event:', error);

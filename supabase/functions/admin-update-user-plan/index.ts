@@ -83,40 +83,8 @@ serve(async (req: Request) => {
       return json(400, { error: "newPlan must be one of: free|starter|pro", requestId });
     }
 
-    // 3) Buscar email do usuário alvo (profiles primeiro; fallback auth.users)
-    let email: string | null = null;
+    // Removido lookup de email desnecessário: set_user_plan já resolve email internamente.
 
-    const { data: prof, error: profErr } = await service
-      .from("profiles")
-      .select("email")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (profErr) {
-      // não retorna; apenas registra
-      console.warn("[profiles email lookup error]", { requestId, msg: profErr.message });
-    }
-    email = prof?.email ?? null;
-
-    if (!email) {
-      // Fallback para auth.users via REST (admin)
-      const authResp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
-        headers: { Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
-      });
-      if (authResp.ok) {
-        const authJson = await authResp.json();
-        email = authJson?.email ?? null;
-      } else {
-        console.warn("[auth.fallback email lookup failed]", { requestId, status: authResp.status });
-      }
-    }
-
-    if (!email) {
-      return json(500, {
-        error: "User email not found for subscribers upsert (email is NOT NULL).",
-        requestId,
-      });
-    }
 
     // 4) FASE 2: Prova de escrita via função central set_user_plan
     const { data: existingData, error: existingErr } = await service

@@ -72,8 +72,8 @@ const PricingSection = ({
     // Map plan names to stripe plan IDs
     const planMap: { [key: string]: string } = {
       "Starter": "starter",
-      "Professional": "professional", 
-      "Ultra": "ultra"
+      "Professional": "pro", 
+      "Ultra": "pro"
     };
 
     const stripePlanId = planMap[planName];
@@ -124,7 +124,7 @@ const PricingSection = ({
     features: ["150 créditos mensais", ...beneficiosPadrao],
     popular: true,
     cta: "Mais Popular",
-    isActive: subscription.subscription_tier === "Professional"
+    isActive: subscription.subscription_tier === "pro"
   }, {
     name: "Ultra",
     icon: <Zap className="h-8 w-8 text-yellow-400" />,
@@ -137,7 +137,7 @@ const PricingSection = ({
     features: ["Aproximadamente 1.000 créditos/mês", ...beneficiosPadrao],
     popular: false,
     cta: "Escolher Ultra",
-    isActive: subscription.subscription_tier === "Ultra"
+    isActive: subscription.subscription_tier === "pro"
   }, {
     name: "Clínicas",
     icon: <Building2 className="h-8 w-8 text-green-400" />,

@@ -5,10 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, ArrowRight, Home } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { usePlan } from '@/hooks/usePlan';
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { forceRefreshPlan } = usePlan();
+  const { toast } = useToast();
+  
   // Função para verificar subscription direto
   const checkSubscription = async () => {
     try {
@@ -17,13 +21,14 @@ const PaymentSuccess = () => {
       console.error('Erro ao verificar subscription:', error);
     }
   };
-  const { toast } = useToast();
 
   useEffect(() => {
     // Atualizar status da assinatura após pagamento bem-sucedido
     const updateSubscription = async () => {
       try {
         await checkSubscription();
+        // Force refresh plan data to reflect changes immediately
+        await forceRefreshPlan();
         toast({
           title: "Pagamento confirmado!",
           description: "Sua assinatura foi ativada com sucesso.",
@@ -34,7 +39,7 @@ const PaymentSuccess = () => {
     };
 
     updateSubscription();
-  }, [checkSubscription, toast]);
+  }, [checkSubscription, forceRefreshPlan, toast]);
 
   const sessionId = searchParams.get('session_id');
 
@@ -61,7 +66,10 @@ const PaymentSuccess = () => {
           
           <div className="space-y-3">
             <Button 
-              onClick={() => navigate('/dashboard')}
+              onClick={async () => {
+                await forceRefreshPlan();
+                navigate('/dashboard');
+              }}
               className="w-full bg-green-600 hover:bg-green-700 text-white"
             >
               <ArrowRight className="w-4 h-4 mr-2" />

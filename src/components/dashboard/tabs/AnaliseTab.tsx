@@ -229,7 +229,7 @@ export const AnaliseTab = () => {
         </SubscriptionGate>
       ) : plan === 'starter' && monthlyAnalyses >= 50 ? (
         <SubscriptionGate 
-          requiredTier="professional"
+          requiredTier="pro"
           featureName="Análises Ilimitadas"
           description="Você atingiu o limite de 50 análises mensais do plano Starter. Faça upgrade para análises ilimitadas."
         >

@@ -3,32 +3,20 @@ import { usePlan } from '@/hooks/usePlan';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Lock, Crown, Zap } from 'lucide-react';
+import { Lock, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { normalizeTier, getTierLevel, TIER_COLORS } from '@/lib/plan-constants';
 
 interface SubscriptionGateProps {
   children: ReactNode;
-  requiredTier?: 'starter' | 'professional' | 'ultra';
+  requiredTier?: 'starter' | 'pro';
   featureName: string;
   description?: string;
 }
 
-const tierLevels = {
-  starter: 1,
-  professional: 2,
-  ultra: 3
-};
-
 const tierIcons = {
   starter: Lock,
-  professional: Crown,
-  ultra: Zap
-};
-
-const tierColors = {
-  starter: 'bg-blue-500',
-  professional: 'bg-purple-500', 
-  ultra: 'bg-orange-500'
+  pro: Crown
 };
 
 export const SubscriptionGate = ({ 
@@ -37,14 +25,27 @@ export const SubscriptionGate = ({
   featureName,
   description 
 }: SubscriptionGateProps) => {
-  const { plan, plan_level } = usePlan();
+  const { plan, loading } = usePlan();
   const navigate = useNavigate();
-  const Icon = tierIcons[requiredTier];
-
-  const currentTierLevel = plan_level;
   
-  const requiredTierLevel = tierLevels[requiredTier];
-  const hasAccess = plan_level >= requiredTierLevel;
+  const normalizedCurrentTier = normalizeTier(plan);
+  const normalizedRequiredTier = normalizeTier(requiredTier);
+  
+  const currentTierLevel = getTierLevel(normalizedCurrentTier);
+  const requiredTierLevel = getTierLevel(normalizedRequiredTier);
+  const hasAccess = currentTierLevel >= requiredTierLevel;
+  
+  const Icon = tierIcons[normalizedRequiredTier as keyof typeof tierIcons] || Lock;
+
+  if (loading) {
+    return (
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardContent className="p-8 text-center">
+          <p className="text-gray-300">Carregando...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (hasAccess) {
     return <>{children}</>;
@@ -58,17 +59,17 @@ export const SubscriptionGate = ({
         </div>
         <CardTitle className="text-white flex items-center justify-center gap-2">
           {featureName}
-          <Badge className={`${tierColors[requiredTier]} text-white`}>
-            {requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)}
+          <Badge className={`${TIER_COLORS[normalizedRequiredTier]} text-white`}>
+            {normalizedRequiredTier.charAt(0).toUpperCase() + normalizedRequiredTier.slice(1)}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="text-center space-y-4">
         <p className="text-gray-300">
-          {description || `Esta funcionalidade requer um plano ${requiredTier.charAt(0).toUpperCase() + requiredTier.slice(1)} ou superior.`}
+          {description || `Esta funcionalidade requer um plano ${normalizedRequiredTier.charAt(0).toUpperCase() + normalizedRequiredTier.slice(1)} ou superior.`}
         </p>
         
-        {plan_level === 1 ? (
+        {currentTierLevel === 1 ? (
           <div className="space-y-3">
             <p className="text-sm text-gray-400">
               Faça o upgrade para acessar este recurso e muito mais.
@@ -83,7 +84,7 @@ export const SubscriptionGate = ({
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-gray-400">
-              Seu plano atual: <span className="text-white font-medium">{plan}</span>
+              Seu plano atual: <span className="text-white font-medium">{normalizedCurrentTier}</span>
             </p>
             <Button 
               onClick={() => navigate('/checkout')}

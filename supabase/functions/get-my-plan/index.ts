@@ -90,6 +90,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         ...userPlan,
+        session_version: userPlan.session_version || 0,
         requestId
       }),
       { 

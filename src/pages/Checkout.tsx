@@ -64,7 +64,7 @@ const Checkout = () => {
       ],
       recommended: false
     },
-    professional: {
+    pro: {
       name: 'Professional',
       price: 'R$ 129,90',
       period: '/mês',
@@ -77,20 +77,6 @@ const Checkout = () => {
         'Histórico completo'
       ],
       recommended: true
-    },
-    ultra: {
-      name: 'Ultra',
-      price: 'R$ 349,90',
-      period: '/mês',
-      features: [
-        'Tudo do Professional',
-        'API personalizada',
-        'Integração com sistemas hospitalares',
-        'Treinamento personalizado',
-        'Gestor de conta dedicado',
-        'Relatórios customizados'
-      ],
-      recommended: false
     }
   };
 

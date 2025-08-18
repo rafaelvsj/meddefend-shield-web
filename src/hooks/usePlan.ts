@@ -1,9 +1,10 @@
 // FASE 3: Hook unificado para leitura do plano
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { normalizeTier } from '@/lib/plan-constants';
 
 interface PlanData {
   plan: string;
@@ -11,6 +12,7 @@ interface PlanData {
   subscribed: boolean;
   is_comp: boolean;
   updated_at: string | null;
+  session_version?: number;
 }
 
 export const usePlan = () => {
@@ -21,9 +23,12 @@ export const usePlan = () => {
     plan_level: 1,
     subscribed: false,
     is_comp: false,
-    updated_at: null
+    updated_at: null,
+    session_version: 0
   });
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const lastUserIdRef = useRef<string | null>(null);
 
   const getPlan = useCallback(async () => {
     if (!user) {
@@ -67,17 +72,23 @@ export const usePlan = () => {
         return;
       }
 
-      // Update plan data
+      // Update plan data with normalization
+      const normalizedPlan = normalizeTier(data.plan);
       const newPlanData = {
-        plan: data.plan || 'free',
+        plan: normalizedPlan,
         plan_level: data.plan_level || 1,
         subscribed: data.subscribed || false,
         is_comp: data.is_comp || false,
-        updated_at: data.updated_at || null
+        updated_at: data.updated_at || null,
+        session_version: data.session_version || 0
       };
       
       setPlanData(newPlanData);
-      console.log('[usePlan] Plan updated:', newPlanData);
+      console.info('[plan] get-my-plan', { 
+        plan: normalizedPlan, 
+        session_version: newPlanData.session_version, 
+        at: new Date().toISOString() 
+      });
       
     } catch (error) {
       console.error('[usePlan] Unexpected error:', error);
@@ -99,7 +110,8 @@ export const usePlan = () => {
         plan_level: 1,
         subscribed: false,
         is_comp: false,
-        updated_at: null
+        updated_at: null,
+        session_version: 0
       });
     } finally {
       setLoading(false);
@@ -121,6 +133,59 @@ export const usePlan = () => {
     const levels = { 'free': 1, 'starter': 2, 'pro': 3 };
     return levels[tier as keyof typeof levels] || 1;
   }, []);
+
+  // Auto-fetch on mount e revalidations
+  useEffect(() => {
+    if (!mounted) {
+      setMounted(true);
+      if (user) {
+        getPlan();
+        lastUserIdRef.current = user.id;
+      }
+      return;
+    }
+
+    // Detectar mudança de usuário
+    if (user?.id !== lastUserIdRef.current) {
+      lastUserIdRef.current = user?.id || null;
+      if (user) {
+        getPlan();
+      } else {
+        // User logged out - reset to free
+        setPlanData({
+          plan: 'free',
+          plan_level: 1,
+          subscribed: false,
+          is_comp: false,
+          updated_at: null,
+          session_version: 0
+        });
+      }
+    }
+  }, [user, mounted, getPlan]);
+
+  // Revalidar no foco da janela
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user && mounted) {
+        getPlan();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user && mounted) {
+        getPlan();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user, mounted, getPlan]);
 
   return {
     ...planData,

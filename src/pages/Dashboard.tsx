@@ -53,6 +53,11 @@ const Dashboard = () => {
     }
   }, []);
 
+  // Carregar plano ao montar (evita mostrar 'free' por default após mudança via Admin)
+  useEffect(() => {
+    forceRefreshPlan();
+  }, [forceRefreshPlan]);
+
   return (
     <div className="min-h-screen bg-white font-inter flex flex-col lg:flex-row">
       <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} />

@@ -55,18 +55,19 @@ serve(async (req: Request) => {
     }
     const actorId = userRes.user.id;
 
-    // Confirma role admin/owner
+    // Confirma role admin/owner (tolerante a múltiplos roles)
     const service = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { data: roleRow, error: roleErr } = await service
+    const { data: adminRows, error: roleErr } = await service
       .from("user_roles")
       .select("role")
       .eq("user_id", actorId)
-      .maybeSingle();
+      .in("role", ["admin"]) // somente admin é necessário
+      .limit(1);
 
     if (roleErr) {
       return json(500, { error: "Failed to check admin role", requestId, debug: roleErr.message });
     }
-    const isAdmin = roleRow?.role === "admin" || roleRow?.role === "owner";
+    const isAdmin = Array.isArray(adminRows) && adminRows.length > 0;
     if (!isAdmin) {
       return json(403, { error: "Admin access required", requestId });
     }

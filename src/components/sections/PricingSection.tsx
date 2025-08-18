@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Check, Crown, Shield, Zap, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useSubscription } from '@/hooks/useSubscription';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 interface PricingSectionProps {
@@ -16,10 +16,21 @@ const PricingSection = ({
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  // Só usar subscription hook se o usuário estiver logado
-  const subscriptionHook = useSubscription();
-  const subscription = user ? subscriptionHook.subscription : { subscribed: false };
-  const createCheckout = user ? subscriptionHook.createCheckout : null;
+  // Função para criar checkout direto via supabase
+  const createCheckout = async (plan: string) => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { plan }
+      });
+      if (error) throw error;
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error('Erro ao criar checkout:', error);
+    }
+  };
+  
+  const subscription = { subscribed: false, subscription_tier: null }; // Placeholder - não usado neste componente
 
   useEffect(() => {
     const observer = new IntersectionObserver(entries => {

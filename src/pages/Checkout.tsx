@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, ArrowLeft, Shield, Clock, Users } from 'lucide-react';
-import { useSubscription } from '@/hooks/useSubscription';
+
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +14,23 @@ import { supabase } from '@/integrations/supabase/client';
 const Checkout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { createCheckout } = useSubscription();
+  // Função para criar checkout direto
+  const createCheckout = async (plan: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { plan }
+      });
+      if (error) throw error;
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error('Erro ao criar checkout:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível iniciar o checkout.",
+        variant: "destructive",
+      });
+    }
+  };
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 

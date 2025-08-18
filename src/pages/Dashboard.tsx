@@ -6,7 +6,6 @@ import { AnaliseTab } from '@/components/dashboard/tabs/AnaliseTab';
 import { ModelosTab } from '@/components/dashboard/tabs/ModelosTab';
 import { HistoricoTab } from '@/components/dashboard/tabs/HistoricoTab';
 import { usePlan } from '@/hooks/usePlan';
-import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Crown, CreditCard, Calendar } from 'lucide-react';
@@ -16,8 +15,16 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('analise');
   const { plan, subscribed, forceRefreshPlan } = usePlan();
   
-  // Import useSubscription only for portal function
-  const { openCustomerPortal } = useSubscription();
+  // Função para abrir portal do Stripe via supabase
+  const openCustomerPortal = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      if (error) throw error;
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error('Erro ao abrir portal:', error);
+    }
+  };
   const navigate = useNavigate();
 
   // Verificação de redirecionamento automático

@@ -3,13 +3,20 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, ArrowRight, Home } from 'lucide-react';
-import { useSubscription } from '@/hooks/useSubscription';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { checkSubscription } = useSubscription();
+  // Função para verificar subscription direto
+  const checkSubscription = async () => {
+    try {
+      await supabase.functions.invoke('check-subscription');
+    } catch (error) {
+      console.error('Erro ao verificar subscription:', error);
+    }
+  };
   const { toast } = useToast();
 
   useEffect(() => {

@@ -259,6 +259,39 @@ serve(async (req) => {
 
     const { text, specialty, userId, templateId } = await req.json();
 
+    // Rate limiting baseado no plano do usuário
+    const { data: userPlan } = await supabaseClient.rpc('get_user_plan', { target_user_id: user.id });
+    const plan = userPlan?.[0]?.plan || 'free';
+    
+    // Limites por plano (mensagens por mês)
+    const limits = { 
+      free: 200, 
+      starter: 2000, 
+      pro: 20000, 
+      professional: 20000, 
+      ultra: 100000 
+    };
+    const monthlyLimit = limits[plan as keyof typeof limits] || 200;
+    
+    // Verificar rate limit
+    const { data: overLimit } = await supabaseClient.rpc('increment_and_check_usage', {
+      p_user_id: user.id,
+      p_period: 'monthly',
+      p_counter_key: 'chat_messages',
+      p_increment: 1,
+      p_limit: monthlyLimit
+    });
+    
+    if (overLimit) {
+      return new Response(JSON.stringify({
+        error: 'quota_exceeded',
+        message: `Seu plano (${plan}) atingiu o limite mensal de ${monthlyLimit} mensagens. Faça upgrade para continuar.`
+      }), {
+        status: 402,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // Carregar configurações LLM
     const { data: llmSettings } = await supabaseClient
       .from('llm_settings')

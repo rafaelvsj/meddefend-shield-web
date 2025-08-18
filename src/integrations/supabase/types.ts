@@ -121,6 +121,39 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_user_plan_changes: {
+        Row: {
+          admin_id: string | null
+          created_at: string | null
+          id: string
+          new_tier: string
+          old_tier: string | null
+          reason: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string | null
+          id?: string
+          new_tier: string
+          old_tier?: string | null
+          reason?: string | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string | null
+          id?: string
+          new_tier?: string
+          old_tier?: string | null
+          reason?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cache_entries: {
         Row: {
           access_count: number
@@ -641,6 +674,7 @@ export type Database = {
           email: string
           id: string
           is_comp: boolean | null
+          session_version: number
           stripe_customer_id: string | null
           subscribed: boolean
           subscription_end: string | null
@@ -653,6 +687,7 @@ export type Database = {
           email: string
           id?: string
           is_comp?: boolean | null
+          session_version?: number
           stripe_customer_id?: string | null
           subscribed?: boolean
           subscription_end?: string | null
@@ -665,6 +700,7 @@ export type Database = {
           email?: string
           id?: string
           is_comp?: boolean | null
+          session_version?: number
           stripe_customer_id?: string | null
           subscribed?: boolean
           subscription_end?: string | null
@@ -721,6 +757,33 @@ export type Database = {
           start_time?: string
           status?: string
           trace_id?: string
+        }
+        Relationships: []
+      }
+      usage_counters: {
+        Row: {
+          counter_key: string
+          counter_value: number
+          period: string
+          updated_at: string | null
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          counter_key: string
+          counter_value?: number
+          period: string
+          updated_at?: string | null
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          counter_key?: string
+          counter_value?: number
+          period?: string
+          updated_at?: string | null
+          user_id?: string
+          window_start?: string
         }
         Relationships: []
       }
@@ -1000,6 +1063,16 @@ export type Database = {
         Args: { curlopt: string; value: string }
         Returns: boolean
       }
+      increment_and_check_usage: {
+        Args: {
+          p_counter_key: string
+          p_increment?: number
+          p_limit?: number
+          p_period: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
@@ -1037,7 +1110,15 @@ export type Database = {
         }[]
       }
       set_user_plan: {
-        Args: { p_new_plan: string; p_source: string; p_user_id: string }
+        Args:
+          | {
+              p_admin_id?: string
+              p_new_plan: string
+              p_reason?: string
+              p_source: string
+              p_user_id: string
+            }
+          | { p_new_plan: string; p_source: string; p_user_id: string }
         Returns: Json
       }
       sparsevec_out: {

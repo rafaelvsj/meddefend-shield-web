@@ -105,16 +105,15 @@ serve(async (req) => {
     logStep("Customer search completed", { found: customers.data.length > 0 });
     
     if (customers.data.length === 0) {
-      logStep("No customer found, updating unsubscribed state");
-      await supabaseClient.from("subscribers").upsert({
-        email: user.email,
-        user_id: user.id,
-        stripe_customer_id: null,
-        subscribed: false,
-        subscription_tier: null,
-        subscription_end: null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'email' });
+      logStep("No customer found, updating to free plan");
+      
+      // Usar set_user_plan
+      await supabaseClient.rpc('set_user_plan', {
+        p_source: 'stripe-webhook',
+        p_user_id: user.id,
+        p_new_plan: 'free',
+        p_reason: 'No Stripe customer found'
+      });
       
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -160,20 +159,18 @@ serve(async (req) => {
       logStep("No active subscription found");
     }
 
-    // Update database
-    const upsertResult = await supabaseClient.from("subscribers").upsert({
-      email: user.email,
-      user_id: user.id,
-      stripe_customer_id: customerId,
-      subscribed: hasActiveSub,
-      subscription_tier: subscriptionTier,
-      subscription_end: subscriptionEnd,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'email' });
+    // Usar set_user_plan ao invés de upsert direto
+    const { data: planResult, error: planError } = await supabaseClient.rpc('set_user_plan', {
+      p_source: 'stripe-webhook',
+      p_user_id: user.id,
+      p_new_plan: subscriptionTier || 'free',
+      p_reason: `Stripe sync: ${hasActiveSub ? 'active subscription' : 'no active subscription'}`
+    });
 
     logStep("Database update completed", { 
-      success: !upsertResult.error, 
-      error: upsertResult.error?.message,
+      success: !planError, 
+      error: planError?.message,
+      planResult,
       subscribed: hasActiveSub, 
       subscriptionTier 
     });

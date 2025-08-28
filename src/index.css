@@ -157,4 +157,57 @@
   .text-gradient {
     @apply bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent;
   }
+
+  /* Scroll-driven animation utilities */
+  .scroll-reveal {
+    animation-timeline: scroll(root);
+    animation-range: entry 0% entry 100%;
+  }
+
+  .scroll-reveal-early {
+    animation-timeline: scroll(root);
+    animation-range: entry 0% entry 50%;
+  }
+
+  .scroll-reveal-late {
+    animation-timeline: scroll(root);
+    animation-range: entry 50% entry 100%;
+  }
+
+  .scroll-reveal-extend {
+    animation-timeline: scroll(root);
+    animation-range: entry 0% exit 25%;
+  }
+
+  .scroll-stagger-1 { animation-delay: 0.1s; }
+  .scroll-stagger-2 { animation-delay: 0.2s; }
+  .scroll-stagger-3 { animation-delay: 0.3s; }
+  .scroll-stagger-4 { animation-delay: 0.4s; }
+  .scroll-stagger-5 { animation-delay: 0.5s; }
+  .scroll-stagger-6 { animation-delay: 0.6s; }
+
+  /* Fallback for browsers without scroll-timeline support */
+  @supports not (animation-timeline: scroll()) {
+    .scroll-reveal,
+    .scroll-reveal-early,
+    .scroll-reveal-late,
+    .scroll-reveal-extend {
+      animation-timeline: unset;
+      animation-range: unset;
+      animation-delay: 0s;
+      opacity: 0;
+      animation: fade-in 1s ease-out forwards;
+    }
+
+    .scroll-reveal:nth-child(1) { animation-delay: 0.1s; }
+    .scroll-reveal:nth-child(2) { animation-delay: 0.2s; }
+    .scroll-reveal:nth-child(3) { animation-delay: 0.3s; }
+    .scroll-reveal:nth-child(4) { animation-delay: 0.4s; }
+    .scroll-reveal:nth-child(5) { animation-delay: 0.5s; }
+  }
+
+  /* Smooth scrolling for the entire document */
+  html {
+    scroll-behavior: smooth;
+  }
 }

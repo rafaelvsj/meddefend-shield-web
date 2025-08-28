@@ -158,52 +158,45 @@
     @apply bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent;
   }
 
-  /* Scroll-driven animation utilities */
-  .scroll-reveal {
-    animation-timeline: scroll(root);
-    animation-range: entry 0% entry 100%;
+  /* Scroll-driven animation utilities with fallbacks */
+  .scroll-reveal-up {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s ease-out;
   }
 
-  .scroll-reveal-early {
-    animation-timeline: scroll(root);
-    animation-range: entry 0% entry 50%;
+  .scroll-reveal-up.animate {
+    opacity: 1;
+    transform: translateY(0);
   }
 
-  .scroll-reveal-late {
-    animation-timeline: scroll(root);
-    animation-range: entry 50% entry 100%;
+  .scroll-reveal-scale {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: all 0.6s ease-out;
   }
 
-  .scroll-reveal-extend {
-    animation-timeline: scroll(root);
-    animation-range: entry 0% exit 25%;
+  .scroll-reveal-scale.animate {
+    opacity: 1;
+    transform: scale(1);
   }
 
-  .scroll-stagger-1 { animation-delay: 0.1s; }
-  .scroll-stagger-2 { animation-delay: 0.2s; }
-  .scroll-stagger-3 { animation-delay: 0.3s; }
-  .scroll-stagger-4 { animation-delay: 0.4s; }
-  .scroll-stagger-5 { animation-delay: 0.5s; }
-  .scroll-stagger-6 { animation-delay: 0.6s; }
+  .scroll-reveal-fade {
+    opacity: 0;
+    transition: opacity 0.6s ease-out;
+  }
 
-  /* Fallback for browsers without scroll-timeline support */
-  @supports not (animation-timeline: scroll()) {
-    .scroll-reveal,
-    .scroll-reveal-early,
-    .scroll-reveal-late,
-    .scroll-reveal-extend {
-      animation-timeline: unset;
-      animation-range: unset;
-      animation-delay: 0s;
-      opacity: 0;
-      animation: fade-in 1s ease-out forwards;
-    }
+  .scroll-reveal-fade.animate {
+    opacity: 1;
+  }
 
-    .scroll-reveal:nth-child(1) { animation-delay: 0.1s; }
-    .scroll-reveal:nth-child(2) { animation-delay: 0.2s; }
-    .scroll-reveal:nth-child(3) { animation-delay: 0.3s; }
-    .scroll-reveal:nth-child(4) { animation-delay: 0.4s; }
-    .scroll-reveal:nth-child(5) { animation-delay: 0.5s; }
+  /* Interactive Elements */
+  .story-link {
+    @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
   }
 
   /* Smooth scrolling for the entire document */

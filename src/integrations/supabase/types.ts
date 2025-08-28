@@ -832,6 +832,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_plan_v1: {
+        Row: {
+          email: string | null
+          is_comp: boolean | null
+          plan: string | null
+          plan_level: number | null
+          subscribed: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          email?: string | null
+          is_comp?: boolean | null
+          plan?: string | null
+          plan_level?: number | null
+          subscribed?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          email?: string | null
+          is_comp?: boolean | null
+          plan?: string | null
+          plan_level?: number | null
+          subscribed?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -897,18 +927,7 @@ export type Database = {
       }
     }
     Views: {
-      user_plan_v1: {
-        Row: {
-          email: string | null
-          is_comp: boolean | null
-          plan: string | null
-          plan_level: number | null
-          subscribed: boolean | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       admin_update_user_plan: {
@@ -1086,6 +1105,10 @@ export type Database = {
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: unknown
+      }
+      refresh_user_plan_v1: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       search_similar_chunks: {
         Args: {

@@ -907,33 +907,7 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
         }
-        Insert: {
-          email?: string | null
-          is_comp?: never
-          plan?: never
-          plan_level?: never
-          subscribed?: never
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          email?: string | null
-          is_comp?: never
-          plan?: never
-          plan_level?: never
-          subscribed?: never
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_subscribers_user_id"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
@@ -966,6 +940,18 @@ export type Database = {
         Returns: Json
       }
       get_user_plan: {
+        Args: { target_user_id?: string }
+        Returns: {
+          email: string
+          is_comp: boolean
+          plan: string
+          plan_level: number
+          subscribed: boolean
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      get_user_plan_secure: {
         Args: { target_user_id?: string }
         Returns: {
           email: string
